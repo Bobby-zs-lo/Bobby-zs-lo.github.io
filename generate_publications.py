@@ -45,6 +45,18 @@ with open(output_file, 'w', encoding='utf-8') as f:
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Publications – Bobby Zhao Sheng Lo</title>
     <link rel="stylesheet" href="style.css">
+   <style>
+     body {{ font-family: 'Segoe UI', sans-serif; margin: auto; }}
+     .metrics {{ float: right; width: 250px; background: #f5f5f5; padding: 15px; margin: 20px; border: 1px solid #ccc; }}
+     .pubs {{ margin-right: 280px; padding: 20px; }}
+     h1, h2 {{ color: #333; }}
+     ul {{ list-style-type: none; padding-left: 0; }}
+     li {{ margin-bottom: 15px; }}
+     .nav-bar {{ list-style: none; display: flex; justify-content: center; padding: 10px; background-color: #e5dfd5; margin: 0; }}
+     .nav-bar li {{ margin: 0 20px; }}
+     .nav-bar a {{ text-decoration: none; color: #5a5148; font-weight: bold; }}
+     .nav-bar a:hover {{ text-decoration: underline; }}
+   </style>
 </head>
 <body>
 
@@ -86,7 +98,7 @@ with open(output_file, 'w', encoding='utf-8') as f:
         year = bib.get('pub_year', 'n.d.')
         venue = bib.get('journal') or bib.get('venue') or 'Unknown journal or conference'
 
-        f.write(f"<li><strong>{title}</strong><br>{authors} ({year})<br><em>{venue}</em></li>\n")
+        f.write(f"<li><strong>{title}</strong><br>{authors} <br><em>{venue} ({year})</em></li>\n")
 
     f.write("""
         </ul>
