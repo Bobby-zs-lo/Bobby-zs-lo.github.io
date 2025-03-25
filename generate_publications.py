@@ -15,76 +15,87 @@ h_index = author.get('hindex', 0)
 i10_index = author.get('i10index', 0)
 citations = author.get('citedby', 0)
 
-# Sort publications by year (as integer)
+# Helper: Get year safely
 def safe_year(pub):
-    year = pub['bib'].get('pub_year', '0')
+    year = pub.get('bib', {}).get('pub_year', '0')
     try:
         return int(year)
     except ValueError:
         return 0
 
-publications = sorted(author['publications'], key=safe_year, reverse=True)
+# Fill each publication to get full metadata
+filled_pubs = []
+for pub in author['publications']:
+    try:
+        pub = scholarly.fill(pub)
+        filled_pubs.append(pub)
+    except Exception as e:
+        print(f"⚠️ Skipping a publication due to error: {e}")
+
+# Sort the filled publications by year
+publications = sorted(filled_pubs, key=safe_year, reverse=True)
+
 
 # === Generate HTML ===
 with open(output_file, 'w', encoding='utf-8') as f:
     f.write(f"""<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Publications - Bobby Zhao Sheng Lo</title>
-  <link rel="stylesheet" href="style.css">
-  <style>
-    body {{ font-family: 'Segoe UI', sans-serif; max-width: 1000px; margin: auto; }}
-    .metrics {{ float: right; width: 250px; background: #f5f5f5; padding: 15px; margin: 20px; border: 1px solid #ccc; }}
-    .pubs {{ margin-right: 280px; padding: 20px; }}
-    h1, h2 {{ color: #333; }}
-    ul {{ list-style-type: none; padding-left: 0; }}
-    li {{ margin-bottom: 15px; }}
-    .nav-bar {{ list-style: none; display: flex; justify-content: center; padding: 10px; background-color: #e5dfd5; margin: 0; }}
-    .nav-bar li {{ margin: 0 20px; }}
-    .nav-bar a {{ text-decoration: none; color: #5a5148; font-weight: bold; }}
-    .nav-bar a:hover {{ text-decoration: underline; }}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Publications – Bobby Zhao Sheng Lo</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- ✅ Navigation Bar -->
-  <nav>
+<header>
+    <h1>Bobby Zhao Sheng Lo, MD, PhD</h1>
+    <p>Medical Researcher | AI in Gastroenterology | Educator</p>
+</header>
+
+<!-- Navigation Bar -->
+<nav>
     <ul class="nav-bar">
-      <li><a href="index.html">Home</a></li>
-      <li><a href="publications.html">Publications</a></li>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="publications.html">Publications</a></li>
     </ul>
-  </nav>
+</nav>
 
-  <h1>My Publications</h1>
+<div class="container">
+    <div class="metrics">
+        <h2>Scholar Metrics</h2>
+        <ul>
+            <li>Total citations: {citations}</li>
+            <li>h-index: {h_index}</li>
+            <li>i10-index: {i10_index}</li>
+            <li><a href="https://scholar.google.com/citations?user={scholar_id}" target="_blank">Google Scholar</a></li>
+        </ul>
+    </div>
 
-  <div class="metrics">
-    <h2>Scholar Metrics</h2>
-    <ul>
-      <li>Total citations: {citations}</li>
-      <li>h-index: {h_index}</li>
-      <li>i10-index: {i10_index}</li>
-      <li><a href="https://scholar.google.com/citations?user={scholar_id}" target="_blank">Google Scholar</a></li>
-    </ul>
-  </div>
-
-  <div class="pubs">
-    <h2>Peer-reviewed Publications</h2>
-    <ul>
+    <div class="pubs">
+        <h2>Peer-reviewed Publications</h2>
+        <ul>
 """)
 
-    # === Write each publication entry ===
     for pub in publications:
         bib = pub['bib']
         title = bib.get('title', 'Untitled')
-        authors = bib.get('author', 'Unknown authors')
+        raw_authors = bib.get('author', 'Unknown authors')
+        authors_list = [a.strip() for a in raw_authors.split(' and ')]
+        authors = ', '.join(authors_list)
         year = bib.get('pub_year', 'n.d.')
-        venue = bib.get('venue', '')
+        venue = bib.get('journal') or bib.get('venue') or 'Unknown journal or conference'
+
         f.write(f"<li><strong>{title}</strong><br>{authors} ({year})<br><em>{venue}</em></li>\n")
 
     f.write("""
-    </ul>
-  </div>
+        </ul>
+    </div>
+</div>
+
+<footer>
+    <p>Contact: <a href="mailto:bobby.lo@regionh.dk">bobby.lo@regionh.dk</a></p>
+</footer>
 
 </body>
 </html>
