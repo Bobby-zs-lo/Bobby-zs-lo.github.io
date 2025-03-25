@@ -47,3 +47,34 @@ footer {
     border: 4px solid #d7d2cb;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
+
+/* Navigation Bar */
+nav {
+    background-color: #e5dfd5;
+    border-top: 1px solid #d3cfc7;
+    border-bottom: 1px solid #d3cfc7;
+}
+
+.nav-bar {
+    list-style-type: none;
+    margin: 0;
+    padding: 10px 0;
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+}
+
+.nav-bar li {
+    display: inline;
+}
+
+.nav-bar a {
+    text-decoration: none;
+    color: #5a5148;
+    font-weight: bold;
+}
+
+.nav-bar a:hover {
+    text-decoration: underline;
+}
+
