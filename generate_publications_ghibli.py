@@ -1,9 +1,14 @@
-from scholarly import scholarly
+from scholarly import scholarly, ProxyGenerator
 from datetime import datetime
 import os
 
 # === Settings ===
 scholar_id = "YrAJMdcAAAAJ"  # Replace with your own Google Scholar ID
+
+# Set up a ProxyGenerator
+pg = ProxyGenerator()
+pg.FreeProxies()
+scholarly.use_proxy(pg)
 output_file = "publications.html"
 
 # === Fetch Author Profile and Publications ===

@@ -20,8 +20,8 @@ To run the project locally, you will need to have Python installed.
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/your-username/your-repo-name.git
-    cd your-repo-name
+    git clone https://github.com/Bobby-zs-lo/Bobby-zs-lo.github.io.git
+    cd Bobby-zs-lo.github.io
     ```
 2.  **Install Python dependencies:**
     ```bash
