@@ -1,1 +1,2 @@
 scholarly
+free-proxy<1.1.0
