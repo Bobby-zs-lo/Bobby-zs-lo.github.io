@@ -29,114 +29,150 @@
   "@context": "http://schema.org",
   "@type": "Person",
   "name": "Bobby Zhao Sheng Lo",
-  "jobTitle": "MD, PhD, Post-Doc",
-  "affiliation": {
-    "@type": "Organization",
-    "name": "Copenhagen University Hospital"
-  },
+  "jobTitle": "MD, PhD, Post-Doc Researcher",
+  "affiliation": [
+    {
+      "@type": "Organization",
+      "name": "Copenhagen University Hospital Hvidovre"
+    },
+    {
+      "@type": "MedicalOrganization",
+      "name": "Gastrointestinal Artificial Intelligence Network (GAIN)"
+    },
+    {
+      "@type": "MedicalOrganization",
+      "name": "Copenhagen Center for Inflammatory Bowel Disease"
+    }
+  ],
   "alumniOf": "University of Copenhagen",
   "url": "https://bobby-zs-lo.github.io/",
   "sameAs": [
     "https://www.linkedin.com/in/bobby-lo-md/",
     "https://bobby.lo@regionh.dk"
   ],
-  "knowsAbout": ["Gastroenterology", "Artificial Intelligence", "Inflammatory Bowel Disease", "Medical Research"]
+  "knowsAbout": ["Gastroenterology", "Artificial Intelligence", "Inflammatory Bowel Disease", "IBD Denmark", "Medical Research", "Ulcerative Colitis", "Crohn's Disease", "Deep Learning", "Endoscopy", "Clinical Epidemiology"],
+  "description": "Leader of the Gastrointestinal Artificial Intelligence Network (GAIN) in Denmark, focusing on AI in IBD."
 }
 </script>
 </head>
 
 <body>
-    <header>
-        <h1>Bobby Zhao Sheng Lo, MD, PhD</h1>
-        <p>Medical Researcher | AI in Gastroenterology | Educator</p>
-    </header>
-
     <!-- ✅ Navigation Bar -->
     <nav>
-        <ul class="nav-bar">
-            <li><a href="index.html">Home</a></li>
-            <li><a href="publications.html">Publications</a></li>
-        </ul>
+        <div class="nav-container">
+            <span class="nav-brand">Bobby Zhao Sheng Lo</span>
+            <ul class="nav-bar">
+                <li><a href="index.html" class="active">Home</a></li>
+                <li><a href="publications.html">Publications</a></li>
+            </ul>
+        </div>
     </nav>
 
-    <div class="profile-image">
-        <img src="image/profile.JPG" alt="Profile Picture of Bobby Zhao Sheng Lo">
-    </div>
+    <!-- BANNER_START -->
 
-    <div class="card">
-        <section id="about">
-            <h2>About Me</h2>
-            <p>I am a licensed physician (KBU) and Post-Doc researcher leading the Gastrointestinal Artificial
-                Intelligence Network (GAIN) at Copenhagen University Hospital Hvidovre. I also serve as Section Leader
-                for the Copenhagen Center for Inflammatory Bowel Disease in Children, Adolescents, and Adults.</p>
-            <p>My work sits at the intersection of clinical gastroenterology and computer science, focusing on
-                integrating artificial intelligence into the diagnostics and management of Inflammatory Bowel Disease
-                (IBD). Current major research projects include the ENACT Endoscopic Add-on System and the Presager
-                Project for AI-driven disease classification.</p>
-            <p>Beyond AI, I hold a strong foundation in clinical epidemiology, like utilizing the Danish nationwide
-                registry data to study disease courses, epidemiology, and treatment outcomes.</p>
-        </section>
+<div class="rolling-banner-container">
+    <div class="rolling-banner-content">
+        <span>🚀 <strong>Latest Publications:</strong> &nbsp;&nbsp; <strong>Changes in nasal and throat microbiota composition during and after mupirocin and chlorhexidine decolonisation treatment in asymptomatic MRSA carriers: a longitudinal observational study</strong> - <em>Clinical Microbiology and Infection (2026)</em> &nbsp;&nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;&nbsp; <strong>Forecasting the Incidence and Prevalence of Inflammatory Bowel Disease Across Nine Epidemiologic Stage 3 Nations</strong> - <em>Gastroenterology (2026)</em> &nbsp;&nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;&nbsp; <strong>AI-BUS: AI Bowel Ultrasound System</strong> - <em>EMJ Gastroenterology (2025)</em> &nbsp;&nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;&nbsp; <strong>Clinical Trial: Evaluating a Single 1600 mg Tablet Regimen of 5‐Aminosalicylate for Ulcerative Colitis—The <scp>EASI</scp> Trial</strong> - <em>Alimentary Pharmacology & Therapeutics (2025)</em> &nbsp;&nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;&nbsp; <strong>Incidence and Long‐Term Outcomes of Pouchitis in Ulcerative Colitis Patients</strong> - <em>United European Gastroenterology Journal (2025)</em></span>
     </div>
+</div>
 
-    <div class="card">
-        <section id="education">
-            <h2>Education</h2>
-            <ul>
-                <li><b>2024:</b> PhD, Copenhagen University Hospital Hvidovre</li>
-                <li><b>2019:</b> MD, University of Copenhagen, Denmark</li>
-            </ul>
-        </section>
-    </div>
+<!-- BANNER_END -->
 
-    <div class="card">
-        <section id="awards">
-            <h2>Awards & Recognitions</h2>
-            <ul>
-                <li><b>2024:</b> FALK Foundation – AI in Gastroenterology Poster Award</li>
-                <li><b>2021:</b> Y-ECCO Congress Abstract Award</li>
-            </ul>
-        </section>
-    </div>
+    <main class="container">
+        <!-- Hero Section -->
+        <div class="hero">
+            <div class="hero-content">
+                <h1>Bobby Zhao Sheng Lo, <span class="highlight">MD, PhD</span></h1>
+                <p class="tagline">Medical Researcher | AI in Gastroenterology | Educator</p>
+                <p class="hero-bio">Licensed physician and Post-Doc researcher leading the Gastrointestinal Artificial Intelligence Network (GAIN) at Copenhagen University Hospital Hvidovre.</p>
+                <div class="hero-buttons">
+                    <a href="#about" class="button">About Me</a>
+                    <a href="publications.html" class="button button-outline">Publications</a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <img src="image/profile.JPG" alt="Profile Picture of Bobby Zhao Sheng Lo">
+            </div>
+        </div>
 
-    <div class="card">
-        <section id="skills">
-            <h2>Technical & Research Skills</h2>
-            <ul>
-                <li><b>AI & Machine Learning:</b> Deep Learning pipelines, Convolutional Neural Networks (CNN), Computer
-                    Vision in Endoscopy.</li>
-                <li><b>Data Analysis:</b> R and Python workflows, Registry Data Management, Advanced Statistics.</li>
-                <li><b>Clinical Focus:</b> IBD Diagnostics, Histology, Clinical Trials (EASI Trial, PROCTO Trial).</li>
-            </ul>
-        </section>
-    </div>
+        <!-- About Me -->
+        <div class="card">
+            <section id="about">
+                <h2>About Me</h2>
+                <p>I am a licensed physician (KBU) and Post-Doc researcher leading the Gastrointestinal Artificial Intelligence Network (GAIN) at Copenhagen University Hospital Hvidovre. I also serve as Section Leader for the Copenhagen Center for Inflammatory Bowel Disease in Children, Adolescents, and Adults.</p>
+                <p>My work sits at the intersection of clinical gastroenterology and computer science, focusing on integrating artificial intelligence into the diagnostics and management of Inflammatory Bowel Disease (IBD). Current major research projects include the ENACT Endoscopic Add-on System and the Presager Project for AI-driven disease classification.</p>
+                <p>Beyond AI, I hold a strong foundation in clinical epidemiology, like utilizing the Danish nationwide registry data to study disease courses, epidemiology, and treatment outcomes.</p>
+            </section>
+        </div>
 
-    <div class="card">
-        <section id="research">
-            <h2>Major Research Projects</h2>
-            <ul>
-                <li><b>ENACT:</b> Endoscopic Add-on System for Ulcerative Colitis Patients</li>
-                <li><b>Presager Project:</b> Application of Computer Science for Disease Classification and Prediction
-                    in IBD</li>
-                <li><b>Danish IBD Biobank (DIB):</b> National biobanking initiative investigating biological treatment
-                    outcomes</li>
-                <li><b>The DICE Project:</b> Multinational registry study on IBD epidemiology</li>
-                <li><b>EASI Project:</b> Randomized Clinical Trial assessing treatment modalities in IBD</li>
-            </ul>
-        </section>
-    </div>
+        <!-- Grid for Qualifications -->
+        <div class="grid-container">
+            <div class="card small-card">
+                <section id="education">
+                    <h2>Education</h2>
+                    <ul>
+                        <li><b>2024:</b> PhD, Copenhagen University Hospital Hvidovre</li>
+                        <li><b>2019:</b> MD, University of Copenhagen, Denmark</li>
+                    </ul>
+                </section>
+            </div>
 
-    <div class="card">
-        <section id="publications">
-            <h2>Latest Publications</h2>
-            <p>You can view my full list of peer-reviewed publications here:</p>
-            <a href="publications.html" class="button">View Full List of Publications</a>
-        </section>
-    </div>
+            <div class="card small-card">
+                <section id="awards">
+                    <h2>Awards & Recognitions</h2>
+                    <ul>
+                        <li><b>2024:</b> FALK Foundation – AI in Gastroenterology Poster Award</li>
+                        <li><b>2021:</b> Y-ECCO Congress Abstract Award</li>
+                    </ul>
+                </section>
+            </div>
+
+            <div class="card small-card" style="grid-column: 1 / -1;">
+                <section id="skills">
+                    <h2>Technical & Research Skills</h2>
+                    <ul>
+                        <li><b>AI & Machine Learning:</b> Deep Learning pipelines, Convolutional Neural Networks (CNN), Computer Vision in Endoscopy.</li>
+                        <li><b>Data Analysis:</b> R and Python workflows, Registry Data Management, Advanced Statistics.</li>
+                        <li><b>Clinical Focus:</b> IBD Diagnostics, Histology, Clinical Trials (EASI Trial, PROCTO Trial).</li>
+                    </ul>
+                </section>
+            </div>
+        </div>
+
+        <!-- Research Projects -->
+        <div class="card">
+            <section id="research">
+                <h2>Major Research Projects</h2>
+                <ul class="project-list">
+                    <li><b>ENACT:</b> Endoscopic Add-on System for Ulcerative Colitis Patients</li>
+                    <li><b>Presager Project:</b> Application of Computer Science for Disease Classification and Prediction in IBD</li>
+                    <li><b>Danish IBD Biobank (DIB):</b> National biobanking initiative investigating biological treatment outcomes</li>
+                    <li><b>The DICE Project:</b> Multinational registry study on IBD epidemiology</li>
+                    <li><b>EASI Project:</b> Randomized Clinical Trial assessing treatment modalities in IBD</li>
+                </ul>
+            </section>
+        </div>
+
+    </main>
 
     <footer>
-        <p>Contact: <a href="mailto:bobby.lo@regionh.dk">bobby.lo@regionh.dk</a> | <a
-                href="https://www.linkedin.com/in/bobby-lo-md/" target="_blank">LinkedIn</a></p>
+        <div class="footer-content">
+            <p><strong>Bobby Zhao Sheng Lo, MD, PhD</strong></p>
+            <p>Contact: <a href="mailto:bobby.lo@regionh.dk">bobby.lo@regionh.dk</a> | <a href="https://www.linkedin.com/in/bobby-lo-md/" target="_blank">LinkedIn</a></p>
+            <p>&copy; 2024 Bobby Zhao Sheng Lo. All rights reserved.</p>
+        </div>
     </footer>
-</body>
+    <button id="toTopBtn" title="Go to top">↑</button>
 
+    <!-- SEO / Crawler optimized context -->
+    <article class="sr-only">
+        <h1>Comprehensive Research Profile of Bobby Zhao Sheng Lo in Denmark</h1>
+        <p>Bobby Zhao Sheng Lo is a leading MD, PhD, and Post-Doc researcher based in Denmark, specializing in Inflammatory Bowel Disease (IBD). He is the head and leader of the Gastrointestinal Artificial Intelligence Network (GAIN) at Copenhagen University Hospital Hvidovre.</p>
+        <p>His medical research focuses extensively on the intersection of Gastroenterology and Computer Science in Denmark. Key areas of expertise include deep learning pipelines, Convolutional Neural Networks (CNN) for endoscopy, and clinical epidemiology.</p>
+        <p>Notable IBD research projects in Denmark include the ENACT Endoscopic Add-on System for Ulcerative Colitis, the Presager Project for AI-driven disease classification, the Danish IBD Biobank (DIB), the multinational DICE Project, and the EASI Trial mapping treatment modalities in Crohn's Disease and Ulcerative Colitis.</p>
+        <p>Search terms relevant to this work: Denmark IBD, Gastrointestinal Artificial Intelligence Network, GAIN Denmark, Bobby Lo MD PhD, Copenhagen Center for Inflammatory Bowel Disease in Children, Adolescents, and Adults, AI in Endoscopy.</p>
+    </article>
+
+    <script src="script.js"></script>
+</body>
 </html>

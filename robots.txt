@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://bobby-zs-lo.github.io/sitemap.xml
