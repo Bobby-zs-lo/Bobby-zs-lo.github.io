@@ -30,20 +30,53 @@
 .card {
   background-color: white;
   border-left: 6px solid var(--cactus-green);
-  margin: 1rem auto;
-  padding: 1rem;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  margin: 1.5rem auto;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   max-width: 800px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  animation: slideUpFade 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+/* Base staggered animation delays for cards */
+.card:nth-child(1) { animation-delay: 0.1s; }
+.card:nth-child(2) { animation-delay: 0.2s; }
+.card:nth-child(3) { animation-delay: 0.3s; }
+.card:nth-child(4) { animation-delay: 0.4s; }
+.card:nth-child(5) { animation-delay: 0.5s; }
+.card:nth-child(6) { animation-delay: 0.6s; }
+.card:nth-child(7) { animation-delay: 0.7s; }
+.card:nth-child(8) { animation-delay: 0.8s; }
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
 body {
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Inter', sans-serif;
   background-color: var(--parchment-beige);
   color: var(--deep-charcoal);
   margin: auto;
   padding: 0;
+  line-height: 1.6;
 }
 
 header {
@@ -132,6 +165,20 @@ nav {
   border-radius: 5px;
   overflow: hidden;
   background-color: white;
+}
+
+/* Compact rules for Highlighted Publications */
+.highlights .card {
+  padding: 1rem;
+  margin: 0.5rem auto;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  animation: slideUpFade 0.4s ease-out forwards;
+}
+
+.highlights .card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 .collapsible {

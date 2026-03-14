@@ -1,4 +1,5 @@
 import requests
+from typing import List, Tuple, Dict, Any
 
 # === Settings ===
 author_id = "a5078664290"
@@ -38,21 +39,40 @@ except requests.exceptions.RequestException as e:
     publications_data = []
 
 # Helper: Highlight author's name
-def highlight_name(authors_list):
-    formatted_authors = []
+def highlight_name(authors_list: List[Dict[str, Any]]) -> str:
+    formatted_authors: List[str] = []
     for author in authors_list:
-        author_name = author.get('author', {}).get('display_name', 'Unknown author')
+        author_name = str(author.get('author', {}).get('display_name', 'Unknown author'))
         is_highlighted = any(keyword.lower() in author_name.lower() for keyword in author_names_to_highlight if keyword)
-        formatted_authors.append(f"<b>{author_name}</b>" if is_highlighted else author_name)
+        formatted_authors.append(str(f"<b>{author_name}</b>" if is_highlighted else author_name))
     return ', '.join(formatted_authors)
 
-# Group publications by year
-publications_by_year = {}
+# Group publications by year and extract highlights
+publications_by_year: Dict[str, List[Dict[str, Any]]] = {}
+highlighted_publications: List[Tuple[Dict[str, Any], int, str, str]] = []
+high_impact_keywords = ['nature', 'gastroenterology', 'gut', 'lancet', 'jama', 'new england journal']
+
 for pub in publications_data:
     year = pub.get('publication_year', 'n.d.')
     if year not in publications_by_year:
         publications_by_year[year] = []
     publications_by_year[year].append(pub)
+    
+    # Check if publication matches highlight criteria
+    citations_count = pub.get('cited_by_count', 0)
+    primary_location = pub.get('primary_location')
+    source = primary_location.get('source') if primary_location else None
+    venue = source.get('display_name') if source else 'Unknown journal or conference'
+    
+    is_high_impact = any(keyword in venue.lower() for keyword in high_impact_keywords)
+    if citations_count > 50 or is_high_impact:
+        highlighted_publications.append((pub, citations_count, venue, year))
+
+# Sort highlights by citation count (descending)
+highlighted_publications.sort(key=lambda x: x[1], reverse=True)
+
+# Limit to top 5 highlights to keep the section compact
+top_highlights = [highlighted_publications[i] for i in range(min(5, len(highlighted_publications)))]
 
 # === Generate HTML ===
 with open(output_file, 'w', encoding='utf-8') as f:
@@ -89,7 +109,25 @@ with open(output_file, 'w', encoding='utf-8') as f:
             <li><a href="{openalex_url}" target="_blank">OpenAlex</a></li>
         </ul>
     </div>
+""")
 
+    if top_highlights:
+        f.write("""
+    <div class="card highlights">
+        <h2>🔥 Highlighted Publications</h2>
+        <ul>
+""")
+        for pub, cite_count, venue, year in top_highlights:
+            title = pub.get('title', 'Untitled')
+            authors = highlight_name(pub.get('authorships', []))
+            f.write(f"""            <li class="card"><strong>{title}</strong><br>{authors} <br><em>{venue} ({year}) - {cite_count} Citations</em></li>\n""")
+        
+        f.write("""
+        </ul>
+    </div>
+""")
+
+    f.write("""
     <div class="card pubs">
         <h2>Peer-reviewed Publications</h2>
         <input type="text" id="searchBox" onkeyup="filterPublications()" placeholder="Search for publications...">
@@ -140,4 +178,4 @@ with open(output_file, 'w', encoding='utf-8') as f:
 </html>
 """)
 
-print(f"✅ {output_file} generated successfully from OpenAlex data.")
+print(f"Success: {output_file} generated successfully from OpenAlex data.")

@@ -9,8 +9,9 @@ This is a simple, static website designed to showcase Dr. Lo's professional prof
 ## Features
 
 *   **Homepage:** A summary of Dr. Lo's profile.
-*   **Publications Page:** A complete list of publications, automatically updated from OpenAlex.
-*   **Automated Updates:** A GitHub Action is set up to automatically update the publications list every week.
+*   **Publications Page:** A complete list of publications automatically generated from OpenAlex.
+*   **Automated Highlights:** The publications generator automatically surfaces high-impact papers (e.g., published in Nature, Gastroenterology) and highly cited papers (> 50 citations) into a dedicated "Highlights" section.
+*   **Weekly Auto-Updates:** A GitHub Action is set up to automatically run the Python scraper, generate new HTML, and push changes to the repository every week.
 
 ## Setup
 
@@ -35,6 +36,6 @@ To run the project locally, you will need to have Python installed.
 
 ## Automated Publication Updates
 
-A GitHub Action is configured to run the `generate_publications.py` script once a week (every Sunday at midnight). This script fetches the latest publications from Dr. Lo's OpenAlex profile and updates the `publications.html` file.
+A GitHub Action is configured to run the `generate_publications.py` script once a week (every Sunday at midnight). This script fetches the latest publications from Dr. Lo's OpenAlex profile, extracts citation data and journal metrics to build an automatic "Highlights" section, and updates the `publications.html` file.
 
 The workflow is defined in `.github/workflows/update-publications.yml`. If any changes are made to the publications list, the action will automatically commit the updated `publications.html` file to the `main` branch.
