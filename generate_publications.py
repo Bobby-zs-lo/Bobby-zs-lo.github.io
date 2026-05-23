@@ -165,8 +165,8 @@ with open(output_file, 'w', encoding='utf-8') as f:
 
     <link rel="stylesheet" href="style.css">
     <link rel="canonical" href="https://bobby-zs-lo.github.io/publications.html" />
-    <link rel="icon" type="image/jpeg" href="image/profile.JPG">
-    <link rel="apple-touch-icon" href="image/profile.JPG">
+    <link rel="icon" type="image/jpeg" href="image/profile-2026.jpg">
+    <link rel="apple-touch-icon" href="image/profile-2026.jpg">
     <link rel="sitemap" type="application/xml" href="sitemap.xml">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -177,7 +177,10 @@ with open(output_file, 'w', encoding='utf-8') as f:
     <meta property="og:site_name" content="Bobby Zhao Sheng Lo, MD, PhD">
     <meta property="og:title" content="Publications — Bobby Zhao Sheng Lo, MD, PhD">
     <meta property="og:description" content="Peer-reviewed publications. {citations:,} citations · h-index {h_index}. AI in IBD, deep learning for endoscopy, clinical epidemiology.">
-    <meta property="og:image" content="https://bobby-zs-lo.github.io/image/profile.JPG">
+    <meta property="og:image" content="https://bobby-zs-lo.github.io/image/og-card.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:type" content="image/jpeg">
     <meta property="og:image:alt" content="Portrait of Bobby Zhao Sheng Lo, MD, PhD">
     <meta property="og:url" content="https://bobby-zs-lo.github.io/publications.html">
     <meta property="og:locale" content="en_GB">
@@ -185,7 +188,7 @@ with open(output_file, 'w', encoding='utf-8') as f:
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Publications — Bobby Zhao Sheng Lo, MD, PhD">
     <meta name="twitter:description" content="Peer-reviewed publications. {citations:,} citations · h-index {h_index}. AI in IBD, deep learning for endoscopy, clinical epidemiology.">
-    <meta name="twitter:image" content="https://bobby-zs-lo.github.io/image/profile.JPG">
+    <meta name="twitter:image" content="https://bobby-zs-lo.github.io/image/og-card.jpg">
 
     <!-- Person (kept on publications page so crawlers connect both URLs to the same entity) -->
     <script type="application/ld+json">
@@ -198,11 +201,12 @@ with open(output_file, 'w', encoding='utf-8') as f:
   "familyName": "Lo",
   "honorificSuffix": "MD, PhD",
   "url": "https://bobby-zs-lo.github.io/",
-  "image": "https://bobby-zs-lo.github.io/image/profile.JPG",
+  "image": "https://bobby-zs-lo.github.io/image/og-card.jpg",
   "jobTitle": [
     "Specialist Trainee in Internal Medicine and Gastroenterology",
     "Postdoctoral Researcher",
-    "Leader, Gastrointestinal Artificial Intelligence Network (GAIN)"
+    "Leader, Gastrointestinal Artificial Intelligence Network (GAIN)",
+    "Principal Investigator, Copenhagen Center for Inflammatory Bowel Disease"
   ],
   "affiliation": [
     {{ "@type": "Hospital", "name": "Bispebjerg Hospital" }},
@@ -215,6 +219,7 @@ with open(output_file, 'w', encoding='utf-8') as f:
   "sameAs": [
     "https://www.linkedin.com/in/bobby-lo-md/",
     "https://orcid.org/0000-0002-0252-9341",
+    "https://scholar.google.com/citations?user=YrAJMdcAAAAJ&hl=en",
     "https://openalex.org/A5078664290"
   ],
   "knowsAbout": ["Gastroenterology", "Inflammatory Bowel Disease", "Artificial Intelligence", "Deep Learning", "Computer Vision", "Endoscopy", "Clinical Epidemiology"],

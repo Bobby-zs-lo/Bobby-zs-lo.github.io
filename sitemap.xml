@@ -8,9 +8,13 @@
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
     <image:image>
-      <image:loc>https://bobby-zs-lo.github.io/image/profile.JPG</image:loc>
+      <image:loc>https://bobby-zs-lo.github.io/image/og-card.jpg</image:loc>
       <image:title>Bobby Zhao Sheng Lo, MD, PhD</image:title>
       <image:caption>Portrait of Bobby Zhao Sheng Lo, MD, PhD — specialist trainee in Gastroenterology and Leader of GAIN at Copenhagen University Hospital Hvidovre.</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://bobby-zs-lo.github.io/image/profile-2026.jpg</image:loc>
+      <image:title>Bobby Zhao Sheng Lo — hero portrait</image:title>
     </image:image>
   </url>
   <url>
