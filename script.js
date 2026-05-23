@@ -232,22 +232,25 @@ window.__motion = function () {
     });
   }
 
-  // -- Scrubbed fade-up for cards, rows, prose --
+  // -- Fade-up for cards, rows, prose (safe: only animates y, opacity stays 1) --
+  // immediateRender:false + play-once means content is always visible even if
+  // JS is slow; it just gets a subtle lift-in when scrolled into view.
   const animateTargets = [
     '.role-card', '.comp-card', '.timeline li', '.sso-block',
     '.pub-row', '.aff-marks span', '.contact-list li', '.section-body > h2', '.prose p'
   ].join(',');
   gsap.utils.toArray(animateTargets).forEach((el) => {
     gsap.from(el, {
-      y: 18, opacity: 0, duration: 0.7, ease: 'power3.out',
-      scrollTrigger: { trigger: el, start: 'top 88%', toggleActions: 'play none none reverse' }
+      y: 18, duration: 0.7, ease: 'power3.out', immediateRender: false,
+      scrollTrigger: { trigger: el, start: 'top 92%', toggleActions: 'play none none none' }
     });
   });
 
-  // -- Research projects: pinned stack reveal --
+  // -- Research projects: pinned stack reveal (desktop only) --
+  const isMobile = window.matchMedia('(max-width: 768px)').matches;
   const researchSection = document.getElementById('research');
   const cards = researchSection ? researchSection.querySelectorAll('.research-card') : [];
-  if (researchSection && cards.length) {
+  if (researchSection && cards.length && !isMobile) {
     gsap.set(cards, { opacity: 0, y: 40 });
     ScrollTrigger.create({
       trigger: researchSection,
@@ -266,6 +269,15 @@ window.__motion = function () {
           card.style.transform = `translateY(${y}px)`;
         });
       }
+    });
+  }
+  // On mobile, research cards just fade in normally via the generic handler above
+  if (researchSection && cards.length && isMobile) {
+    cards.forEach((card) => {
+      gsap.from(card, {
+        y: 24, opacity: 0, duration: 0.6, ease: 'power3.out', immediateRender: false,
+        scrollTrigger: { trigger: card, start: 'top 92%', toggleActions: 'play none none none' }
+      });
     });
   }
 };
