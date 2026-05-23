@@ -18,25 +18,6 @@
   --accent-2:   #7A1F2B;
   --ochre:      #C9A96E;
 
-  /* backwards-compat aliases for generate_publications.py inline styles
-     remove once Task 23 lands */
-  --golden-amber:    var(--accent);
-  --cactus-green:    var(--accent-2);
-  --dusty-blue:      var(--ink-3);
-  --midnight-blue:   var(--ink);
-  --sky-teal:        var(--ochre);
-  --parchment-beige: var(--paper);
-  --soft-cyan:       var(--ink-3);
-  --deep-charcoal:   var(--ink);
-  --warm-brick:      var(--accent);
-  --blush-pink:      var(--accent);
-  --glass-bg:        var(--paper);
-
-  /* shadow tokens (still used by generator inline) */
-  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.10);
-
   /* spacing */
   --gutter: 24px;
   --section-y: 80px;
