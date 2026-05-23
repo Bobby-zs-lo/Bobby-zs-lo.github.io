@@ -270,3 +270,29 @@ ul { list-style: none; }
   align-items: center; justify-content: center; z-index: 90;
 }
 #toTopBtn:hover { background: var(--accent); transform: translateY(-3px); }
+
+/* ===== Publications page extras ===== */
+.pubs-search {
+  width: 100%; padding: 12px 14px; font-size: 14px;
+  border: 1px solid var(--rule); border-radius: 8px;
+  background: #fff; color: var(--ink); font-family: inherit;
+  margin-bottom: 12px; outline: none; transition: border-color .2s, box-shadow .2s;
+}
+.pubs-search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(196,48,43,.12); }
+
+.collapsible-section { background: transparent; margin: 0; }
+.collapsible {
+  width: 100%; text-align: left; background: var(--paper-2); color: var(--ink);
+  border: 1px solid var(--rule); border-radius: 6px; padding: 14px 18px;
+  font-family: 'Fraunces', serif; font-size: 18px; font-weight: 500; cursor: pointer;
+  display: flex; justify-content: space-between; align-items: center; margin-top: 14px;
+  transition: background .2s, border-color .2s;
+}
+.collapsible:hover, .collapsible.active { background: #fff; border-color: var(--accent); }
+.collapsible::after {
+  content: '+'; color: var(--accent); font-family: 'JetBrains Mono', monospace;
+  font-weight: 700; font-size: 16px;
+}
+.collapsible.active::after { content: '−'; }
+.content { display: none; padding: 14px 0 6px; }
+.content .pubs-preview { border-top: 0; }
