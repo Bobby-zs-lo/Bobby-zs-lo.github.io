@@ -83,33 +83,71 @@ These can be removed once the generator is updated.
 - **Project card** (eyebrow tag + Fraunces title + body, hovers)
 - **Ticker bar** (slim, full-bleed, ink background, paper text, marquee animation — replaces current babyblue marquee)
 
-## 4. Page architecture (12 sections)
+## 4. Page architecture (12 sections — v3)
 
-| # | Section | New / Reworked / Kept | Content source |
+| # | Section | Status | Content source |
 |---|---|---|---|
 | 01 | Eyebrow ticker | Reworked | `generate_publications.py` |
-| 02 | Hero | Reworked | `Curriculum Vitae 2026.docx` |
-| 03 | Scholar metrics strip | **New** | OpenAlex API (live, fetched client-side by `script.js`) |
-| 04 | About | Reworked | existing copy |
-| 05 | Now — current focus | **New** | user-maintained (edit `index.html` manually) |
-| 06 | Credentials timeline | Reworked (Education + Awards merged) | `Curriculum Vitae 2026.docx` + `Diploma.pdf` + `PhD Diploma.pdf` |
-| 07 | Expertise | Reworked (3 numbered competency cards) | `Kompetencer.pdf` + `Kurser.docx` |
-| 08 | Major research projects | Reworked **(PINNED scroll)** | existing copy + CV 2026 |
-| 09 | Selected publications preview | **New** | OpenAlex API (live, fetched client-side; same call as metrics, reused) |
-| 10 | Speaking & appearances | **New** | `Poster, abstracts, foredrag mm.docx` |
-| 11 | Affiliations strip | **New** | text wordmarks initially; logos optional later |
-| 12 | Contact / footer | Reworked | existing + ORCID lookup |
+| 02 | Hero (copy updated) | Reworked | `CV 2026` — see § 4.1 |
+| 03 | Scholar metrics strip | **New** | OpenAlex API (live client-side fetch) |
+| 04 | About (copy updated) | Reworked | `CV 2026` — see § 4.1 |
+| 05 | Currently — three concurrent roles | **New** | `CV 2026` + user-maintained |
+| 06 | Experience timeline (clinical \| research, two columns) | **New** | `Ansættelser.docx` + `CV 2026` |
+| 07 | Education & Awards | Reworked | `CV 2026` + `Diploma.pdf` + `PhD Diploma.pdf` |
+| 08 | Expertise & continuing education (3 cards + collapsible 17-course list) | Reworked | `Kompetencer.pdf` + `Kurser.docx` |
+| 09 | Major research projects | Reworked **(PINNED scroll)** | existing copy + `CV 2026` |
+| 10 | Selected publications preview | **New** | OpenAlex API (reuses § 03 fetch) |
+| 11 | Speaking, Service & Outreach (talks + advisory boards + peer review + supervision + media) | **New** | `Poster, abstracts, foredrag mm.docx` + `CV 2026` |
+| 12 | Contact + affiliations | Reworked | `CV 2026` + existing |
+
+### 4.1 Copy updates required (current site is out of date)
+
+The current site says Bobby is a "licensed physician (KBU)" — this is outdated. Per `Curriculum Vitae 2026.docx`:
+
+- **Current clinical role (2026–present):** Specialist Training in Internal Medicine / Gastroenterology and Hepatology, Department of Gastroenterology, **Bispebjerg Hospital**, Copenhagen.
+- **Prior clinical role (2025–2026):** Introductory Training Doctor in Internal Medicine / Gastroenterology, Zealand University Hospital Køge.
+- **Concurrent academic role (2024–present):** Postdoc and Leader, **Gastrointestinal Artificial Intelligence Network (GAIN)**.
+- **Concurrent academic role (2021–present):** Researcher / Section Leader, **Copenhagen Center for Inflammatory Bowel Disease in Children, Adolescents, and Adults**, Copenhagen University Hospital Amager and Hvidovre.
+
+**Hero tagline:** "Specialist Trainee · Medical AI Researcher · Educator" (replaces "Medical Researcher | AI in Gastroenterology | Educator").
+
+**Hero bio (1-line):** "Specialist trainee in Gastroenterology at Bispebjerg Hospital and Postdoc leading the Gastrointestinal Artificial Intelligence Network (GAIN) at Copenhagen University Hospital Hvidovre."
+
+**About paragraph:** rework to reflect the three concurrent roles + the bridge between clinical practice and AI research, drawing from the motivation paragraph in `CV 2026`.
+
+### 4.2 Section 05 (Currently) — concrete content
+
+Three small datestamped cards:
+
+1. **2026 — Present** · Specialist Trainee, Bispebjerg Hospital · Internal Medicine / Gastroenterology & Hepatology
+2. **2024 — Present** · Postdoc & Leader · Gastrointestinal Artificial Intelligence Network (GAIN)
+3. **2021 — Present** · Section Leader · Copenhagen Center for Inflammatory Bowel Disease in Children, Adolescents, and Adults
+
+### 4.3 Section 06 (Experience timeline) — two-column structure
+
+**Clinical column (reverse-chronological):**
+2026→ Bispebjerg · 2025–2026 Køge · 2024–2025 Familielægerne i Rødovre (locum) · 2024 Familielægerne i Rødovre (KBU) · 2023–2024 Herlev Gastrokirurgi (KBU) · earlier roles condensed.
+
+**Research column (reverse-chronological):**
+2024→ Postdoc/GAIN · 2021→ Researcher CCIBD · 2020–2024 PhD GastroUnit · 2017–2019 Research Assistant Dept. Clinical Microbiology · 2016–2022 Research Assistant/Data Manager GastroUnit · 2014 Research Assistant Nordsjælland Pediatrics.
+
+### 4.4 Section 11 (Speaking, Service & Outreach) — four sub-blocks
+
+1. **Invited talks** — IBDeas AI Symposium 2022 · AI in IBD 2021 · Basic Treatment of UC 2023 · ECYG 2023 · DSAKG 2024 · JnJ Winter Conference 2025 · "AI in Medicine: Hype, Harm, and How to Get It Right" webinar 2025 · "AI i klinisk gastroenterologi" 2025.
+2. **Advisory boards** — Tillotts Pharma AB (2022) · Takeda Pharma (2025–ongoing).
+3. **Peer review** — American Journal of Gastroenterology · Journal of Crohn and Colitis · Gastroenterology · GUT.
+4. **Supervision** — bachelor and master students in Medicine & Data Science · co-supervisor of 2 PhD students.
+5. **Media** — BestPractice · Journal of Crohn and Colitis · Medicinsk Tidsskrift · Nyheder fra Hvidovre Hospital · CCF Magasinet.
 
 ### Content source files (on disk)
 Located at `C:\Users\Bobby\OneDrive\CV og anbefalinger\`:
-- `Curriculum Vitae 2026.docx` — primary source for biography, employment, education
-- `Poster, abstracts, foredrag mm.docx` — talks/posters/abstracts for Speaking section
-- `Kurser.docx` — courses
-- `Ansættelser.docx` — employment history
-- `Kompetencer.pdf` — competencies
-- `publikationsliste.pdf` / `publikationsliste.xlsx` — publication list cross-check
-
-**Implementation note:** read these only during the relevant implementation step. Do not read all up-front.
+- `Curriculum Vitae 2026.docx` — primary source for biography, employment, education *(already read)*
+- `Poster, abstracts, foredrag mm.docx` — talks/posters/abstracts *(already read)*
+- `Kurser.docx` — courses *(already read)*
+- `Ansættelser.docx` — employment history *(already read)*
+- `Kompetencer.pdf` — competencies *(to read during implementation)*
+- `publikationsliste.pdf` / `publikationsliste.xlsx` — publication list cross-check *(skip — use OpenAlex)*
+- `Diploma.pdf` + `PhD Diploma.pdf` — for Education section years/institutions *(to read during implementation if needed)*
 
 ## 5. Motion choreography
 
