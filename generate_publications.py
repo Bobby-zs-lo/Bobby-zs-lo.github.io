@@ -95,6 +95,54 @@ highlighted_publications.sort(key=lambda x: x[1], reverse=True)
 top_highlights = [highlighted_publications[i] for i in range(min(5, len(highlighted_publications)))]
 
 
+def _esc_json(s: str) -> str:
+    """Minimal JSON string escaping for safe inclusion inside JSON-LD."""
+    return (s or "").replace('\\', '\\\\').replace('"', '\\"').replace('\n', ' ').replace('\r', ' ')
+
+
+def build_pub_jsonld(pub: Dict[str, Any]) -> str:
+    """Emit a ScholarlyArticle JSON-LD object for one publication."""
+    title = _esc_json(pub.get('title', 'Untitled'))
+    year = pub.get('publication_year', '')
+    date = pub.get('publication_date', '') or (str(year) if year else '')
+    primary_location = pub.get('primary_location') or {}
+    source = primary_location.get('source') or {}
+    venue = _esc_json(source.get('display_name', ''))
+    doi = pub.get('doi') or ''
+    cites = pub.get('cited_by_count', 0)
+    authors = pub.get('authorships', []) or []
+    author_objs = []
+    for a in authors[:10]:  # cap to keep payload reasonable
+        nm = _esc_json(((a.get('author') or {}).get('display_name')) or 'Unknown')
+        author_objs.append(f'{{"@type":"Person","name":"{nm}"}}')
+    authors_str = ','.join(author_objs)
+    doi_block = f',"sameAs":"{_esc_json(doi)}"' if doi else ''
+    venue_block = f',"isPartOf":{{"@type":"Periodical","name":"{venue}"}}' if venue else ''
+    return (
+        '{'
+        '"@context":"https://schema.org",'
+        '"@type":"ScholarlyArticle",'
+        f'"headline":"{title}",'
+        f'"datePublished":"{date}",'
+        f'"author":[{authors_str}],'
+        f'"citationCount":{int(cites)}'
+        f'{doi_block}'
+        f'{venue_block}'
+        '}'
+    )
+
+
+highlights_jsonld_items = ','.join(build_pub_jsonld(p) for p, _c, _v, _y in top_highlights)
+highlights_jsonld = (
+    '<script type="application/ld+json">{'
+    '"@context":"https://schema.org",'
+    '"@type":"ItemList",'
+    '"name":"Highlighted publications",'
+    f'"itemListElement":[{highlights_jsonld_items}]'
+    '}</script>'
+) if top_highlights else ''
+
+
 # === Generate HTML ===
 with open(output_file, 'w', encoding='utf-8') as f:
     f.write(f"""<!DOCTYPE html>
@@ -103,54 +151,111 @@ with open(output_file, 'w', encoding='utf-8') as f:
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Publications – Bobby Zhao Sheng Lo</title>
+    <title>Publications — Bobby Zhao Sheng Lo, MD, PhD · {len(publications_data)} peer-reviewed works</title>
 
     <meta name="description"
-        content="Publications by Bobby Zhao Sheng Lo, MD, PhD, Post-Doc and Leader of the Gastrointestinal Artificial Intelligence Network (GAIN). Specializing in deep learning for endoscopy, IBD diagnostics, and clinical epidemiology at Copenhagen University Hospital.">
+        content="Peer-reviewed publications by Bobby Zhao Sheng Lo, MD, PhD — specialist trainee in Gastroenterology at Bispebjerg Hospital and Leader of the Gastrointestinal Artificial Intelligence Network (GAIN). {citations:,} citations · h-index {h_index} · i10-index {i10_index}. Topics: AI in IBD, deep learning for endoscopy, clinical epidemiology, Danish registry research.">
 
     <meta name="keywords"
-        content="Bobby Zhao Sheng Lo, Medical AI, Gastroenterology, Inflammatory Bowel Disease, IBD Denmark, Ulcerative Colitis, Crohn's Disease, Deep Learning, Endoscopy, HECTOR, GAIN Denmark, Copenhagen University Hospital, Clinical Epidemiology, Neural Networks">
+        content="Bobby Zhao Sheng Lo publications, Bobby Lo MD PhD, Medical AI publications, AI Gastroenterology research, IBD research, Ulcerative Colitis, Crohn's Disease, Deep Learning endoscopy, GAIN Denmark, Copenhagen University Hospital, Clinical Epidemiology, Danish IBD registry, ENACT, Presager, EASI Trial">
 
     <meta name="author" content="Bobby Zhao Sheng Lo">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+    <meta name="theme-color" content="#1A1614">
+
     <link rel="stylesheet" href="style.css">
     <link rel="canonical" href="https://bobby-zs-lo.github.io/publications.html" />
+    <link rel="icon" type="image/jpeg" href="image/profile.JPG">
+    <link rel="apple-touch-icon" href="image/profile.JPG">
+    <link rel="sitemap" type="application/xml" href="sitemap.xml">
 
-    <meta property="og:title" content="Publications – Bobby Zhao Sheng Lo | Medical AI Researcher">
-    <meta property="og:description"
-        content="Peer-reviewed publications by Post-Doc and GAIN Leader specializing in AI-driven IBD diagnostics and endoscopic imaging pipelines.">
-    <meta property="og:image" content="https://bobby-zs-lo.github.io/image/profile.JPG">
-    <meta property="og:url" content="https://bobby-zs-lo.github.io/publications.html">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+
     <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Bobby Zhao Sheng Lo, MD, PhD">
+    <meta property="og:title" content="Publications — Bobby Zhao Sheng Lo, MD, PhD">
+    <meta property="og:description" content="Peer-reviewed publications. {citations:,} citations · h-index {h_index}. AI in IBD, deep learning for endoscopy, clinical epidemiology.">
+    <meta property="og:image" content="https://bobby-zs-lo.github.io/image/profile.JPG">
+    <meta property="og:image:alt" content="Portrait of Bobby Zhao Sheng Lo, MD, PhD">
+    <meta property="og:url" content="https://bobby-zs-lo.github.io/publications.html">
+    <meta property="og:locale" content="en_GB">
 
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Publications — Bobby Zhao Sheng Lo, MD, PhD">
+    <meta name="twitter:description" content="Peer-reviewed publications. {citations:,} citations · h-index {h_index}. AI in IBD, deep learning for endoscopy, clinical epidemiology.">
+    <meta name="twitter:image" content="https://bobby-zs-lo.github.io/image/profile.JPG">
+
+    <!-- Person (kept on publications page so crawlers connect both URLs to the same entity) -->
     <script type="application/ld+json">
 {{
-  "@context": "http://schema.org",
+  "@context": "https://schema.org",
   "@type": "Person",
+  "@id": "https://bobby-zs-lo.github.io/#person",
   "name": "Bobby Zhao Sheng Lo",
-  "jobTitle": "MD, PhD, Post-Doc Researcher",
+  "givenName": "Bobby Zhao Sheng",
+  "familyName": "Lo",
+  "honorificSuffix": "MD, PhD",
+  "url": "https://bobby-zs-lo.github.io/",
+  "image": "https://bobby-zs-lo.github.io/image/profile.JPG",
+  "jobTitle": [
+    "Specialist Trainee in Internal Medicine and Gastroenterology",
+    "Postdoctoral Researcher",
+    "Leader, Gastrointestinal Artificial Intelligence Network (GAIN)"
+  ],
   "affiliation": [
-    {{
-      "@type": "Organization",
-      "name": "Copenhagen University Hospital Hvidovre"
-    }},
-    {{
-      "@type": "MedicalOrganization",
-      "name": "Gastrointestinal Artificial Intelligence Network (GAIN)"
-    }},
-    {{
-      "@type": "MedicalOrganization",
-      "name": "Copenhagen Center for Inflammatory Bowel Disease"
-    }}
+    {{ "@type": "Hospital", "name": "Bispebjerg Hospital" }},
+    {{ "@type": "Hospital", "name": "Copenhagen University Hospital Hvidovre" }},
+    {{ "@type": "MedicalOrganization", "name": "Gastrointestinal Artificial Intelligence Network (GAIN)" }},
+    {{ "@type": "MedicalOrganization", "name": "Copenhagen Center for Inflammatory Bowel Disease" }}
   ],
   "alumniOf": "University of Copenhagen",
-  "url": "https://bobby-zs-lo.github.io/",
+  "email": "mailto:bobby.lo@regionh.dk",
   "sameAs": [
-    "https://www.linkedin.com/in/bobby-lo-md/"
+    "https://www.linkedin.com/in/bobby-lo-md/",
+    "https://orcid.org/0000-0002-0252-9341",
+    "https://openalex.org/A5078664290"
   ],
-  "knowsAbout": ["Gastroenterology", "Artificial Intelligence", "Inflammatory Bowel Disease", "IBD Denmark", "Medical Research", "Ulcerative Colitis", "Crohn's Disease", "Deep Learning", "Endoscopy", "Clinical Epidemiology"],
-  "description": "Leader of the Gastrointestinal Artificial Intelligence Network (GAIN) in Denmark, focusing on AI in IBD."
+  "knowsAbout": ["Gastroenterology", "Inflammatory Bowel Disease", "Artificial Intelligence", "Deep Learning", "Computer Vision", "Endoscopy", "Clinical Epidemiology"],
+  "description": "Specialist trainee in Gastroenterology and Leader of the Gastrointestinal Artificial Intelligence Network (GAIN) in Denmark."
 }}
     </script>
+
+    <!-- CollectionPage describing the publications archive -->
+    <script type="application/ld+json">
+{{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "@id": "https://bobby-zs-lo.github.io/publications.html#page",
+  "url": "https://bobby-zs-lo.github.io/publications.html",
+  "name": "Publications — Bobby Zhao Sheng Lo, MD, PhD",
+  "inLanguage": "en",
+  "isPartOf": {{ "@id": "https://bobby-zs-lo.github.io/#website" }},
+  "about": {{ "@id": "https://bobby-zs-lo.github.io/#person" }},
+  "author": {{ "@id": "https://bobby-zs-lo.github.io/#person" }},
+  "mainEntity": {{
+    "@type": "ItemList",
+    "numberOfItems": {len(publications_data)},
+    "itemListOrder": "https://schema.org/ItemListOrderDescending"
+  }}
+}}
+    </script>
+
+    <!-- BreadcrumbList -->
+    <script type="application/ld+json">
+{{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {{ "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bobby-zs-lo.github.io/" }},
+    {{ "@type": "ListItem", "position": 2, "name": "Publications", "item": "https://bobby-zs-lo.github.io/publications.html" }}
+  ]
+}}
+    </script>
+
+    <!-- Highlighted publications as ScholarlyArticle list -->
+    {highlights_jsonld}
 </head>
 <body>
 

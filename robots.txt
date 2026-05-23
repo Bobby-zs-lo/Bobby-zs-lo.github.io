@@ -1,4 +1,38 @@
 User-agent: *
 Allow: /
+Disallow: /receipts.html
+Disallow: /receipts.js
+Disallow: /Apps-Script-Setup.md
+Disallow: /.superpowers/
+Disallow: /docs/
+Disallow: /old%20files/
+Disallow: /old files/
+
+# Be explicit for major crawlers (GoogleBot, Bingbot, GPTBot, etc.)
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+# Allow academic / research-focused crawlers
+User-agent: Scholar
+Allow: /
+
+User-agent: SemanticScholarBot
+Allow: /
+
+# Allow LLM crawlers (Bobby is an AI researcher — discoverability over privacy here)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
 
 Sitemap: https://bobby-zs-lo.github.io/sitemap.xml
