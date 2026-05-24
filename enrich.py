@@ -1,11 +1,12 @@
 """Enrichment pipeline: OpenAlex abstracts, PubMed metadata, Gemini summaries."""
 from __future__ import annotations
 
+import os
+import xml.etree.ElementTree as ET
 from typing import Any, Dict, List, Optional
 
-import xml.etree.ElementTree as ET
-
 import requests
+from google import genai
 
 ID_CONVERTER_URL = "https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/"
 EFETCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
@@ -98,3 +99,32 @@ def fetch_pubmed(pmid: Optional[str], timeout: float = 10.0) -> Dict[str, Any]:
     abstract = " ".join(abstract_parts) if abstract_parts else None
 
     return {"mesh_terms": mesh, "abstract": abstract}
+
+
+GEMINI_MODEL = "gemini-3.5-flash"
+SUMMARY_PROMPT = (
+    "Summarise this medical research abstract in one plain-English sentence of at most "
+    "30 words, aimed at an educated non-specialist. State what was tested and the main "
+    "finding. Do not invent details or add caveats not present in the abstract. Output "
+    "only the sentence, no preamble.\n\nAbstract:\n{abstract}"
+)
+
+
+def summarise_with_gemini(abstract: Optional[str]) -> Optional[str]:
+    """Call Gemini to produce a <=30-word lay summary. Returns None on failure."""
+    if not abstract:
+        return None
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        print("Warning: GEMINI_API_KEY not set; skipping summary.")
+        return None
+    try:
+        client = genai.Client(api_key=api_key)
+        response = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=SUMMARY_PROMPT.format(abstract=abstract),
+        )
+        return (response.text or "").strip() or None
+    except Exception as e:
+        print(f"Warning: Gemini summarisation failed: {e}")
+        return None

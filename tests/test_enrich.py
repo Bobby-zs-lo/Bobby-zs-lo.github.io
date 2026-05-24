@@ -1,4 +1,6 @@
 """Tests for enrich.py."""
+from unittest.mock import MagicMock, patch
+
 import responses
 
 import enrich
@@ -73,3 +75,29 @@ class TestFetchPubmed:
             status=500,
         )
         assert enrich.fetch_pubmed("999") == {"mesh_terms": [], "abstract": None}
+
+
+class TestSummariseWithGemini:
+    @patch("enrich.genai")
+    def test_returns_stripped_summary(self, mock_genai):
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.text = "  Tested an AI tool on UC endoscopy; matched experts in 92% of cases.  "
+        mock_client.models.generate_content.return_value = mock_response
+        mock_genai.Client.return_value = mock_client
+
+        result = enrich.summarise_with_gemini("BACKGROUND: ...")
+        assert result == "Tested an AI tool on UC endoscopy; matched experts in 92% of cases."
+        mock_genai.Client.assert_called_once_with(api_key="test-key-not-real")
+        call_kwargs = mock_client.models.generate_content.call_args.kwargs
+        assert call_kwargs["model"] == "gemini-3.5-flash"
+        assert "BACKGROUND: ..." in call_kwargs["contents"]
+
+    @patch("enrich.genai")
+    def test_returns_none_on_api_error(self, mock_genai):
+        mock_genai.Client.side_effect = RuntimeError("API down")
+        assert enrich.summarise_with_gemini("anything") is None
+
+    def test_returns_none_for_empty_abstract(self):
+        assert enrich.summarise_with_gemini(None) is None
+        assert enrich.summarise_with_gemini("") is None
