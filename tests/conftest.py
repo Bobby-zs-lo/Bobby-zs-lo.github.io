@@ -1,6 +1,5 @@
 """Shared pytest fixtures."""
 import json
-import os
 from pathlib import Path
 
 import pytest
@@ -27,5 +26,15 @@ def idconv_response():
 
 @pytest.fixture(autouse=True)
 def _no_real_gemini(monkeypatch):
-    """Belt-and-braces: ensure no test accidentally hits the real Gemini API."""
+    """Hard block on the Gemini SDK so tests cannot make real network calls.
+
+    Sets a fake API key AND patches the SDK's network entry points. Tests that
+    exercise the Gemini path should still use @patch("enrich.genai") for
+    deterministic behaviour — this is the belt-and-braces fallback.
+    """
     monkeypatch.setenv("GEMINI_API_KEY", "test-key-not-real")
+    monkeypatch.setattr("google.generativeai.configure", lambda **kwargs: None)
+    monkeypatch.setattr("google.generativeai.GenerativeModel",
+                        lambda *args, **kwargs: (_ for _ in ()).throw(
+                            RuntimeError("_no_real_gemini: SDK blocked; use @patch('enrich.genai')")
+                        ))
