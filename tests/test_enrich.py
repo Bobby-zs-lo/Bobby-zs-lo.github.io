@@ -45,3 +45,31 @@ class TestDoiToPmid:
     def test_returns_none_for_empty_doi(self):
         assert enrich.doi_to_pmid(None) is None
         assert enrich.doi_to_pmid("") is None
+
+
+class TestFetchPubmed:
+    @responses.activate
+    def test_extracts_mesh_and_abstract(self, pubmed_efetch_xml):
+        responses.get(
+            "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi",
+            body=pubmed_efetch_xml, content_type="application/xml",
+        )
+        result = enrich.fetch_pubmed("38449034")
+        assert result["mesh_terms"] == [
+            "Colitis, Ulcerative", "Artificial Intelligence", "Colonoscopy"
+        ]
+        assert "BACKGROUND: UC endoscopy is subjective." in result["abstract"]
+        assert "METHODS: We trained a CNN on 1200 videos." in result["abstract"]
+        assert "RESULTS: Agreement with experts: 92%." in result["abstract"]
+
+    def test_returns_empty_for_missing_pmid(self):
+        assert enrich.fetch_pubmed(None) == {"mesh_terms": [], "abstract": None}
+        assert enrich.fetch_pubmed("") == {"mesh_terms": [], "abstract": None}
+
+    @responses.activate
+    def test_returns_empty_on_http_error(self):
+        responses.get(
+            "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi",
+            status=500,
+        )
+        assert enrich.fetch_pubmed("999") == {"mesh_terms": [], "abstract": None}

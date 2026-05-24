@@ -3,9 +3,12 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
+import xml.etree.ElementTree as ET
+
 import requests
 
 ID_CONVERTER_URL = "https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/"
+EFETCH_URL = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi"
 CONTACT_EMAIL = "bobby.lo@regionh.dk"
 USER_AGENT = f"bobby-zs-lo.github.io enrichment ({CONTACT_EMAIL})"
 
@@ -55,3 +58,43 @@ def doi_to_pmid(doi: Optional[str], timeout: float = 10.0) -> Optional[str]:
     except (requests.RequestException, ValueError) as e:
         print(f"Warning: DOI->PMID lookup failed for {clean}: {e}")
     return None
+
+
+def fetch_pubmed(pmid: Optional[str], timeout: float = 10.0) -> Dict[str, Any]:
+    """Fetch MeSH terms and abstract text from PubMed for a given PMID.
+
+    Returns {"mesh_terms": [...], "abstract": str|None}.
+    On any failure (missing PMID, network, malformed XML) returns empty fields.
+    """
+    empty: Dict[str, Any] = {"mesh_terms": [], "abstract": None}
+    if not pmid:
+        return empty
+    try:
+        r = requests.get(
+            EFETCH_URL,
+            params={"db": "pubmed", "id": pmid, "retmode": "xml",
+                    "tool": "bobby-zs-lo-site", "email": CONTACT_EMAIL},
+            headers={"User-Agent": USER_AGENT},
+            timeout=timeout,
+        )
+        r.raise_for_status()
+        root = ET.fromstring(r.content)
+    except (requests.RequestException, ET.ParseError) as e:
+        print(f"Warning: PubMed efetch failed for PMID {pmid}: {e}")
+        return empty
+
+    mesh: List[str] = []
+    for desc in root.iter("DescriptorName"):
+        if desc.text:
+            mesh.append(desc.text)
+
+    abstract_parts: List[str] = []
+    for at in root.iter("AbstractText"):
+        label = at.get("Label")
+        text = "".join(at.itertext()).strip()
+        if not text:
+            continue
+        abstract_parts.append(f"{label}: {text}" if label else text)
+    abstract = " ".join(abstract_parts) if abstract_parts else None
+
+    return {"mesh_terms": mesh, "abstract": abstract}
