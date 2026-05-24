@@ -280,7 +280,9 @@ def render_html(author: Dict[str, Any], works: List[Dict[str, Any]],
     <link rel="stylesheet" href="style.css">
     <link rel="canonical" href="{SITE_BASE}/publications.html" />
     <link rel="alternate" type="application/rss+xml" title="Publications RSS" href="{SITE_BASE}/publications.xml" />
-    <link rel="icon" type="image/jpeg" href="image/profile-2026.jpg">
+    <link rel="icon" type="image/svg+xml" href="image/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="image/favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="image/apple-touch-icon.png">
     {highlights_jsonld}
 </head>
 <body>
