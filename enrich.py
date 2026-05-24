@@ -1,8 +1,12 @@
 """Enrichment pipeline: OpenAlex abstracts, PubMed metadata, Gemini summaries."""
 from __future__ import annotations
 
+import json
 import os
+import time
 import xml.etree.ElementTree as ET
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import requests
@@ -128,3 +132,88 @@ def summarise_with_gemini(abstract: Optional[str]) -> Optional[str]:
     except Exception as e:
         print(f"Warning: Gemini summarisation failed: {e}")
         return None
+
+
+def load_cache(path: Path) -> Dict[str, Dict[str, Any]]:
+    """Load the enrichment cache. Returns {} if the file is missing or unreadable."""
+    p = Path(path)
+    if not p.exists():
+        return {}
+    try:
+        with p.open(encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, json.JSONDecodeError) as e:
+        print(f"Warning: cache at {p} unreadable, starting fresh: {e}")
+        return {}
+
+
+def save_cache(path: Path, cache: Dict[str, Dict[str, Any]]) -> None:
+    """Persist cache with sorted keys and indent for clean git diffs."""
+    p = Path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    with p.open("w", encoding="utf-8") as f:
+        json.dump(cache, f, indent=2, sort_keys=True, ensure_ascii=False)
+        f.write("\n")
+
+
+def _needs_enrichment(entry: Optional[Dict[str, Any]]) -> bool:
+    """True if the entry is missing or has no successful summary yet."""
+    if entry is None:
+        return True
+    return not entry.get("summary")
+
+
+def enrich(
+    works: List[Dict[str, Any]],
+    cache: Dict[str, Dict[str, Any]],
+    max_new: Optional[int] = None,
+    pubmed_delay: float = 0.4,
+    gemini_delay: float = 1.0,
+) -> Dict[str, Dict[str, Any]]:
+    """Populate the cache with abstracts, MeSH terms, and Gemini summaries.
+
+    Mutates and returns `cache`. Skips works whose cache entry already has
+    a non-empty summary. Respects `max_new` to cap per-run enrichment cost.
+    """
+    new_count = 0
+    for work in works:
+        wid = work.get("id")
+        if not wid:
+            continue
+        entry = cache.get(wid)
+        if not _needs_enrichment(entry):
+            continue
+        if max_new is not None and new_count >= max_new:
+            break
+
+        doi = _strip_doi(work.get("doi"))
+        existing = entry or {}
+        abstract = existing.get("abstract") or reconstruct_abstract(work.get("abstract_inverted_index"))
+        abstract_source = "openalex" if abstract else None
+
+        pmid = existing.get("pmid") or doi_to_pmid(doi)
+        time.sleep(pubmed_delay)
+        pm = fetch_pubmed(pmid)
+        mesh_terms = existing.get("mesh_terms") or pm["mesh_terms"]
+        if not abstract and pm["abstract"]:
+            abstract = pm["abstract"]
+            abstract_source = "pubmed"
+
+        summary = summarise_with_gemini(abstract) if abstract else None
+        time.sleep(gemini_delay)
+
+        cache[wid] = {
+            "doi": doi,
+            "pmid": pmid,
+            "abstract": abstract,
+            "abstract_source": abstract_source,
+            "mesh_terms": mesh_terms,
+            "openalex_concepts": [c["display_name"] for c in (work.get("concepts") or [])],
+            "summary": summary,
+            "summary_model": GEMINI_MODEL,
+            "summary_generated_at": datetime.now(timezone.utc).isoformat(),
+        }
+        new_count += 1
+        print(f"Enriched {wid}: summary={'ok' if summary else 'none'}, pmid={pmid or '-'}")
+
+    return cache

@@ -101,3 +101,74 @@ class TestSummariseWithGemini:
     def test_returns_none_for_empty_abstract(self):
         assert enrich.summarise_with_gemini(None) is None
         assert enrich.summarise_with_gemini("") is None
+
+
+class TestCacheIO:
+    def test_load_returns_empty_dict_when_missing(self, tmp_path):
+        path = tmp_path / "missing.json"
+        assert enrich.load_cache(path) == {}
+
+    def test_save_then_load_roundtrip(self, tmp_path):
+        path = tmp_path / "cache.json"
+        data = {"https://openalex.org/W1": {"summary": "X", "pmid": "1"}}
+        enrich.save_cache(path, data)
+        assert enrich.load_cache(path) == data
+
+    def test_save_sorts_keys_for_deterministic_diffs(self, tmp_path):
+        path = tmp_path / "cache.json"
+        enrich.save_cache(path, {"b": 1, "a": 2})
+        text = path.read_text(encoding="utf-8")
+        assert text.index('"a"') < text.index('"b"')
+
+
+class TestEnrich:
+    @patch("enrich.summarise_with_gemini", return_value="A lay summary.")
+    @patch("enrich.fetch_pubmed", return_value={"mesh_terms": ["UC"], "abstract": None})
+    @patch("enrich.doi_to_pmid", return_value="38449034")
+    def test_enriches_one_new_work(self, m_pmid, m_pubmed, m_summary,
+                                    openalex_work, tmp_path, monkeypatch):
+        monkeypatch.setattr(enrich.time, "sleep", lambda *_: None)
+        cache = {}
+        result = enrich.enrich([openalex_work], cache)
+        wid = openalex_work["id"]
+        assert wid in result
+        assert result[wid]["pmid"] == "38449034"
+        assert result[wid]["mesh_terms"] == ["UC"]
+        assert result[wid]["summary"] == "A lay summary."
+        assert result[wid]["summary_model"] == "gemini-3.5-flash"
+        assert "summary_generated_at" in result[wid]
+        assert result[wid]["openalex_concepts"] == ["Gastroenterology", "Machine learning"]
+
+    @patch("enrich.summarise_with_gemini")
+    def test_skips_when_summary_already_cached(self, m_summary, openalex_work, monkeypatch):
+        monkeypatch.setattr(enrich.time, "sleep", lambda *_: None)
+        wid = openalex_work["id"]
+        cache = {wid: {"summary": "Already done.", "pmid": "X", "mesh_terms": []}}
+        enrich.enrich([openalex_work], cache)
+        m_summary.assert_not_called()
+
+    @patch("enrich.summarise_with_gemini", return_value="Now done.")
+    @patch("enrich.fetch_pubmed", return_value={"mesh_terms": [], "abstract": None})
+    @patch("enrich.doi_to_pmid", return_value=None)
+    def test_retries_when_cached_summary_is_none(
+        self, m_pmid, m_pubmed, m_summary, openalex_work, monkeypatch
+    ):
+        monkeypatch.setattr(enrich.time, "sleep", lambda *_: None)
+        wid = openalex_work["id"]
+        cache = {wid: {"summary": None, "abstract": "old"}}
+        result = enrich.enrich([openalex_work], cache)
+        m_summary.assert_called_once()
+        assert result[wid]["summary"] == "Now done."
+
+    @patch("enrich.summarise_with_gemini", return_value="S")
+    @patch("enrich.fetch_pubmed", return_value={"mesh_terms": [], "abstract": None})
+    @patch("enrich.doi_to_pmid", return_value=None)
+    def test_max_new_caps_enrichment(self, m_pmid, m_pubmed, m_summary,
+                                      openalex_work, monkeypatch):
+        monkeypatch.setattr(enrich.time, "sleep", lambda *_: None)
+        works = [
+            {**openalex_work, "id": f"https://openalex.org/W{i}"} for i in range(5)
+        ]
+        result = enrich.enrich(works, {}, max_new=2)
+        summarised = [k for k, v in result.items() if v.get("summary")]
+        assert len(summarised) == 2
