@@ -338,9 +338,11 @@ def render_html(author: Dict[str, Any], works: List[Dict[str, Any]],
 def main() -> int:
     parser = argparse.ArgumentParser(description="Generate publications.html and friends.")
     parser.add_argument("--max-new", type=int, default=None,
-                        help="Cap how many uncached papers to enrich this run (default: unlimited).")
+                        help="Cap total Gemini operations (new + retry + verify) per run.")
     parser.add_argument("--skip-enrich", action="store_true",
                         help="Render from existing cache only; do not call PubMed/Gemini.")
+    parser.add_argument("--skip-verify", action="store_true",
+                        help="Skip fact-check verification of existing summaries.")
     args = parser.parse_args()
 
     author = fetch_author()
@@ -352,10 +354,10 @@ def main() -> int:
     cache = enrich.load_cache(CACHE_PATH)
     if not args.skip_enrich:
         before = sum(1 for v in cache.values() if v.get("summary"))
-        enrich.enrich(works, cache, max_new=args.max_new)
+        enrich.enrich(works, cache, cache_path=CACHE_PATH,
+                      max_new=args.max_new, skip_verify=args.skip_verify)
         after = sum(1 for v in cache.values() if v.get("summary"))
-        print(f"Enrichment: {after - before} new summaries; {after} total cached.")
-        enrich.save_cache(CACHE_PATH, cache)
+        print(f"Enrichment: {after - before} new/updated summaries; {after} total cached.")
 
     OUTPUT_HTML.write_text(render_html(author, works, cache), encoding="utf-8")
     print(f"Wrote {OUTPUT_HTML}.")

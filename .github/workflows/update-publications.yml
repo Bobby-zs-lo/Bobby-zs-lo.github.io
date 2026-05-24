@@ -2,7 +2,7 @@ name: Update site content
 
 on:
   schedule:
-    - cron: '0 0 * * 0'   # weekly, Sunday 00:00 UTC
+    - cron: '0 2 * * *'   # daily at 02:00 UTC (after Gemini quota resets)
   workflow_dispatch:
     inputs:
       max_new:
