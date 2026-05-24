@@ -105,7 +105,7 @@ def fetch_pubmed(pmid: Optional[str], timeout: float = 10.0) -> Dict[str, Any]:
     return {"mesh_terms": mesh, "abstract": abstract}
 
 
-GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL = "gemini-2.5-flash-lite"
 SUMMARY_PROMPT = (
     "Summarise this medical research abstract in one plain-English sentence of at most "
     "30 words, aimed at an educated non-specialist. State what was tested and the main "

@@ -90,7 +90,7 @@ class TestSummariseWithGemini:
         assert result == "Tested an AI tool on UC endoscopy; matched experts in 92% of cases."
         mock_genai.Client.assert_called_once_with(api_key="test-key-not-real")
         call_kwargs = mock_client.models.generate_content.call_args.kwargs
-        assert call_kwargs["model"] == "gemini-2.5-flash"
+        assert call_kwargs["model"] == "gemini-2.5-flash-lite"
         assert "BACKGROUND: ..." in call_kwargs["contents"]
 
     @patch("enrich.genai")
@@ -135,7 +135,7 @@ class TestEnrich:
         assert result[wid]["pmid"] == "38449034"
         assert result[wid]["mesh_terms"] == ["UC"]
         assert result[wid]["summary"] == "A lay summary."
-        assert result[wid]["summary_model"] == "gemini-2.5-flash"
+        assert result[wid]["summary_model"] == "gemini-2.5-flash-lite"
         assert "summary_generated_at" in result[wid]
         assert result[wid]["openalex_concepts"] == ["Gastroenterology", "Machine learning"]
 
