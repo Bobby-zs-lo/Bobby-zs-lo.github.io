@@ -8,33 +8,47 @@ collapsibles.forEach(button => {
     });
 });
 
-// Search functionality
+// Active topic filter (null = "All")
+let activeTopic = null;
+
+function rowMatches(row, query) {
+    const haystack = row.dataset.search || (row.textContent || "").toLowerCase();
+    if (query && !haystack.includes(query)) return false;
+    if (activeTopic) {
+        const topicsOnRow = (row.dataset.topics || "").split(/\s+/).filter(Boolean);
+        if (!topicsOnRow.includes(activeTopic)) return false;
+    }
+    return true;
+}
+
 function filterPublications() {
     const input = document.getElementById("searchBox");
-    const filter = input.value.toLowerCase();
+    const query = input ? input.value.toLowerCase().trim() : "";
     const sections = document.getElementsByClassName("collapsible-section");
-
     for (let i = 0; i < sections.length; i++) {
         const section = sections[i];
-        // Get all li elements within the current collapsible section.
-        const liItems = section.getElementsByTagName("li");
+        const rows = section.querySelectorAll("li.pub-row");
         let sectionHasMatch = false;
-
-        // Loop through each publication (li) in the section.
-        for (let j = 0; j < liItems.length; j++) {
-            const text = liItems[j].textContent || liItems[j].innerText;
-            if (text.toLowerCase().includes(filter)) {
-                liItems[j].style.display = "";
-                sectionHasMatch = true;
-            } else {
-                liItems[j].style.display = "none";
-            }
-        }
-
-        // Hide the entire collapsible section if no publications match.
+        rows.forEach(row => {
+            const show = rowMatches(row, query);
+            row.style.display = show ? "" : "none";
+            if (show) sectionHasMatch = true;
+        });
         section.style.display = sectionHasMatch ? "" : "none";
     }
 }
+
+// Topic chips: clicking sets activeTopic and re-runs filter.
+document.addEventListener("click", function(e) {
+    const chip = e.target.closest(".topic-chip");
+    if (!chip) return;
+    const topic = chip.dataset.topic;
+    activeTopic = topic === "all" ? null : topic;
+    document.querySelectorAll(".topic-chip").forEach(c => {
+        c.setAttribute("aria-pressed", c === chip ? "true" : "false");
+    });
+    filterPublications();
+});
 
 
 // Show the "To the Top" button when scrolling down

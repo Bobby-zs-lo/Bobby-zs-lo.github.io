@@ -1,269 +1,289 @@
+"""Generate publications.html, publications.xml, and abstract_cache.json.
+
+Run weekly via GitHub Action, or locally with --max-new to stage backfill.
+"""
+from __future__ import annotations
+
+import argparse
+import html
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List
+
 import requests
-from typing import List, Tuple, Dict, Any
+
+import enrich
+import topics
 
 # === Settings ===
-author_id = "a5078664290"
-output_file = "publications.html"
-mailto = "bobby.lo@regionh.dk"
+AUTHOR_ID = "a5078664290"
+MAILTO = "bobby.lo@regionh.dk"
+OUTPUT_HTML = Path("publications.html")
+OUTPUT_RSS = Path("publications.xml")
+CACHE_PATH = Path("data/abstract_cache.json")
+SITE_BASE = "https://bobby-zs-lo.github.io"
 
-# === Fetch Author Profile from OpenAlex ===
-try:
-    author_url = f"https://api.openalex.org/authors/{author_id}?mailto={mailto}"
-    author_response = requests.get(author_url)
-    author_data = author_response.json()
-
-    h_index = author_data.get('summary_stats', {}).get('h_index', 0)
-    i10_index = author_data.get('summary_stats', {}).get('i10_index', 0)
-    citations = author_data.get('cited_by_count', 0)
-
-    author_names_to_highlight = author_data.get('display_name_alternatives', [])
-    author_names_to_highlight.append(author_data.get('display_name', ''))
-
-    openalex_url = author_data.get('id', '#')
-
-except requests.exceptions.RequestException as e:
-    print(f"Warning: Error fetching author metrics: {e}")
-    h_index, i10_index, citations, author_names_to_highlight, openalex_url = 0, 0, 0, ["Bobby Lo"], "#"
-
-# === Fetch Publications from OpenAlex ===
-try:
-    works_url = f"https://api.openalex.org/works?filter=authorships.author.id:{author_id}&per_page=200&sort=publication_date:desc&mailto={mailto}"
-    works_response = requests.get(works_url)
-    publications_data = works_response.json().get('results', [])
-except requests.exceptions.RequestException as e:
-    print(f"Warning: Error fetching publications: {e}")
-    publications_data = []
+HIGH_IMPACT_KEYWORDS = [
+    "nature", "gastroenterology", "gut", "lancet", "jama", "new england journal",
+]
 
 
-def highlight_name(authors_list: List[Dict[str, Any]]) -> str:
-    formatted_authors: List[str] = []
-    for author in authors_list:
-        author_name = str(author.get('author', {}).get('display_name', 'Unknown author'))
-        is_highlighted = any(keyword.lower() in author_name.lower() for keyword in author_names_to_highlight if keyword)
-        formatted_authors.append(str(f"<b>{author_name}</b>" if is_highlighted else author_name))
-    return ', '.join(formatted_authors)
+def fetch_author() -> Dict[str, Any]:
+    url = f"https://api.openalex.org/authors/{AUTHOR_ID}?mailto={MAILTO}"
+    try:
+        return requests.get(url, timeout=20).json()
+    except requests.RequestException as e:
+        print(f"Warning: author fetch failed: {e}")
+        return {}
 
 
-def highlight_name_short(authors_list: List[Dict[str, Any]]) -> str:
-    author_names = []
-    for author in authors_list:
-        name = str(author.get('author', {}).get('display_name', 'Unknown author'))
-        is_highlighted = any(keyword.lower() in name.lower() for keyword in author_names_to_highlight if keyword)
-        author_names.append((name, is_highlighted))
-
-    if len(author_names) <= 3:
-        return ', '.join([f"<b>{name}</b>" if is_hl else name for name, is_hl in author_names])
-
-    top_3_formatted = [f"<b>{name}</b>" if is_hl else name for name, is_hl in author_names[:3]]
-    bobby_in_top_3 = any(is_hl for name, is_hl in author_names[:3])
-
-    if bobby_in_top_3:
-        return ', '.join(top_3_formatted) + ' ...'
-    else:
-        bobby_formatted = None
-        for name, is_hl in author_names[3:]:
-            if is_hl:
-                bobby_formatted = f"<b>{name}</b>"
-                break
-        if bobby_formatted:
-            return ', '.join(top_3_formatted) + f' ... {bobby_formatted} ...'
-        else:
-            return ', '.join(top_3_formatted) + ' ...'
+def fetch_works() -> List[Dict[str, Any]]:
+    url = (
+        f"https://api.openalex.org/works?filter=authorships.author.id:{AUTHOR_ID}"
+        f"&per_page=200&sort=publication_date:desc&mailto={MAILTO}"
+    )
+    try:
+        return requests.get(url, timeout=30).json().get("results", []) or []
+    except requests.RequestException as e:
+        print(f"Warning: works fetch failed: {e}")
+        return []
 
 
-# Group publications by year and extract highlights
-publications_by_year: Dict[str, List[Dict[str, Any]]] = {}
-highlighted_publications: List[Tuple[Dict[str, Any], int, str, str]] = []
-high_impact_keywords = ['nature', 'gastroenterology', 'gut', 'lancet', 'jama', 'new england journal']
-
-for pub in publications_data:
-    year = pub.get('publication_year', 'n.d.')
-    if year not in publications_by_year:
-        publications_by_year[year] = []
-    publications_by_year[year].append(pub)
-
-    citations_count = pub.get('cited_by_count', 0)
-    primary_location = pub.get('primary_location')
-    source = primary_location.get('source') if primary_location else None
-    venue = source.get('display_name') if source else 'Unknown journal or conference'
-
-    is_high_impact = any(keyword in venue.lower() for keyword in high_impact_keywords)
-    if citations_count > 50 or is_high_impact:
-        highlighted_publications.append((pub, citations_count, venue, year))
-
-highlighted_publications.sort(key=lambda x: x[1], reverse=True)
-top_highlights = [highlighted_publications[i] for i in range(min(5, len(highlighted_publications)))]
+def author_name_keywords(author: Dict[str, Any]) -> List[str]:
+    names = list(author.get("display_name_alternatives", []) or [])
+    if author.get("display_name"):
+        names.append(author["display_name"])
+    return names or ["Bobby Lo"]
 
 
-def _esc_json(s: str) -> str:
-    """Minimal JSON string escaping for safe inclusion inside JSON-LD."""
-    return (s or "").replace('\\', '\\\\').replace('"', '\\"').replace('\n', ' ').replace('\r', ' ')
+def highlight_name(authors_list: List[Dict[str, Any]], keywords: List[str]) -> str:
+    out = []
+    for a in authors_list:
+        name = str((a.get("author") or {}).get("display_name", "Unknown"))
+        is_hl = any(k.lower() in name.lower() for k in keywords if k)
+        out.append(f"<b>{html.escape(name)}</b>" if is_hl else html.escape(name))
+    return ", ".join(out)
 
 
-def build_pub_jsonld(pub: Dict[str, Any]) -> str:
-    """Emit a ScholarlyArticle JSON-LD object for one publication."""
-    title = _esc_json(pub.get('title', 'Untitled'))
-    year = pub.get('publication_year', '')
-    date = pub.get('publication_date', '') or (str(year) if year else '')
-    primary_location = pub.get('primary_location') or {}
-    source = primary_location.get('source') or {}
-    venue = _esc_json(source.get('display_name', ''))
-    doi = pub.get('doi') or ''
-    cites = pub.get('cited_by_count', 0)
-    authors = pub.get('authorships', []) or []
-    author_objs = []
-    for a in authors[:10]:  # cap to keep payload reasonable
-        nm = _esc_json(((a.get('author') or {}).get('display_name')) or 'Unknown')
-        author_objs.append(f'{{"@type":"Person","name":"{nm}"}}')
-    authors_str = ','.join(author_objs)
-    doi_block = f',"sameAs":"{_esc_json(doi)}"' if doi else ''
-    venue_block = f',"isPartOf":{{"@type":"Periodical","name":"{venue}"}}' if venue else ''
+def highlight_name_short(authors_list: List[Dict[str, Any]], keywords: List[str]) -> str:
+    pairs = []
+    for a in authors_list:
+        name = str((a.get("author") or {}).get("display_name", "Unknown"))
+        pairs.append((name, any(k.lower() in name.lower() for k in keywords if k)))
+    if len(pairs) <= 3:
+        return ", ".join(f"<b>{html.escape(n)}</b>" if hl else html.escape(n) for n, hl in pairs)
+    top3 = [f"<b>{html.escape(n)}</b>" if hl else html.escape(n) for n, hl in pairs[:3]]
+    bobby_in_top3 = any(hl for _, hl in pairs[:3])
+    if bobby_in_top3:
+        return ", ".join(top3) + " ..."
+    for n, hl in pairs[3:]:
+        if hl:
+            return ", ".join(top3) + f" ... <b>{html.escape(n)}</b> ..."
+    return ", ".join(top3) + " ..."
+
+
+def render_pub_row(pub: Dict[str, Any], cache: Dict[str, Dict[str, Any]],
+                   authors_renderer=None, keywords: List[str] | None = None) -> str:
+    """Render one <li class='pub-row'> with summary blurb + data-search + data-topics."""
+    keywords = keywords or ["Bobby Lo"]
+    authors_renderer = authors_renderer or (lambda a: highlight_name(a, keywords))
+    title = pub.get("title") or "Untitled"
+    year = pub.get("publication_year") or "n.d."
+    authors_html = authors_renderer(pub.get("authorships", []) or [])
+    primary = pub.get("primary_location") or {}
+    source = primary.get("source") or {}
+    venue = source.get("display_name") or "Unknown journal or conference"
+
+    entry = cache.get(pub.get("id") or "") or {}
+    summary = entry.get("summary") or ""
+    mesh = entry.get("mesh_terms") or []
+    concepts = entry.get("openalex_concepts") or []
+    topic_list = topics.topics_for(mesh, concepts)
+    topics_attr = html.escape(" ".join(topic_list))
+
+    plain_authors = ", ".join(
+        (a.get("author") or {}).get("display_name", "") for a in pub.get("authorships", []) or []
+    )
+    search_blob = " ".join([str(title), plain_authors, str(venue), summary]).lower()
+    search_attr = html.escape(search_blob, quote=True)
+
+    summary_block = (
+        f'<p class="pub-summary">{html.escape(summary)}</p>'
+        if summary else ""
+    )
+
     return (
-        '{'
-        '"@context":"https://schema.org",'
-        '"@type":"ScholarlyArticle",'
-        f'"headline":"{title}",'
-        f'"datePublished":"{date}",'
-        f'"author":[{authors_str}],'
-        f'"citationCount":{int(cites)}'
-        f'{doi_block}'
-        f'{venue_block}'
-        '}'
+        f'<li class="pub-row" data-topics="{topics_attr}" data-search="{search_attr}">'
+        f'<span class="pub-year">{html.escape(str(year))}</span>'
+        f'<div>'
+        f'<strong>{html.escape(str(title))}</strong>'
+        f'<span class="pub-meta">{authors_html} &middot; {html.escape(str(venue))}</span>'
+        f'{summary_block}'
+        f'</div>'
+        f'</li>'
     )
 
 
-highlights_jsonld_items = ','.join(build_pub_jsonld(p) for p, _c, _v, _y in top_highlights)
-highlights_jsonld = (
-    '<script type="application/ld+json">{'
-    '"@context":"https://schema.org",'
-    '"@type":"ItemList",'
-    '"name":"Highlighted publications",'
-    f'"itemListElement":[{highlights_jsonld_items}]'
-    '}</script>'
-) if top_highlights else ''
+def render_chip_bar(cache: Dict[str, Dict[str, Any]]) -> str:
+    """Render the topic chip bar. Only shows chips with at least one matching paper."""
+    present: set[str] = set()
+    for entry in cache.values():
+        for t in topics.topics_for(entry.get("mesh_terms") or [], entry.get("openalex_concepts") or []):
+            present.add(t)
+    chips = ['<button class="topic-chip" data-topic="all" aria-pressed="true">All</button>']
+    for t in topics.TOPIC_ORDER:
+        if t in present:
+            chips.append(
+                f'<button class="topic-chip" data-topic="{html.escape(t)}" '
+                f'aria-pressed="false">{html.escape(t)}</button>'
+            )
+    return f'<div class="topic-chips" role="group" aria-label="Filter by topic">{"".join(chips)}</div>'
 
 
-# === Generate HTML ===
-with open(output_file, 'w', encoding='utf-8') as f:
-    f.write(f"""<!DOCTYPE html>
+def render_rss(works: List[Dict[str, Any]], cache: Dict[str, Dict[str, Any]]) -> str:
+    """Render a minimal RSS 2.0 feed of the 25 most recent publications."""
+    items = []
+    for pub in works[:25]:
+        title = html.escape(pub.get("title") or "Untitled")
+        link = pub.get("doi") or pub.get("id") or SITE_BASE
+        entry = cache.get(pub.get("id") or "") or {}
+        desc = html.escape(entry.get("summary") or pub.get("title") or "")
+        pub_date = pub.get("publication_date") or ""
+        items.append(
+            f"<item><title>{title}</title><link>{html.escape(link)}</link>"
+            f"<guid isPermaLink=\"false\">{html.escape(pub.get('id') or link)}</guid>"
+            f"<description>{desc}</description>"
+            f"<pubDate>{html.escape(pub_date)}</pubDate></item>"
+        )
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<rss version="2.0"><channel>'
+        '<title>Publications — Bobby Zhao Sheng Lo, MD, PhD</title>'
+        f'<link>{SITE_BASE}/publications.html</link>'
+        '<description>Latest peer-reviewed publications.</description>'
+        f'<lastBuildDate>{datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000")}</lastBuildDate>'
+        + "".join(items) + "</channel></rss>"
+    )
+
+
+# === Rendering helpers (highlights, JSON-LD) — kept from original ===
+
+def _esc_json(s: str) -> str:
+    return (s or "").replace("\\", "\\\\").replace('"', '\\"').replace("\n", " ").replace("\r", " ")
+
+
+def build_pub_jsonld(pub: Dict[str, Any]) -> str:
+    title = _esc_json(pub.get("title", "Untitled"))
+    year = pub.get("publication_year", "")
+    date = pub.get("publication_date", "") or (str(year) if year else "")
+    primary = pub.get("primary_location") or {}
+    source = primary.get("source") or {}
+    venue = _esc_json(source.get("display_name", ""))
+    doi = pub.get("doi") or ""
+    cites = pub.get("cited_by_count", 0)
+    author_objs = []
+    for a in (pub.get("authorships") or [])[:10]:
+        nm = _esc_json(((a.get("author") or {}).get("display_name")) or "Unknown")
+        author_objs.append(f'{{"@type":"Person","name":"{nm}"}}')
+    authors_str = ",".join(author_objs)
+    doi_block = f',"sameAs":"{_esc_json(doi)}"' if doi else ""
+    venue_block = f',"isPartOf":{{"@type":"Periodical","name":"{venue}"}}' if venue else ""
+    return (
+        "{"
+        '"@context":"https://schema.org","@type":"ScholarlyArticle",'
+        f'"headline":"{title}","datePublished":"{date}",'
+        f'"author":[{authors_str}],"citationCount":{int(cites)}'
+        f"{doi_block}{venue_block}"
+        "}"
+    )
+
+
+def render_html(author: Dict[str, Any], works: List[Dict[str, Any]],
+                cache: Dict[str, Dict[str, Any]]) -> str:
+    """Produce the full publications.html string."""
+    h_index = author.get("summary_stats", {}).get("h_index", 0)
+    i10_index = author.get("summary_stats", {}).get("i10_index", 0)
+    citations = author.get("cited_by_count", 0)
+    openalex_url = author.get("id", "#")
+    keywords = author_name_keywords(author)
+
+    by_year: Dict[Any, List[Dict[str, Any]]] = {}
+    highlighted: List[tuple] = []
+    for pub in works:
+        year = pub.get("publication_year", "n.d.")
+        by_year.setdefault(year, []).append(pub)
+        venue = ((pub.get("primary_location") or {}).get("source") or {}).get(
+            "display_name", "") or ""
+        cites = pub.get("cited_by_count", 0)
+        if cites > 50 or any(k in venue.lower() for k in HIGH_IMPACT_KEYWORDS):
+            highlighted.append((pub, cites, venue, pub.get("publication_year", "n.d.")))
+    highlighted.sort(key=lambda x: x[1], reverse=True)
+    top_highlights = highlighted[:5]
+
+    highlights_jsonld = ""
+    if top_highlights:
+        items = ",".join(build_pub_jsonld(p) for p, _c, _v, _y in top_highlights)
+        highlights_jsonld = (
+            '<script type="application/ld+json">{'
+            '"@context":"https://schema.org","@type":"ItemList",'
+            '"name":"Highlighted publications",'
+            f'"itemListElement":[{items}]}}</script>'
+        )
+
+    chip_bar = render_chip_bar(cache)
+
+    highlights_html = ""
+    if top_highlights:
+        rows = []
+        for pub, _cites, _venue, _year in top_highlights:
+            rows.append(
+                render_pub_row(
+                    pub, cache,
+                    authors_renderer=lambda a, kw=keywords: highlight_name_short(a, kw),
+                    keywords=keywords,
+                )
+            )
+        highlights_html = f"""
+      <section class="section">
+        <div class="container section-inner">
+          <div class="section-gutter"><span class="eyebrow">// 02  Highlighted</span></div>
+          <div class="section-body">
+            <h2>Highlighted publications</h2>
+            <ul class="pubs-preview">{''.join(rows)}</ul>
+          </div>
+        </div>
+      </section>
+"""
+
+    year_blocks = []
+    for year in sorted(by_year.keys(), key=lambda y: int(y) if str(y).isdigit() else 0, reverse=True):
+        rows = "".join(render_pub_row(p, cache, keywords=keywords) for p in by_year[year])
+        year_blocks.append(f"""
+              <div class="collapsible-section">
+                <button class="collapsible">{year}</button>
+                <div class="content">
+                  <ul class="pubs-preview">{rows}</ul>
+                </div>
+              </div>""")
+
+    return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Publications — Bobby Zhao Sheng Lo, MD, PhD · {len(publications_data)} peer-reviewed works</title>
-
-    <meta name="description"
-        content="Peer-reviewed publications by Bobby Zhao Sheng Lo, MD, PhD — specialist trainee in Gastroenterology at Bispebjerg Hospital and Leader of the Gastrointestinal Artificial Intelligence Network (GAIN). {citations:,} citations · h-index {h_index} · i10-index {i10_index}. Topics: AI in IBD, deep learning for endoscopy, clinical epidemiology, Danish registry research.">
-
-    <meta name="keywords"
-        content="Bobby Zhao Sheng Lo publications, Bobby Lo MD PhD, Medical AI publications, AI Gastroenterology research, IBD research, Ulcerative Colitis, Crohn's Disease, Deep Learning endoscopy, GAIN Denmark, Copenhagen University Hospital, Clinical Epidemiology, Danish IBD registry, ENACT, Presager, EASI Trial">
-
+    <title>Publications &mdash; Bobby Zhao Sheng Lo, MD, PhD &middot; {len(works)} peer-reviewed works</title>
+    <meta name="description" content="Peer-reviewed publications by Bobby Zhao Sheng Lo, MD, PhD. {citations:,} citations &middot; h-index {h_index} &middot; i10-index {i10_index}.">
     <meta name="author" content="Bobby Zhao Sheng Lo">
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
     <meta name="theme-color" content="#1A1614">
-
     <link rel="stylesheet" href="style.css">
-    <link rel="canonical" href="https://bobby-zs-lo.github.io/publications.html" />
+    <link rel="canonical" href="{SITE_BASE}/publications.html" />
+    <link rel="alternate" type="application/rss+xml" title="Publications RSS" href="{SITE_BASE}/publications.xml" />
     <link rel="icon" type="image/jpeg" href="image/profile-2026.jpg">
-    <link rel="apple-touch-icon" href="image/profile-2026.jpg">
-    <link rel="sitemap" type="application/xml" href="sitemap.xml">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="Bobby Zhao Sheng Lo, MD, PhD">
-    <meta property="og:title" content="Publications — Bobby Zhao Sheng Lo, MD, PhD">
-    <meta property="og:description" content="Peer-reviewed publications. {citations:,} citations · h-index {h_index}. AI in IBD, deep learning for endoscopy, clinical epidemiology.">
-    <meta property="og:image" content="https://bobby-zs-lo.github.io/image/og-card.jpg">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-    <meta property="og:image:type" content="image/jpeg">
-    <meta property="og:image:alt" content="Portrait of Bobby Zhao Sheng Lo, MD, PhD">
-    <meta property="og:url" content="https://bobby-zs-lo.github.io/publications.html">
-    <meta property="og:locale" content="en_GB">
-
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Publications — Bobby Zhao Sheng Lo, MD, PhD">
-    <meta name="twitter:description" content="Peer-reviewed publications. {citations:,} citations · h-index {h_index}. AI in IBD, deep learning for endoscopy, clinical epidemiology.">
-    <meta name="twitter:image" content="https://bobby-zs-lo.github.io/image/og-card.jpg">
-
-    <!-- Person (kept on publications page so crawlers connect both URLs to the same entity) -->
-    <script type="application/ld+json">
-{{
-  "@context": "https://schema.org",
-  "@type": "Person",
-  "@id": "https://bobby-zs-lo.github.io/#person",
-  "name": "Bobby Zhao Sheng Lo",
-  "givenName": "Bobby Zhao Sheng",
-  "familyName": "Lo",
-  "honorificSuffix": "MD, PhD",
-  "url": "https://bobby-zs-lo.github.io/",
-  "image": "https://bobby-zs-lo.github.io/image/og-card.jpg",
-  "jobTitle": [
-    "Specialist Trainee in Internal Medicine and Gastroenterology",
-    "Postdoctoral Researcher",
-    "Leader, Gastrointestinal Artificial Intelligence Network (GAIN)",
-    "Principal Investigator, Copenhagen Center for Inflammatory Bowel Disease"
-  ],
-  "affiliation": [
-    {{ "@type": "Hospital", "name": "Bispebjerg Hospital" }},
-    {{ "@type": "Hospital", "name": "Copenhagen University Hospital Hvidovre" }},
-    {{ "@type": "MedicalOrganization", "name": "Gastrointestinal Artificial Intelligence Network (GAIN)" }},
-    {{ "@type": "MedicalOrganization", "name": "Copenhagen Center for Inflammatory Bowel Disease" }}
-  ],
-  "alumniOf": "University of Copenhagen",
-  "email": "mailto:bobby.lo@regionh.dk",
-  "sameAs": [
-    "https://www.linkedin.com/in/bobby-lo-md/",
-    "https://orcid.org/0000-0002-0252-9341",
-    "https://scholar.google.com/citations?user=YrAJMdcAAAAJ&hl=en",
-    "https://openalex.org/A5078664290"
-  ],
-  "knowsAbout": ["Gastroenterology", "Inflammatory Bowel Disease", "Artificial Intelligence", "Deep Learning", "Computer Vision", "Endoscopy", "Clinical Epidemiology"],
-  "description": "Specialist trainee in Gastroenterology and Leader of the Gastrointestinal Artificial Intelligence Network (GAIN) in Denmark."
-}}
-    </script>
-
-    <!-- CollectionPage describing the publications archive -->
-    <script type="application/ld+json">
-{{
-  "@context": "https://schema.org",
-  "@type": "CollectionPage",
-  "@id": "https://bobby-zs-lo.github.io/publications.html#page",
-  "url": "https://bobby-zs-lo.github.io/publications.html",
-  "name": "Publications — Bobby Zhao Sheng Lo, MD, PhD",
-  "inLanguage": "en",
-  "isPartOf": {{ "@id": "https://bobby-zs-lo.github.io/#website" }},
-  "about": {{ "@id": "https://bobby-zs-lo.github.io/#person" }},
-  "author": {{ "@id": "https://bobby-zs-lo.github.io/#person" }},
-  "mainEntity": {{
-    "@type": "ItemList",
-    "numberOfItems": {len(publications_data)},
-    "itemListOrder": "https://schema.org/ItemListOrderDescending"
-  }}
-}}
-    </script>
-
-    <!-- BreadcrumbList -->
-    <script type="application/ld+json">
-{{
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  "itemListElement": [
-    {{ "@type": "ListItem", "position": 1, "name": "Home", "item": "https://bobby-zs-lo.github.io/" }},
-    {{ "@type": "ListItem", "position": 2, "name": "Publications", "item": "https://bobby-zs-lo.github.io/publications.html" }}
-  ]
-}}
-    </script>
-
-    <!-- Highlighted publications as ScholarlyArticle list -->
     {highlights_jsonld}
 </head>
 <body>
-
     <nav class="nav">
       <div class="container nav-inner">
         <a href="index.html" class="nav-brand">Bobby<span class="nav-brand-dot">.</span>Lo</a>
@@ -273,9 +293,7 @@ with open(output_file, 'w', encoding='utf-8') as f:
         </ul>
       </div>
     </nav>
-
     <main>
-
       <section class="section metrics-page">
         <div class="container section-inner">
           <div class="section-gutter"><span class="eyebrow">// 01  Scholar metrics</span></div>
@@ -286,103 +304,68 @@ with open(output_file, 'w', encoding='utf-8') as f:
               <div class="metric"><div class="metric-value">{h_index}</div><div class="metric-label">h-index</div></div>
               <div class="metric"><div class="metric-value">{i10_index}</div><div class="metric-label">i10-index</div></div>
             </div>
-            <a href="{openalex_url}" target="_blank" rel="noopener" class="btn btn-outline" style="margin-top:24px">View OpenAlex profile →</a>
+            <a href="{openalex_url}" target="_blank" rel="noopener" class="btn btn-outline" style="margin-top:24px">View OpenAlex profile &rarr;</a>
           </div>
         </div>
       </section>
-""")
-
-    if top_highlights:
-        f.write("""
-      <section class="section">
-        <div class="container section-inner">
-          <div class="section-gutter"><span class="eyebrow">// 02  Highlighted</span></div>
-          <div class="section-body">
-            <h2>Highlighted publications</h2>
-            <ul class="pubs-preview">
-""")
-        for pub, cite_count, venue, year in top_highlights:
-            title = pub.get('title', 'Untitled')
-            authors = highlight_name_short(pub.get('authorships', []))
-            cite_word = 'citation' if cite_count == 1 else 'citations'
-            f.write(f"""              <li class="pub-row">
-                <span class="pub-year">{year}</span>
-                <div>
-                  <strong>{title}</strong>
-                  <span class="pub-meta">{authors} · {venue} · {cite_count} {cite_word}</span>
-                </div>
-              </li>
-""")
-        f.write("""            </ul>
-          </div>
-        </div>
-      </section>
-""")
-
-    f.write("""
+      {highlights_html}
       <section class="section">
         <div class="container section-inner">
           <div class="section-gutter"><span class="eyebrow">// 03  All publications</span></div>
           <div class="section-body">
             <h2>Peer-reviewed publications</h2>
-            <input type="text" id="searchBox" onkeyup="filterPublications()" placeholder="Search publications…" class="pubs-search" />
+            {chip_bar}
+            <input type="text" id="searchBox" onkeyup="filterPublications()" placeholder="Search publications&hellip;" class="pubs-search" />
             <button id="toggleAllBtn" onclick="toggleAll()" class="btn btn-outline" style="margin-bottom:18px">Expand All</button>
-            <div id="publicationsList">
-""")
-
-    for year in sorted(publications_by_year.keys(), key=lambda y: int(y) if str(y).isdigit() else 0, reverse=True):
-        pubs = publications_by_year[year]
-        f.write(f"""
-              <div class="collapsible-section">
-                <button class="collapsible">{year}</button>
-                <div class="content">
-                  <ul class="pubs-preview">
-""")
-        for pub in pubs:
-            title = pub.get('title', 'Untitled')
-            authors = highlight_name(pub.get('authorships', []))
-            primary_location = pub.get('primary_location')
-            source = primary_location.get('source') if primary_location else None
-            venue = source.get('display_name') if source else 'Unknown journal or conference'
-            f.write(f"""                    <li class="pub-row">
-                      <span class="pub-year">{year}</span>
-                      <div>
-                        <strong>{title}</strong>
-                        <span class="pub-meta">{authors} · {venue}</span>
-                      </div>
-                    </li>
-""")
-        f.write("""                  </ul>
-                </div>
-              </div>
-""")
-
-    f.write("""
-            </div>
+            <div id="publicationsList">{''.join(year_blocks)}</div>
           </div>
         </div>
       </section>
-
     </main>
-
     <footer class="site-footer">
       <div class="container site-footer-inner">
-        <span>&copy; 2026 Bobby Zhao Sheng Lo.</span>
+        <span>&copy; {datetime.now(timezone.utc).year} Bobby Zhao Sheng Lo.</span>
         <span class="site-footer-meta">All rights reserved.</span>
       </div>
     </footer>
-    <button id="toTopBtn" title="Go to top" aria-label="Scroll to top">↑</button>
-
-    <article class="sr-only">
-      <h1>Comprehensive Research Profile of Bobby Zhao Sheng Lo in Denmark</h1>
-      <p>Bobby Zhao Sheng Lo is a leading MD, PhD, and Post-Doc researcher based in Denmark, specializing in Inflammatory Bowel Disease (IBD). He is the head and leader of the Gastrointestinal Artificial Intelligence Network (GAIN) at Copenhagen University Hospital Hvidovre.</p>
-      <p>Notable IBD research projects in Denmark include the ENACT Endoscopic Add-on System for Ulcerative Colitis, the Presager Project for AI-driven disease classification, the Danish IBD Biobank (DIB), the multinational DICE Project, and the EASI Trial.</p>
-    </article>
-
+    <button id="toTopBtn" title="Go to top" aria-label="Scroll to top">&uarr;</button>
     <script src="script.js"></script>
-
 </body>
 </html>
-""")
+"""
 
-print(f"Success: {output_file} generated successfully from OpenAlex data.")
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Generate publications.html and friends.")
+    parser.add_argument("--max-new", type=int, default=None,
+                        help="Cap total Gemini operations (new + retry + verify) per run.")
+    parser.add_argument("--skip-enrich", action="store_true",
+                        help="Render from existing cache only; do not call PubMed/Gemini.")
+    parser.add_argument("--skip-verify", action="store_true",
+                        help="Skip fact-check verification of existing summaries.")
+    args = parser.parse_args()
+
+    author = fetch_author()
+    works = fetch_works()
+    if not works:
+        print("Error: no works fetched; aborting render to avoid wiping pages.")
+        return 1
+
+    cache = enrich.load_cache(CACHE_PATH)
+    if not args.skip_enrich:
+        before = sum(1 for v in cache.values() if v.get("summary"))
+        enrich.enrich(works, cache, cache_path=CACHE_PATH,
+                      max_new=args.max_new, skip_verify=args.skip_verify)
+        after = sum(1 for v in cache.values() if v.get("summary"))
+        print(f"Enrichment: {after - before} new/updated summaries; {after} total cached.")
+
+    OUTPUT_HTML.write_text(render_html(author, works, cache), encoding="utf-8")
+    print(f"Wrote {OUTPUT_HTML}.")
+
+    OUTPUT_RSS.write_text(render_rss(works, cache), encoding="utf-8")
+    print(f"Wrote {OUTPUT_RSS}.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

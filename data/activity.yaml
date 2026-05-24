@@ -1,0 +1,42 @@
+# Outreach content — rendered into index.html between
+# <!-- OUTREACH-START --> and <!-- OUTREACH-END --> by generate_index.py.
+# Each top-level entry is a block. Either `items` (list) or `body` (paragraph) — not both.
+
+- title: "Invited talks"
+  type: talks
+  items:
+    - { date: "2025", title: "AI i klinisk gastroenterologi — lær at gennemskue forskningen og teknologien bag" }
+    - { date: "2025", title: "AI in Medicine: Hype, Harm, and How to Get It Right — webinar" }
+    - { date: "2025", title: "JnJ Winter Conference" }
+    - { date: "2024", title: "Dansk Selskab for Ambulant Kirurgi & Gastroenterologi · Årsmøde" }
+    - { date: "2023", title: "European Conference of Young Gastroenterologists" }
+    - { date: "2023", title: "Basic Treatment of the Patient with Ulcerative Colitis" }
+    - { date: "2022", title: "IBDeas AI Symposium" }
+    - { date: "2021", title: "AI in Inflammatory Bowel Disease" }
+  aux: "Also: oral presenter / chair at Digestive Disease Week, UEGW, and the ECCO Conference."
+
+- title: "Advisory boards"
+  type: boards
+  items:
+    - { date: "2025 →", title: "Takeda Pharma — ongoing" }
+    - { date: "2022",   title: "Tillotts Pharma AB" }
+
+- title: "Peer review"
+  type: text
+  body: >-
+    Frequent reviewer for <strong>American Journal of Gastroenterology</strong>,
+    <strong>Journal of Crohn and Colitis</strong>, <strong>Gastroenterology</strong>,
+    and <strong>GUT</strong>.
+
+- title: "Supervision & mentorship"
+  type: text
+  body: >-
+    Supervisor / co-supervisor for several bachelor and master students in
+    Medicine and Data Science. Co-supervisor of 2 PhD students in Medicine
+    and Data Science.
+
+- title: "Media"
+  type: text
+  body: >-
+    Contributions to BestPractice, Journal of Crohn and Colitis,
+    Medicinsk Tidsskrift, Nyheder fra Hvidovre Hospital, CCF Magasinet.

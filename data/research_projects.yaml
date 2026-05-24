@@ -1,0 +1,41 @@
+# Major Research Projects — rendered into index.html between
+# <!-- RESEARCH-START --> and <!-- RESEARCH-END --> by generate_index.py.
+# If `openalex_id` (preferred) or `doi` resolves to a cache entry with a summary,
+# that summary replaces fallback_description.
+
+- id: enact
+  tag: "Endoscopy AI"
+  title: "ENACT"
+  openalex_id: ""
+  doi: ""
+  fallback_description: >-
+    Endoscopic Add-on System for Ulcerative Colitis patients. Real-time CNN
+    inference on live endoscopy video to augment clinician scoring.
+
+- id: presager
+  tag: "Computer Vision"
+  title: "Presager Project"
+  openalex_id: ""
+  doi: ""
+  fallback_description: >-
+    Application of computer science for disease classification and prediction
+    in IBD using deep learning.
+
+- id: dib
+  tag: "Biobank"
+  title: "Danish IBD Biobank (DIB)"
+  openalex_id: ""
+  doi: ""
+  fallback_description: >-
+    National biobanking initiative investigating biological treatment
+    outcomes in Inflammatory Bowel Disease.
+
+- id: ius-predict
+  tag: "Ultrasound Clinical Trial"
+  title: "IUS-Predict Study"
+  openalex_id: ""
+  doi: ""
+  fallback_description: >-
+    Multicenter prospective study evaluating early intestinal ultrasound (IUS)
+    in Ulcerative Colitis. Building a centralized multi-omics biobank and
+    imaging repository for future computational and AI-assisted diagnostics.

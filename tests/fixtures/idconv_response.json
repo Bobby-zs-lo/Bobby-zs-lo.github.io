@@ -1,0 +1,12 @@
+{
+  "status": "ok",
+  "responseDate": "2026-05-24 00:00:00",
+  "request": "ids=10.1053%2Fj.gastro.2024.01.001;format=json",
+  "records": [
+    {
+      "pmcid": "PMC10995123",
+      "pmid": "38449034",
+      "doi": "10.1053/j.gastro.2024.01.001"
+    }
+  ]
+}

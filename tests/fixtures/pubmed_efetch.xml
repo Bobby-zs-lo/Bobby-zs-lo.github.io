@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation>
+      <PMID Version="1">38449034</PMID>
+      <Article>
+        <ArticleTitle>Real-time AI for ulcerative colitis endoscopy</ArticleTitle>
+        <Abstract>
+          <AbstractText Label="BACKGROUND">UC endoscopy is subjective.</AbstractText>
+          <AbstractText Label="METHODS">We trained a CNN on 1200 videos.</AbstractText>
+          <AbstractText Label="RESULTS">Agreement with experts: 92%.</AbstractText>
+        </Abstract>
+      </Article>
+      <MeshHeadingList>
+        <MeshHeading>
+          <DescriptorName UI="D003424">Colitis, Ulcerative</DescriptorName>
+        </MeshHeading>
+        <MeshHeading>
+          <DescriptorName UI="D001185">Artificial Intelligence</DescriptorName>
+        </MeshHeading>
+        <MeshHeading>
+          <DescriptorName UI="D003113">Colonoscopy</DescriptorName>
+        </MeshHeading>
+      </MeshHeadingList>
+    </MedlineCitation>
+  </PubmedArticle>
+</PubmedArticleSet>

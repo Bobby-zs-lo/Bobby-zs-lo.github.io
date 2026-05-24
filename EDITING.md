@@ -322,3 +322,56 @@ Fonts are loaded near the top via `@import`. To swap the serif (currently Fraunc
 | `#latest-publications` | Live OpenAlex top 5 by date | (auto) |
 | `#speaking` | Talks + Advisory + Peer review + Supervision + Media | 5 |
 | `#contact` | Email + LinkedIn + Affiliations + Footer | 7, 8 |
+
+---
+
+## 11. Editing research projects (YAML-driven)
+
+The four "Major Research Projects" cards on the home page are auto-generated from `data/research_projects.yaml`.
+
+To change a card:
+
+1. Open `data/research_projects.yaml`.
+2. Edit the entry. To link a card to a published paper so its description auto-updates from the Gemini summary, set `openalex_id` to the full OpenAlex work URL (e.g. `https://openalex.org/W4392104410`) or `doi` to the DOI string.
+3. Run: `python generate_index.py`
+4. Open `index.html` in a browser to verify.
+5. `git add data/research_projects.yaml index.html` and commit.
+
+When `openalex_id` (or `doi`) resolves to a cached summary, that summary is used and `fallback_description` is ignored.
+
+## 12. Editing talks, advisory boards, peer review, supervision, media
+
+These live in `data/activity.yaml`. Blocks are typed:
+
+- `type: talks` and `type: boards` → list with `date` and `title`, optional `aux` paragraph.
+- `type: text` → free `body` field, supports `<strong>` and `<em>`.
+
+After editing:
+
+```
+python generate_index.py
+git add data/activity.yaml index.html
+git commit -m "content: update activity"
+```
+
+## 13. Stale or wrong summary on a paper?
+
+Delete the affected entry from `data/abstract_cache.json` and re-run:
+
+```
+python generate_publications.py --max-new 1
+```
+
+The next weekly Action will also pick it up. Edit the cache directly if you want to hand-write a summary for one paper — `enrich.py` only retries when `summary` is empty/null, so a manual edit sticks.
+
+## 14. Staged backfill of summaries
+
+First time, or after a model change, summaries can be processed a batch at a time:
+
+```
+python generate_publications.py --max-new 10
+```
+
+Re-run until you see `Enrichment: 0 new summaries`. Commit the cache file when you're happy with quality.
+
+> **Deprecated:** Recipes that asked you to hand-edit the "Major Research Projects" or "Speaking, Service & Outreach" sections directly in `index.html` no longer apply. Edit the YAML files instead.
