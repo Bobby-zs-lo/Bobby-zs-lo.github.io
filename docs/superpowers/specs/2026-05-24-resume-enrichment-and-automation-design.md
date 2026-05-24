@@ -63,7 +63,7 @@ generation are **out of scope** for this design.
 | OpenAlex `works` API | Master publication list, `abstract_inverted_index`, `concepts` | Already in use. Free, no key. |
 | NCBI ID Converter | DOI → PMID lookup | Free, no key. ~3 req/s polite limit. |
 | PubMed E-utilities (`efetch`) | MeSH terms; fallback abstract | Free, no key. ~3 req/s. |
-| Gemini API (`gemini-2.0-flash`) | ~30-word lay summary | `GEMINI_API_KEY` GH secret. Same key the Apps Script receipt flow uses. |
+| Gemini API (`gemini-3.5-flash`) | ~30-word lay summary | `GEMINI_API_KEY` GH secret. Same key the Apps Script receipt flow uses. |
 
 ### Pipeline
 
@@ -114,7 +114,7 @@ Keyed by **OpenAlex work ID** (stable, present for every paper, survives DOI cha
     "mesh_terms": ["Inflammatory Bowel Diseases", "Artificial Intelligence", "Colonoscopy"],
     "openalex_concepts": ["Gastroenterology", "Machine learning"],
     "summary": "Tested whether an AI tool could detect early UC flares from colonoscopy video; matched expert raters in 92% of cases.",
-    "summary_model": "gemini-2.0-flash",
+    "summary_model": "gemini-3.5-flash",
     "summary_generated_at": "2026-05-24T00:00:00Z"
   }
 }
@@ -278,10 +278,9 @@ weekly cron pick up the rest, or run unbounded locally and commit the cache.
 
 ## Open questions
 
-- **Summary model:** `gemini-2.0-flash` is the default. If the user prefers
-  `gemini-2.5-flash` or a Pro tier for higher quality, change the constant in
-  `enrich.py`. Cache records the model used, so swapping later doesn't corrupt
-  existing entries.
+- **Summary model:** `gemini-3.5-flash` is the default. If a higher-quality
+  tier is preferred later, change the constant in `enrich.py`. Cache records
+  the model used, so swapping later doesn't corrupt existing entries.
 - **Summary prompt:** the spec assumes the prompt is tuned during implementation.
   Suggested starting point: *"Summarise this medical research abstract in one
   plain-English sentence of at most 30 words, aimed at an educated non-specialist.
