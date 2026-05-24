@@ -281,10 +281,12 @@ ul { list-style: none; }
 /* Publication summary blurb (machine-generated lay summary) */
 .pub-summary {
     margin: 6px 0 0;
-    color: var(--ink-2, #4A4340);
-    font-size: 0.93rem;
-    line-height: 1.45;
-    max-width: 62ch;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-3);
+    line-height: 1.5;
+    letter-spacing: 0.2px;
+    max-width: 72ch;
 }
 
 /* Topic filter chips */
