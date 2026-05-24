@@ -793,6 +793,7 @@
     "abstract": "OBJECTIVE: The COVID-19 pandemic has had a significant impact on mental health across the globe. People living with a chronic gastrointestinal (GI) disorder might be particularly at risk of mental health complications given higher rates of comorbid anxiety and depression compared to the healthy population. As GI disorders affect up to 40% of the population worldwide, this international collaborative study seeks to evaluate the extent of the impact of the COVID-19 pandemic on GI symptoms specifically and more generally on the well-being of those living with chronic GI conditions. METHODS: A longitudinal survey with three time points (baseline, 6-month, and 12-month) will be conducted online. Adult participants with GI disorders from multiple countries will be recruited via patient associations, social media advertising, utilizing snowball sampling. Participants will be invited to complete a battery of questionnaires including demographic and health parameters, and measures of gastrointestinal symptoms, fear of COVID-19, perceived impact of COVID-19, illness perceptions, coping, depression, anxiety, stress, catastrophizing, and quality of life, using validated measures where available. Statistical analyses will include univariate descriptive models, multivariate models utilizing regression, mediation, and moderation, and latent growth models. CONCLUSIONS: This project may present novel information to the field of psychogastroenterology and may provide crucial information regarding the areas of impact for individuals with GI disorders during and following the pandemic. Further, this information can guide healthcare providers and patient associations on how to target support related to the pandemic mental health sequelae for these patients.",
     "abstract_source": "openalex",
     "doi": "10.1016/j.jpsychores.2021.110561",
+    "last_verified_at": "2026-05-24T22:05:26.181168+00:00",
     "mesh_terms": [
       "Anxiety",
       "COVID-19",
@@ -827,9 +828,9 @@
       "Pathology"
     ],
     "pmid": "34217956",
-    "summary": null,
-    "summary_generated_at": "2026-05-24T18:15:27.649314+00:00",
-    "summary_model": "gemini-2.5-flash-lite"
+    "summary": "This planned international study will evaluate the COVID-19 pandemic's impact on gastrointestinal symptoms and well-being in people with chronic GI disorders to guide targeted healthcare support.",
+    "summary_generated_at": "2026-05-24T22:05:26.181168+00:00",
+    "summary_model": "gemini-3.5-flash"
   },
   "https://openalex.org/W3196645898": {
     "abstract": "Artificial intelligence assisted assessment of endoscopic disease activity in inflammatory bowel disease",
