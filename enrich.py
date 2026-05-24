@@ -105,7 +105,7 @@ def fetch_pubmed(pmid: Optional[str], timeout: float = 10.0) -> Dict[str, Any]:
     return {"mesh_terms": mesh, "abstract": abstract}
 
 
-GEMINI_MODEL = "gemini-3.5-flash"
+GEMINI_MODEL = "gemini-2.5-flash"
 SUMMARY_PROMPT = (
     "Summarise this medical research abstract in one plain-English sentence of at most "
     "30 words, aimed at an educated non-specialist. State what was tested and the main "
@@ -168,7 +168,7 @@ def enrich(
     cache: Dict[str, Dict[str, Any]],
     max_new: Optional[int] = None,
     pubmed_delay: float = 0.4,
-    gemini_delay: float = 1.0,
+    gemini_delay: float = 13.0,
 ) -> Dict[str, Dict[str, Any]]:
     """Populate the cache with abstracts, MeSH terms, and Gemini summaries.
 

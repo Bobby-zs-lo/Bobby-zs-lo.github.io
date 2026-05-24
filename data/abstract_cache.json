@@ -20,9 +20,9 @@
       "Business model"
     ],
     "pmid": null,
-    "summary": null,
-    "summary_generated_at": "2026-05-24T17:55:22.241504+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary": "This MIT M. Eng. thesis record provides no details on tested methods or research findings.",
+    "summary_generated_at": "2026-05-24T18:00:52.492523+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W2762422255": {
     "abstract": "Summary Background The Inflammatory Bowel Disease Disability Index ( IBD ‐ DI ) has recently been developed for patients with Crohn's disease ( CD ) and ulcerative colitis ( UC ). Aim To assess the severity of disability and associated factors using the IBD ‐ DI , and review the validity of the IBD ‐ DI as a tool. Method Systematic review of cross‐sectional studies. Patients included had UC or CD and were classified as active, in remission, or needing surgery, biological and/or steroid treatment. We included studies assessing disability using the IBD ‐ DI and that were captured by electronic and manual searches (January 2017). The possibility of bias was evaluated with the Newcastle‐Ottawa Scale. Results Nine studies were included with 3167 patients. Comparatively, patients with active disease had higher disability rates than those in remission ( SMD [ CI 95] = 1.49[1.11, 1.88], I 2 = 94% , P &lt;.01), while patients on biological treatment had lower disability rates than those receiving corticosteroid treatment ( SMD [ CI 95] = −0.22[−0.36, −0.08], I 2 = 0%, P &lt;.01). Disease activity and unemployment were found to be associated factors. The IBD ‐ DI scored “good” for internal consistency, “fair” to “excellent” for intra‐rater reliability and “excellent” for inter‐rater reliability. Construct validity was “moderately strong” to “very strong” and structural validity was found to be mainly unidimensional. The IBD ‐ DI had excellent responsiveness, while its interpretability was only useful on a group level. Conclusions This systematic review and meta‐analysis found a significant association between disease activity, treatment received and disability; although significant heterogeneity was found. The IBD ‐ DI is reliable and valid, but further studies are needed to measure its interpretability.",
@@ -48,8 +48,8 @@
     ],
     "pmid": null,
     "summary": null,
-    "summary_generated_at": "2026-05-24T17:55:16.915963+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary_generated_at": "2026-05-24T18:07:14.420850+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W2763488343": {
     "abstract": "BACKGROUND AND AIM: Crohn's disease [CD] is a progressive inflammatory bowel disease that can lead to complications such as strictures or penetrating disease, and ultimately surgery. Few population-based studies have investigated the predictors for disease progression and surgery in CD according to the Montreal classification. We aimed to identify clinical predictors associated with complicated CD in a Danish population-based inception cohort during the biologic era. METHODS: All incident patients with CD in a well-defined Copenhagen area, between 2003 and 2004, were followed prospectively until 2011. Disease progression was defined as the development of bowel stricture [B2] or penetrating disease [B3] in patients initially diagnosed with non-stricturing/non-penetrating disease [B1]. Associations between disease progression and/or resection, and multiple covariates, were investigated by Cox regression analyses. RESULTS: In total, 213 CD patients were followed. A total of 177 [83%] patients had B1 at diagnosis. Patients who changed location had increased risk of disease progression (hazard ratio [HR] = 3.1, 95% CI: 1.12,8.52). Biologic treatment was associated with lower risk of change in location [HR = 0.3, 95% CI: 0.1-0.7]. Colonic involvement [L2 or L3 vs L1] was associated with a lower risk of surgery (HR = 0.34/0.22, 95% CI: [0.13,0.86]/[0.08,0.60]). All CD patients who progressed in behaviour or changed location had an increased risk of surgery [p < 0.05]. CONCLUSIONS: This population-based inception cohort study demonstrates that changes in disease location or behaviour in patients with CD increase their risk of resection. Our findings highlight the protective effect of biologic treatment with regard to change in disease location, which might ultimately improve the disease course for CD patients.",
@@ -74,8 +74,8 @@
     ],
     "pmid": null,
     "summary": null,
-    "summary_generated_at": "2026-05-24T17:55:19.870260+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary_generated_at": "2026-05-24T18:07:28.876198+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W2790445810": {
     "abstract": "The long-term disease course of Inflammatory bowel disease (IBD), including Crohn’s disease (CD) and ulcerative colitis (UC), in the age of biologics has not been well described. We aimed to characterise the disease course after 10 years in CD and UC patients in a well-defined population based inception cohort. All patients (n = 513) diagnosed with CD, UC or IBD unclassified between January 1, 2003 and December 31, 2004 in a well-defined Copenhagen area were included. Clinical data regarding treatment and outcome were recorded and patient records linked with four national registries to ensure complete data capture and follow-up. Major surgery was defined as any colectomy or intestinal resection. Disease classification was made according to the Montreal Classification. Hospitalisation was defined as any hospitalisation 3 months after date of diagnosis. Treatment with immunomodulators and biologics prior to the surgery was included in a regression model. A total of 213 CD and 300 UC were followed for a mean of 9.24 years (sd: 2.68). In CD, during follow-up 75 (35%) patients underwent at least one major surgery, while 196 (92%) were hospitalised at least once. The median length of stay (LOS) was 3 days (IQR: 1–8) and the median number of hospitalisation was 7 (IQR: 4–13). In UC, 35 (12%) patients had a colectomy and 258 (86%) were hospitalised. The median LOS was 3 days (IQR: 1–8) and median number of hospitalisations was 5 (IQR: 3–8). Cumulative risk of major surgery and associated factors are show in Table 1 and Figures 1 and 2. In the age of biologics, the risk of resection and hospitalisation remains high for CD as well as for UC. The use of immunomodulators but not biologics was associated with a reduced risk of surgery in CD. Cox regression analysis: predictors for surgery and hospitalisation in Crohn’s disease and ulcerative colitis patients after 10 years of follow-up. Risk of first, second, and third major surgery in Crohn’s disease patients after 10 years of follow-up. Risk of major surgery in ulcerative colitis patients after 10 years of follow-up.",
@@ -99,8 +99,8 @@
     ],
     "pmid": null,
     "summary": null,
-    "summary_generated_at": "2026-05-24T17:55:08.368027+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary_generated_at": "2026-05-24T18:06:31.167577+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W2791887248": {
     "abstract": "Perianal complications in patients with Crohn’s disease (CD) are common and associated with a relapsing–remitting course with a negative impact on the patients’ quality of life. Data on the long-term disease course in the era of biological therapy are limited. In this population-based cohort study we sought to investigate the occurrence, clinical risk factors and disease course of perianal CD in the era of biologic therapy. A total of 213 CD patients diagnosed between January 1, 2003–December 31, 2004 were included in a prospective population-based inception cohort. Clinical data were retrieved from medical records and data on surgery, cancer, and death were crosschecked with register data from national health administrative databases until December 2016 ensuring complete follow-up. Perianal CD was defined as the occurrence of a perianal fistula and/or abscess. Associations between primary endpoints (surgery and hospitalisation) and covariates were analysed by Cox regression analysis. A total of 48 (25%) patients developed perianal CD after ten years. Colonic disease location (HR 1.99, 95% confidence interval (CI) 1.01–3.92) and penetrating behaviour (HR 5.65, 95% CI 2.65–12.03) were identified as predictors of perianal CD. The cumulative risk of undergoing perianal surgery and abdominal surgery after 10 years was 67% and 51%, respectively. Patients with perianal CD had a significantly higher rate of intestinal resections (HR 3.92, 95% CI 1.86–8.67). During a follow-up of 10 years, patients with perianal CD were hospitalised for 77.5 (interquartile range (IQR) 39.5–153.5) days in median compared with 46 (IQR 25–84) days in patients without. Total days of hospitalisation was significantly higher for patients with perianal CD (HR 1.01, 95% CI 1.004–1.011). Characteristics of patients at baseline stratified by perianal disease. Cumulative risk of undergoing resection among patients with and without perianal CD The incidence of perianal CD seems to have decreased compared with studies in earlier eras, which may be caused by an increased usage of biologic agents. However, the rate of both perianal and abdominal surgery remains high. We found a higher risk of intestinal resection and hospitalisation in patients with perianal CD suggesting a more severe and protracted course. These findings underline the importance of early identification of patients at risk of developing perianal CD who might benefit from early introduction of aggressive therapy.",
@@ -126,8 +126,8 @@
     ],
     "pmid": null,
     "summary": null,
-    "summary_generated_at": "2026-05-24T17:55:13.974507+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary_generated_at": "2026-05-24T18:06:59.973948+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W2794270012": {
     "abstract": "The long-term treatment strategies and change between medications in Inflammatory bowel disease (IBD) in the age of biologics has not been well described. We aimed to characterise the treatment strategies in IBD in a well-defined population-based inception cohort of Crohn's disease (CD) and ulcerative colitis (UC) patients after 10 years of follow-up. All patients (n = 513) diagnosed with CD, UC or IBD unclassified between January 1, 2003 and December 31, 2004 in a well-defined area were included. Clinical data regarding treatment and outcome were recorded and patient records linked with four national registries to ensure complete data capture and follow-up. Treatments were grouped into four treatment levels (TL): (1) 5-aminosalicylates (5-ASA) ± topical steroids, (2) oral steroids ± 5-ASA or topical steroids, (3) immunosuppressant (azathioprine or 6-mercaptopurine ± steroids and/or 5-ASA), (4) biologics (infliximab or adalimumab in combination with any of the above). Disease classification was made according to the Montreal classification. In a linear regression model, gender, age class, diagnostic delay, smoking behaviour, disease behaviour, location, and extent at diagnosis was used as independent variables. A total of 213 CD and 300 UC patients were followed. TL over time is shown in Figure 1 and 2. Characteristics of patients’ TL are shown in Table 1. In CD, only younger age at diagnosis was associated with the risk of escalating to TL 3 or 4 (OR (CI 95); A2: 0.7 (0.5, 0.98); A3: 0.5 (0.4,0.8) [ref: A1]). In UC patients, former smoking (OR (CI95); 1.3 (1.0–1.6) [ref: never smoker]), and extent at diagnosis was significantly associated with the risk of escalating to TL 3 or 4 (OR (CI95); E2: 1.4 (1.2,1.8), p < 0.001; E3: 1.4 (1.1,1.7) [ref: E1]). After the first initial years after diagnosis, stability occurs regarding treatment levels of both CD and UC patients. Escalation to immunomodulators and biologics was more frequently necessary in CD, even after the initial years, compared with UC patients. Crohn’s disease patients’ treatment level throughout 10 years of follow-up ulcerative colitis patients’ treatment level throughout 10 years of follow-up Characteristics of Crohn’s disease and Ulcerative colitis patients’ treatment level after 10 years of follow-up Characteristics of Crohn’s disease and Ulcerative colitis patients’ treatment level after 10 years of follow-up",
@@ -154,8 +154,8 @@
     ],
     "pmid": null,
     "summary": null,
-    "summary_generated_at": "2026-05-24T17:55:11.133575+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary_generated_at": "2026-05-24T18:06:45.582855+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W2801188817": {
     "abstract": "OBJECTIVE: IBS is associated with an intestinal dysbiosis and faecal microbiota transplantation (FMT) has been hypothesised to have a positive effect in patients with IBS. We performed a randomised, double-blind placebo-controlled trial to investigate if FMT resulted in an altered gut microbiota and improvement in clinical outcome in patients with IBS. DESIGN: We performed this study in 52 adult patients with moderate-to-severe IBS. At the screening visit, clinical history and symptoms were assessed and faecal samples were collected. Patients were randomised to FMT or placebo capsules for 12 days and followed for 6 months. Study visits were performed at baseline, 1, 3 and 6 months, where patients were asked to register their symptoms using the IBS-severity scoring system (IBS-SSS) and IBS-specific quality of life (IBS-QoL). Prior to each visit, faecal samples were collected. RESULTS: A significant difference in improvement in IBS-SSS score was observed 3 months after treatment (p=0.012) favouring placebo. This was similar for IBS-QoL data after 3 months (p=0.003) favouring placebo. Patients receiving FMT capsules had an increase in faecal microbial biodiversity while placebos did not. CONCLUSION: In this randomised double-blinded placebo-controlled study, we found that FMT changed gut microbiota in patients with IBS. But patients in the placebo group experienced greater symptom relief compared with the FMT group after 3 months. Altering the gut microbiota is not enough to obtain clinical improvement in IBS. However, different study designs and larger studies are required to examine the role of FMT in IBS. TRIAL REGISTRATION NUMBER: NCT02788071.",
@@ -183,8 +183,8 @@
     ],
     "pmid": null,
     "summary": null,
-    "summary_generated_at": "2026-05-24T17:54:39.822760+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary_generated_at": "2026-05-24T18:06:02.788680+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W2802765514": {
     "abstract": "Inflammatory bowel disease (IBD) is a chronic intestinal disorder, with two main types: Crohn's disease (CD) and ulcerative colitis (UC), whose molecular pathology is not well understood. The majority of IBD-associated SNPs are located in non-coding regions and are hard to characterize since regulatory regions in IBD are not known. Here we profile transcription start sites (TSSs) and enhancers in the descending colon of 94 IBD patients and controls. IBD-upregulated promoters and enhancers are highly enriched for IBD-associated SNPs and are bound by the same transcription factors. IBD-specific TSSs are associated to genes with roles in both inflammatory cascades and gut epithelia while TSSs distinguishing UC and CD are associated to gut epithelia functions. We find that as few as 35 TSSs can distinguish active CD, UC, and controls with 85% accuracy in an independent cohort. Our data constitute a foundation for understanding the molecular pathology, gene regulation, and genetics of IBD.",
@@ -272,9 +272,9 @@
       "Philosophy"
     ],
     "pmid": null,
-    "summary": null,
-    "summary_generated_at": "2026-05-24T17:54:36.971103+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary": "A study on Crohn's patients revealed that perianal disease increases long-term risks of surgery and hospitalization, signaling a more severe disease course.",
+    "summary_generated_at": "2026-05-24T18:00:31.100263+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W2912692512": {
     "abstract": "Crohn's disease (CD) and ulcerative colitis (UC) carries a high burden on healthcare resources. To date, no study has assessed the combined direct and indirect cost of inflammatory bowel disease (IBD) in a population-based setting. Our aim was to assess this in a population-based inception cohort with 10 years of follow-up. All incident patients diagnosed with CD or UC between 2003 and 2004 in a well-defined Copenhagen area, were followed prospectively until 2015. Information regarding direct and indirect costs was retrieved from the Danish national registries. Data were compared with a control population matched by age, sex and municipality with a ratio of 1:20 (10259). Using multiple linear regression models, associations between the total cost and multiple variables were assessed. A total of 513 (CD: 213 [42%], UC: 300 [58%]) IBD patients were included. No significant differences were found in indirect costs between CD, UC, and the control population regarding paid sick leave, unemployment benefits or loss of tax income. Costs for CD patients were significantly higher than UC regarding all direct expenditures (except for 5-ASA), but no differences were found in diagnostic expenses. The expenses for biologics were, respectively, €1.6 and 0.3 million for CD and UC. The total costs accounted for €42.6€ million. Figure 1 illustrates the distribution of all expenses; Figure 2 illustrates the total costs per patient each year. Subgroup analyses only revealed significant increased direct expenses in patients with extensive colitis (Proctitis: €2273 [1341–4092], left-sided: €3606 [2354–5311], extensive: €4093 [2313–6057], p < 0.001). Using multi-variable linear regression, no variables were significantly associated with increased total costs in CD or in UC patients. Abstract OP82 – Figure 1. Distribution of costs per year in patients with inflammatory bowel disease. Conventional medicine: 5-aminosalicylic acid, topical steroids, corticosteroids and immunosuppressants. Abstract OP82 – Figure 2. The average total cost per Crohn's disease and ulcerative colitis patient; including paid sick-leave, social benefits, lost tax income, diagnostic procedures, surgery, hospitalisation, and medication. In this prospective population-based cohort, direct costs for IBD remain high. However, indirect costs (sick leave, unemployment and loss of tax-income etc.) did not surpass the control population. Total costs were mainly driven by hospitalisation, but over time indirect costs accounted for a higher percentage; though also decreasing over years.",
@@ -306,9 +306,9 @@
       "Accounting"
     ],
     "pmid": null,
-    "summary": null,
-    "summary_generated_at": "2026-05-24T17:54:31.211351+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary": "This study assessed combined direct and indirect costs of inflammatory bowel disease, finding high direct costs but indirect costs similar to controls.",
+    "summary_generated_at": "2026-05-24T18:00:11.909939+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W2914503522": {
     "abstract": "Patients with inflammatory bowel disease (IBD) including Crohn’s disease (CD) and ulcerative colitis (UC) are at risk of developing metabolic bone disease. No general agreement regarding osteoporosis screening by Dual-energy X-ray absorptiometry (DXA) in IBD patients exists. The aims were to investigate the screening strategy, incidence and risk factors of osteoporosis in a well-defined prospective population-based inception cohort. Between 2003 and 2004 all incident patients diagnosed with CD and UC in a clearly defined Copenhagen area were included and followed until 2015. Data regarding hospitalisation, diagnosis and treatment were collected from patient files and national registries. Data were compared with a control population (1:20). Poisson’s regression model was performed for osteoporosis and a combined variable of osteoporosis and osteopenia with several covariates. A total of 513 patients with IBD were included (213 CD, 300 UC). Overall, 297 (58%, CD: 144 [68%], UC: 153 [51%]) patients received ≥2 courses of steroids within a year, resulting in 624 patient-years where 2 or more courses of steroids where given within a year. Of those, only 65 (10.4%) cases of patient-years were followed by DXA within the same or next calendar year. Overall, 50 (9.7%, Table 1) IBD patients (CD: 21 [9.9%], UC: 29 [9.7%]) and 562 (5.5%, p < 0.001) controls were diagnosed with osteoporosis during follow-up (OR: CD: 1.9 [1.2–3.0], UC: 1.8 [1.2–2.7]). Age at diagnosis (IRR, CD: 1.05 [1.02–1.07], UC: 1.06 [1.04–1.10]) was significantly associated with the risk of osteoporosis. When assessing low energy fractures, 6 (2.8%) CD and 10 (3.3%) UC patients had at least one; independent of steroid treatment (p>0.05). No significant difference was found compared with the control population (238 [2.3%], p = 0.5). Assessment of BMD, T- and Z-score found on DXA showed no significant differences between UC and CD patients at any bone site, nor in subgroups of disease phenotypes. Table 1. Prevalence of osteoporosis and the frequency of Dual-energy X-ray absorptiometry in patients with inflammatory bowel disease. *Compared with those who did not fulfil the criteria in each respective subgroup. Table 1. Prevalence of osteoporosis and the frequency of Dual-energy X-ray absorptiometry in patients with inflammatory bowel disease. *Compared with those who did not fulfil the criteria in each respective subgroup. In this population-based inception cohort with 10 years of follow-up, 10% of IBD patients were diagnosed with osteoporosis, bone mineral density among patients at risk of osteoporosis receiving steroid treatment was inadequately evaluated. Increased attention to IBD patient at risk of metabolic bone disease must be prioritised and guidelines on this matter are warranted.",
@@ -334,9 +334,9 @@
       "Physics"
     ],
     "pmid": null,
-    "summary": null,
-    "summary_generated_at": "2026-05-24T17:54:34.085970+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary": "IBD patients face a higher osteoporosis risk, but this study found their bone density screening is inadequate, especially for those on steroid treatment.",
+    "summary_generated_at": "2026-05-24T18:00:25.064426+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W2944172344": {
     "abstract": "BACKGROUND: Inflammatory bowel disease [IBD], encompassing Crohn's disease [CD] and ulcerative colitis [UC], places a high burden on health care resources. To date, no study has assessed the combined direct and indirect cost of IBD in a population-based setting. Our aim was to assess this in a population-based inception cohort with 10 years of follow-up. METHODS: All incident patients diagnosed with CD or UC, 2003-2004, in a well-defined area of Copenhagen, were followed prospectively until 2015. Direct and indirect costs were retrieved from Danish national registries. Data were compared with a control population [1:20]. Associations between the costs and multiple variables were assessed. RESULTS: A total of 513 (CD: 213 [42%], UC: 300 [58%]) IBD patients were included. No significant differences were found in indirect costs between CD, UC, and the control population. Costs for CD patients were significantly higher than those for UC regarding all direct expenditures (except for5-aminosalicylates [5-ASA] and diagnostic expenses). Biologics accounted for €1.6 and €0.3 million for CD and UC, respectively. The total costs amounted to €42.6 million. Only patients with extensive colitis had significantly higher direct costs (proctitis: €2273 [1341-4092], left-sided: €3606 [2354-5311], extensive: €4093 [2313-6057], p <0.001). No variables were significantly associated with increased total costs in CD or in UC patients. CONCLUSIONS: In this prospective population-based cohort, direct costs for IBD remain high. However, indirect costs did not surpass the control population. Total costs were mainly driven by hospitalisation, but indirect costs accounted for a higher percentage overall, although these did decrease over time. PODCAST: This article has an associated podcast which can be accessed at https://academic.oup.com/ecco-jcc/pages/podcast.",
@@ -360,9 +360,9 @@
       "Philosophy"
     ],
     "pmid": null,
-    "summary": null,
-    "summary_generated_at": "2026-05-24T17:54:28.344937+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary": "This study assessed inflammatory bowel disease costs, finding direct costs high due to hospitalisation, but indirect costs did not exceed controls.",
+    "summary_generated_at": "2026-05-24T18:00:04.386713+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W2946693047": {
     "abstract": "Background Crohn's disease (CD) and ulcerative colitis (UC) are associated with reduced health‐related quality of life (HRQoL), but findings differ between studies. The aim of this study was to analyse the impact of disease activity and social factors on HRQoL. Method A total of 513 patients diagnosed with UC and CD between 2003 and 2004, in a population‐based setting, were followed for 7 years. HRQoL was assessed using the Short Form‐12, the Short Inflammatory Bowel Disease (IBD) Questionnaire (SIBDQ), the Work Productivity and Activity Impairment Questionnaire: General Health and a national health survey. Associations were assessed using multiple linear regressions. Results A total of 185 of the eligible patients (UC: 107 (50.2%) and CD: 78 (50.3%)) were included. No differences in disease‐specific or generic HRQoL were found between CD and UC patients, and IBD patients did not differ compared with the background population. The majority of CD (73.1%) and UC (85.0%) patients had ‘good’ disease‐specific HRQoL using the SIBDQ. Unemployment for ≥ 3 months occurred more in CD vs UC patients(30.6 vs 15.5%, p = 0.03); however, sick leave for ≥ 3 months did not differ significantly (17.4 vs 11.4%, p = 0.4). Using multiple linear regressions, unemployment, sick leave and disease activity were the factors most frequently associated with reduced HRQoL. Conclusion In a population‐based cohort with 7 years of follow‐up, HRQoL did not differ between patients and the background population.",
@@ -402,9 +402,9 @@
       "Linguistics"
     ],
     "pmid": "31428419",
-    "summary": null,
-    "summary_generated_at": "2026-05-24T17:54:25.485478+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary": "This study tested inflammatory bowel disease patients' quality of life, finding it similar to the general population, yet reduced by unemployment, sick leave, and disease activity.",
+    "summary_generated_at": "2026-05-24T17:59:56.963907+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W2973743887": {
     "abstract": "Background Paediatric onset IBD (pIBD) has been reported to be more aggressive than adult onset IBD (aIBD). Yet, a more extensive disease presentation in paediatric onset ulcerative colitis (pUC) has been the only consistent finding. Aims In a population-based study, we aimed to further elucidate the differences in disease course between pIBD and aIBD. Methods We compared a pIBD cohort (diagnosis <15 years of age) and an aIBD cohort (diagnosis ≥18 years of age). Medical records were retrieved manually at last follow-up, and clinical data concerning IBD phenotype and treatment were registered. Results We included 333 pIBD and 449 aIBD patients. Patients with pIBD more often presented with extensive disease localisation than aIBD (24%/9% of pCD/aCD with L4 disease localisation and 67%/24% of pUC/aUC with E3 disease extent). Of the patients with inflammatory disease at diagnosis, 34% and 16% of pCD and aCD patients, respectively, progressed to complicated disease over the first 7 years after diagnosis (P = .002). Patients with pUC were more often treated with systemic corticosteroids (HR: 2.0 [CI: 1.6-2.6], P < .0001) and/or thiopurines (HR: 3.8 [CI: 2.8-5.2], P < .0001). Lastly, pIBD patients more often received biologics (HR: 2.5 [CI: 1.8-3.6, P < .0001] in CD and HR: 3.8 [CI: 2.1-6.9, P < .0001] in UC) and had an increased risk of relapse (incidence rate ratio of 1.8 [CI: 1.4-2.2, P < .0001]). Conclusions In this population-based cohort study we demonstrated a more severe disease course in pIBD than in aIBD. This message should be considered by both paediatric and adult gastroenterologists when caring for pIBD patients.",
@@ -433,8 +433,8 @@
     ],
     "pmid": null,
     "summary": null,
-    "summary_generated_at": "2026-05-24T17:54:22.084705+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary_generated_at": "2026-05-24T18:05:48.344781+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W3000346107": {
     "abstract": "Abstract Background Patients with Crohn’s disease (CD) and ulcerative colitis (UC) are at increased risk of developing intestinal cancer compared with the background population. However, less is known about the risk of extra-intestinal cancers (EICs). A previous meta-analysis did not find an increased overall risk of EICs but was limited by the scarcity of available studies and the short length of follow-up in those cohorts. The aim of this study was to conduct a systematic review and meta-analysis of population-based cohorts assessing the risk of EICs in inflammatory bowel disease (IBD) patients. Methods A systematic literature search was carried out. Only population-based studies reporting on the prevalence or incidence of EICs were included. All studies were screened (603), and included studies were quality assessed by two investigators (BL, MZ). Studies eligible for meta-analysis were pooled for events, expected events or events in a control-population, and the length of follow-up in patient-years. A meta-analysis of the overall and site-specific risk of EICs and a stratified analysis of the cohorts (according to whether there were most patients followed before or after the year 2000) were conducted. Results In total, 36 studies were included in the systematic review and 14 studies were included in the meta-analysis. The majority of the studies reporting on the overall risk of EICs in their respective cohort were inconclusive due to lack of power. In the meta-analysis, the overall risk of EICs was found to be increased in both CD (IRR: 1.45 [1.26, 1.67]) and UC (IRR: 1.15 [1.02, 1.31]) patients (Figures 1 and 2). The stratified analysis showed a significant increased risk of EICs among CD patients both before (IRR: 1.58 [1.09, 2.28]) and after (IRR: 1.47 [1.28, 1.69]) the year 2000, while no increased risk was found among UC patients. Assessing site-specific EICs, both CD and UC patients demonstrated an increased risk of skin and hepatobiliary malignancies. Furthermore, CD demonstrated an increased risk of haematological and lung malignancies (Figures 3 and 4). Conclusion In conclusion, this systematic review and meta-analysis demonstrated that IBD patients, both CD and UC patients, are at an increased risk of developing EICs; both overall and at specific sites. The transition of the millennium did not increase the risk of EICs in CD or UC patients. However, more studies with longer follow-up are needed to assess the true risk of EICs posed by IBD.",
@@ -461,9 +461,9 @@
       "Physics"
     ],
     "pmid": null,
-    "summary": null,
-    "summary_generated_at": "2026-05-24T17:54:13.518942+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary": "This study found that patients with Crohn's disease and ulcerative colitis have an increased overall and site-specific risk of extra-intestinal cancers.",
+    "summary_generated_at": "2026-05-24T17:59:40.194463+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W3004591964": {
     "abstract": "BACKGROUND: Patients with inflammatory bowel disease [IBD] including Crohn's disease [CD] and ulcerative colitis [UC] are at risk of developing metabolic bone disease. The aims here were to investigate the screening strategy, incidence and risk factors of osteoporosis in a prospective population-based inception cohort. METHOD: Between 2003 and 2004 all incident patients diagnosed with CD and UC in a well-defined Copenhagen area were included and followed until 2015. Data were compared with a control population [at a ratio of 1:20]. Regression models were performed with several covariates. The sensitivity of the Danish registries for osteoporosis was also assessed. RESULTS: A total of 513 patients were included [213 CD, 300 UC]. Overall, 338 (66%, CD: 164 [77%], UC: 174 [58%], p < 0.001] patients received ≥ 500 mg corticosteroid within a year, resulting in 781 patient-years at risk of osteoporosis. Of those, only 83 [10.6%] patient-years were followed by a dual-energy X-ray absorptiometry scan within the same or the following 2 years.Overall, 73 [14.2%] IBD patients (CD: 31 [14.6%], UC: 42 [14%]) and 680 [6.6%, p < 0.001] controls were diagnosed with osteoporosis during follow-up. The risk of osteoporosis was increased compared to the control population (odds ratio: CD: 2.9 [95% confidence interval: 2.0-4.1], UC: 2.8 [2.1-3.9]). CONCLUSION: In this population-based inception cohort, the incidence of osteoporosis was significantly higher compared to a control population. Measurement of bone mineral density is infrequent, especially in patients at high risk of developing osteoporosis. These results demonstrate the need of further awareness of the risk of osteoporosis among IBD patients, and prospective population-based studies are warranted.",
@@ -490,9 +490,9 @@
       "Optics"
     ],
     "pmid": null,
-    "summary": null,
-    "summary_generated_at": "2026-05-24T17:54:10.589553+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary": "In IBD patients, osteoporosis incidence was significantly higher than controls, but bone density screening was infrequent.",
+    "summary_generated_at": "2026-05-24T17:59:33.817343+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W3024186036": {
     "abstract": "Objectives: This is a protocol for a Cochrane Review (intervention). The objectives are as follows: The objectives of this systematic review are to examine the benefits and harms of fecal microbiota transplantation versus placebo or no intervention for the treatment of participants with irritable bowel syndrome.",
@@ -513,9 +513,9 @@
       "Antibiotics"
     ],
     "pmid": null,
-    "summary": null,
-    "summary_generated_at": "2026-05-24T17:54:07.806302+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary": "This review will examine fecal microbiota transplantation versus placebo to determine benefits and harms for irritable bowel syndrome patients.",
+    "summary_generated_at": "2026-05-24T17:59:27.062714+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W3031583801": {
     "abstract": "Maternal obesity is associated with adverse pregnancy outcomes. Probiotic supplementation during pregnancy may have positive effects on blood glucose, gestational weight gain (GWG), and the risk of gestational diabetes mellitus [GDM and glycated hemoglobin (HbA1c)]. This feasibility study involved a daily probiotic intervention in obese pregnant women from the early second trimester until delivery. The primary aim was to investigate the effect on GWG and maternal glucose homeostasis (GDM and HbA1c). Secondary aims were the effect on infant birth weight, maternal gut microbiota, and other pregnancy outcomes. We carried out a randomized double-blinded placebo-controlled study in 50 obese pregnant women. Participants were randomly allocated (1:1) to multistrain probiotic (4 capsules of Vivomixx®; total of 450 billion CFU/d) or placebo at 14–20 weeks of gestation until delivery. Participants were followed with 2 predelivery visits at gestational week 27–30 and 36–37 and with 1 postdelivery visit. All visits included blood and fecal sampling. An oral-glucose-tolerance test was performed at inclusion and gestational week 27–30. Forty-nine participants completed the study. Thirty-eight participants took >80% of the capsules (n = 21), placebo (n = 17). There was no significant difference in GWG, GDM, HbA1c concentrations, and infant birth weight between groups. Fecal microbiota analyses showed an overall increase in α-diversity over time in the probiotic group only (P = 0.016). Administration of probiotics during pregnancy is feasible in obese women and the women were willing to participate in additional study visits and collection of fecal samples during pregnancy. Multistrain probiotic can modulate the gut microbiota in obese women during pregnancy. A larger study population is needed to uncover pregnancy effects after probiotic supplementation. This trial was registered at clincaltrials.gov as NCT02508844.",
@@ -543,9 +543,9 @@
       "Alternative medicine"
     ],
     "pmid": "32617453",
-    "summary": null,
-    "summary_generated_at": "2026-05-24T17:54:04.990219+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary": "Daily probiotics in obese pregnant women did not affect weight gain, diabetes, or infant birth weight, but did modulate their gut microbiota.",
+    "summary_generated_at": "2026-05-24T17:59:13.855586+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W3048667272": {
     "abstract": null,
@@ -568,8 +568,8 @@
     ],
     "pmid": null,
     "summary": null,
-    "summary_generated_at": "2026-05-24T17:54:01.743268+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary_generated_at": "2026-05-24T18:04:58.426950+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W3081508004": {
     "abstract": "INTRODUCTION: The Danish National Patient Registry (DNPR) has been the source of several epidemiological studies of inflammatory bowel disease (IBD). However, the validation dates back to 1996 and lacks outpatient records and disease classification. The aim of this study was to update the validation and assess the validity and reliability of using the registry in disease classification. METHODS: Validation of the registry was done using a population-based inception cohort of IBD patients from 2003 to 2011 consisting of 513 patients. Specificity and sensitivity were calculated for the diagnoses of Crohn's disease (CD) and ulcerative colitis (UC), age at diagnosis and disease classification according to the Montreal Classification at both time of diagnosis and end of follow-up. RESULTS: The registry showed high validity and reliability in identifying CD and UC patients concerning correct age classification and identifying perianal disease. The registry showed inconsistent, unreliable results in further disease classification. CONCLUSIONS: The DNPR has good validity and reliability in identifying patients with CD and UC, and defining the age of patients at diagnosis. However, categorising IBD patients according to the Montreal Classification should not be carried out using DNPR data in their current form, except when identifying CD patients with perianal disease.",
@@ -624,9 +624,9 @@
       "Gastroenterology"
     ],
     "pmid": "32994694",
-    "summary": null,
-    "summary_generated_at": "2026-05-24T17:53:51.724475+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary": "This systematic review tested osteoporosis prevalence in IBD patients, finding Crohn's disease links to higher risk, especially with lower weight and BMI.",
+    "summary_generated_at": "2026-05-24T17:59:04.833144+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W3159979618": {
     "abstract": null,
@@ -650,8 +650,8 @@
     ],
     "pmid": null,
     "summary": null,
-    "summary_generated_at": "2026-05-24T17:53:43.680503+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary_generated_at": "2026-05-24T18:04:30.588268+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W3161410590": {
     "abstract": null,
@@ -672,8 +672,8 @@
     ],
     "pmid": null,
     "summary": null,
-    "summary_generated_at": "2026-05-24T17:53:45.546686+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary_generated_at": "2026-05-24T18:04:44.491066+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W3163375084": {
     "abstract": "BACKGROUND: The Montreal classification categorizes patients with ulcerative colitis (UC) based on their macroscopic disease extent. Independent of endoscopic extent, biopsies through all colonic segments should be retrieved during index colonoscopy. However, the prognostic value of histological inflammation at diagnosis in the inflamed and uninflamed regions of the colon has never been assessed. METHODS: This was a multicenter retrospective cohort study of newly diagnosed patients with treatment-naïve proctitis and left-sided UC. Biopsies from at least 2 colonic segments (endoscopically inflamed and uninflamed mucosa) were retrieved and reviewed by 2 pathologists. Histological features in the endoscopically inflamed and uninflamed mucosa were scored using the Nancy score. The primary outcomes were disease complications (proximal disease extension, need for hospitalization or colectomy) and higher therapeutic requirements (need for steroids or for therapy escalation). RESULTS: Overall, 93 treatment-naïve patients were included, with a median follow-up of 44 months (range, 2-329). The prevalence of any histological inflammation above the endoscopic margin was 71%. Proximal disease extension was more frequent in patients with histological inflammation in the endoscopically uninflamed mucosa at diagnosis (21.5% vs 3.4%, P = 0.04). Histological involvement above the endoscopic margin was the only predictor associated with an earlier need for therapy escalation (adjusted hazard ratio, 3.69; 95% confidence interval, 1.05-13.0); P = 0.04) and disease complications (adjusted hazard ratio, 4.79; 95% confidence interval, 1.10-20.9; P = 0.04). CONCLUSIONS: The presence of histological inflammation in the endoscopically uninflamed mucosa at the time of diagnosis was associated with worse outcomes in limited UC.",
@@ -706,8 +706,8 @@
     ],
     "pmid": "33999195",
     "summary": null,
-    "summary_generated_at": "2026-05-24T17:53:36.065816+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary_generated_at": "2026-05-24T18:03:47.822082+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W3166163058": {
     "abstract": "Abstract Background Histological assessment is becoming increasingly important in the management of Ulcerative Colitis (UC). The Nancy index (NI), a recently developed and validated score, has been shown to accurately represent histological inflammation and to correlate with prognosis. However, it is a composite score, involving the analysis of more than one histological feature, which may limit its applicability. Our aim was to evaluate if a single component of the NI could individually predict prognosis in limited UC (E1 and E2) patients. Methods Multi-centre retrospective cohort study of newly diagnosed, treatment-naïve proctitis and left-sided ulcerative colitis patients. Biopsies from inflamed rectal mucosa were reviewed by two pathologists. Histological features from the NI were selected for analysis, including presence of ulcers, acute inflammatory infiltrate (with separate evaluation of neutrophils in lamina propria and epithelium) and chronic inflammatory infiltrate. Mucin depletion and basal plasmacytosis were also evaluated. The primary outcome was a composite outcome intended to evaluate disease-related complications, including proximal disease extension, need for hospitalisation or colectomy. Survival analysis, including univariate and multivariate Cox-regression analysis was performed. Results A total of 91 patients were included (56.0% males, mean age 44±17 years, median follow-up 44 months [2–328]). Overall, 64.8% of the patients had proctitis (E1) and 35.2% left-sided colitis (E2). The most frequent histological features were the presence of chronic inflammatory infiltrate (93.4%), mucin depletion (81.3%) and basal plasmacytosis (78.0%). During the follow-up, 22.0% presented a disease-related complication. The NI was not able to predict prognosis (HR 3.09, 95% CI 0.71–13.36, p=0.132). In univariate analysis, the presence of neutrophils in the epithelium in more than 50% of the crypts was marginally significant for the primary outcome (HR 2.51, 95% CI 0.99–6.36, p=0.05). In multivariate analysis, after adjusting for gender, age at diagnosis, disease extent (E1 vs E2), Mayo endoscopic score (&amp;lt; 2 vs ≥ 2) and clinical severity at diagnosis (mild vs moderate to severe UC) this single component of the score was associated with the primary outcome (aHR 3.36, 95% IC 1.21–9.31, p=0.02). No other histological feature was able to individually predict prognosis (p&amp;gt;0.05). Conclusion The presence of neutrophils in the epithelium in more than 50% of the crypts in endoscopically inflamed mucosa at diagnosis was associated with higher disease complications in limited UC patients. The evaluation of a single feature could facilitate the use of histology in the prediction of prognosis in UC. Our results need to be prospectively validated.",
@@ -733,9 +733,9 @@
       "Epithelium"
     ],
     "pmid": null,
-    "summary": null,
-    "summary_generated_at": "2026-05-24T17:53:48.418590+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary": "Researchers tested single histological features in limited ulcerative colitis, finding neutrophils in over 50% of crypt epithelium predict higher disease complications.",
+    "summary_generated_at": "2026-05-24T17:58:55.899193+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W3167437435": {
     "abstract": "Abstract Background Although several studies have reported the impact of fears relating to COVID-19 on several chronic illness populations, there are few studies focused on gastrointestinal (GI) conditions. The aim was to compare how fear of COVID-19 is manifested in people living with Inflammatory Bowel Disease (IBD) compared to other GI conditions; and, how fear of COVID-19 is manifested across different demographic backgrounds (employment status, education level and country of residence) among IBD respondents using a large international sample. Methods Participants with a GI condition (≥18years of age) were recruited from 22 countries through a web-based questionnaire. Demographic, clinical, and psychosocial information was collected in relation to the COVID-19 pandemic. An adaptation of the scale developed for IBD by Trindade &amp; Ferreira (2020) measuring fear of COVID-19 (FoC; original items 1–9) and GI specific fear of COVID-19 (GI-FoC; new items 10–14) was used. Results In 831 participants (312 IBD), there were no significant differences in FoC between IBD and other GI conditions; whilst significant increases in GI-FoC were found in IBD respondents (mean [SD]: 13.5 [5.5] vs. 10.9 [5.0], p&amp;lt;0.01). The greatest fears of IBD respondents were: their condition would get worse; impact on access to medical support; being at increased risk of getting COVID-19; and being at increased risk of death if they got COVID-19. Among IBD respondents, persons on sick leave had significantly more general FoC than those who were employed, and significantly more GI-FoC compared to the employed or respondents outside of the labour market (Figures 1a and 1b). Persons living in a rural setting had significantly more general FoC and GI-FoC (Figures 2a and 2b). These persons were fearful of contracting COVID-19, having contact with someone with respiratory symptoms, having contact with healthcare professionals, going outside, meeting people, having contact with someone who was in contact with an infected person, having contact with someone infected with COVID-19, and that their IBD means being at increased risk of death if they got COVID-19. There were no differences in general FoC and GI-FoC according to educational background. However, respondents with higher education were less afraid of dying from COVID-19. Conclusion Respondents with IBD are more afraid of the consequences of COVID-19 due to their disease compared to other GI diseases; especially, persons on sick leave or persons living in a rural setting. Persons with higher education were less afraid of dying from COVID-19. These findings should be taken into consideration to personalise the support health-care providers can offer in mitigating fear related to COVID-19 in IBD patients.",
@@ -758,8 +758,8 @@
     ],
     "pmid": null,
     "summary": null,
-    "summary_generated_at": "2026-05-24T17:53:38.973183+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary_generated_at": "2026-05-24T18:04:02.273061+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W3171250166": {
     "abstract": "Abstract Background Evaluation of endoscopic disease severity is a key component in the management of ulcerative colitis (UC) patients. However, endoscopic assessment suffers from substantial intra- and interobserver variation, up to 75 %, thereby limiting the reliability of individual assessments. Our aim was to develop an artificial intelligence (AI) model capable of distinguishing active from healed mucosa as well as to differentiate different levels of endoscopic disease activity. Methods 1484 unique endoscopic images from 467 patients were extracted for classification. Two experts classified all images independent of each other according to the Mayo endoscopic subscore (MES). In case of disagreement, a third expert classified the images. Different convolutional neural network architectures were implied in the development of the AI model. Five-fold cross-validation was employed to select the best model. Unseen test data were used for evaluation. The final model was evaluated on its performance for distinguishing MES 0 from 1–3, MES 0–1 (i.e. mucosal healing) from 2–3, and distinguish between all MES. The accuracy, sensitivity, specificity, positive and negative predictive value, and Cohen’s Kappa were used to evaluate the final models. Results Our final model achieved at the most difficult task (distinguishing between all 4 categories of MES) a mean accuracy of 0.82, mean AUC of 0.99, test accuracy of 0.84, a sensitivity of 0.88, and a specificity of 0.81 and a weighted Cohens Kappa of 0.83 (p&amp;lt;0.001 compared to the experts). The results from the other tasks are shown in table 1. Conclusion We propose a new standardised way of evaluating endoscopic images from UC patients for both clinical and academic purposes. The proposed AI model demonstrated a very good capability of distinguishing between all 4 MES levels of activity. This will optimize and unify the evaluation of the disease severity measured by the Mayo endoscopic subscore across all centres and hospitals no matter the level of medical expertise.",
@@ -786,12 +786,12 @@
     ],
     "pmid": null,
     "summary": null,
-    "summary_generated_at": "2026-05-24T17:53:41.806545+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary_generated_at": "2026-05-24T18:04:16.698517+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W3175478213": {
     "abstract": "OBJECTIVE: The COVID-19 pandemic has had a significant impact on mental health across the globe. People living with a chronic gastrointestinal (GI) disorder might be particularly at risk of mental health complications given higher rates of comorbid anxiety and depression compared to the healthy population. As GI disorders affect up to 40% of the population worldwide, this international collaborative study seeks to evaluate the extent of the impact of the COVID-19 pandemic on GI symptoms specifically and more generally on the well-being of those living with chronic GI conditions. METHODS: A longitudinal survey with three time points (baseline, 6-month, and 12-month) will be conducted online. Adult participants with GI disorders from multiple countries will be recruited via patient associations, social media advertising, utilizing snowball sampling. Participants will be invited to complete a battery of questionnaires including demographic and health parameters, and measures of gastrointestinal symptoms, fear of COVID-19, perceived impact of COVID-19, illness perceptions, coping, depression, anxiety, stress, catastrophizing, and quality of life, using validated measures where available. Statistical analyses will include univariate descriptive models, multivariate models utilizing regression, mediation, and moderation, and latent growth models. CONCLUSIONS: This project may present novel information to the field of psychogastroenterology and may provide crucial information regarding the areas of impact for individuals with GI disorders during and following the pandemic. Further, this information can guide healthcare providers and patient associations on how to target support related to the pandemic mental health sequelae for these patients.",
-    "abstract_source": "pubmed",
+    "abstract_source": "openalex",
     "doi": "10.1016/j.jpsychores.2021.110561",
     "mesh_terms": [
       "Anxiety",
@@ -828,8 +828,8 @@
     ],
     "pmid": "34217956",
     "summary": null,
-    "summary_generated_at": "2026-05-24T17:53:32.611052+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary_generated_at": "2026-05-24T18:03:33.554211+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W3196645898": {
     "abstract": "Artificial intelligence assisted assessment of endoscopic disease activity in inflammatory bowel disease",
@@ -848,13 +848,13 @@
       "Cancer"
     ],
     "pmid": null,
-    "summary": null,
-    "summary_generated_at": "2026-05-24T17:53:29.189933+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary": "Artificial intelligence was shown to assist in assessing endoscopic inflammatory bowel disease activity.",
+    "summary_generated_at": "2026-05-24T18:03:18.969967+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W3199373697": {
     "abstract": "The aim of this cross-sectional study was to use an extended common sense model (CSM) to evaluate the impact of fear of COVID-19 on quality of life (QoL) in an international inflammatory bowel disease cohort. An online study involving 319 adults (75% female, mean (SD) 14.06 (15.57) years of symptoms) completed the Gastrointestinal Symptom Rating Scale, Brief Illness Perceptions Questionnaire, Fear of Contracting COVID-19 Scale, Brief-COPE, Depression, Anxiety and Stress Scale, and the EUROHIS-QOL. The extended CSM had an excellent fit (χ2 (9) = 17.06, p = .05, χ2/N = 1.90, RMSEA = 0.05, SRMR = 0.04, CFI = .99, TLI = .97, GFI = 0.99), indicating the influence of gastrointestinal symptoms on QoL was mediated by illness perceptions, fear of COVID-19, adaptive and maladaptive coping, and psychological distress. Interventions targeting the fear of COVID-19 in the context of an individual's perceptions will likely enhance QoL during the pandemic.",
-    "abstract_source": "pubmed",
+    "abstract_source": "openalex",
     "doi": "10.1007/s10880-021-09823-y",
     "mesh_terms": [
       "Adult",
@@ -898,9 +898,9 @@
       "Statistics"
     ],
     "pmid": "34559331",
-    "summary": null,
-    "summary_generated_at": "2026-05-24T17:53:26.317670+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary": "This study tested fear of COVID-19's impact on quality of life in IBD patients, finding it mediates GI symptom effects on QoL.",
+    "summary_generated_at": "2026-05-24T17:58:32.609907+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W4206985873": {
     "abstract": "Abstract Background The use and cost of biological treatment in patients with inflammatory bowel diseases (IBD) continue to rise. Meanwhile, rates of primary non-response (PNR) and loss of response (LOR) are high. We aimed to investigate predictors of PNR and LOR in a real-world cohort of bio-naïve IBD patients. Methods This study included, 488 adult patients with IBD (52% UC, 47% CD, 1% IBDU) who initiated and completed induction therapy with a biological drug from May, 2019 – Oct, 2021 at five university hospitals covering, 2.1 M inhabitants. Clinical response to induction therapy was defined as a decrease at week, 14 in the Simple Clinical Colitis Activity Index (SCCAI)&amp;gt;1 in UC and a decrease in Harvey Bradshaw Index (HBI)&amp;gt;3 in CD patients. Clinical remission was defined as SCCAI&amp;lt;3 in UC and HBI&amp;lt;5 in CD. PNR was defined as lack of response or IBD surgery during the induction period. LOR was defined as need for systemic steroids, drug switch or IBD surgery during maintenance therapy. Multivariable logistic regression and COX-regression analyses were performed to assess predictors of outcomes. Results Biological treatment was initiated after a median of two years (IQR, 0–9.Table, 1). Most patients were treated with infliximab(97%) followed by adalimumab(2%) and vedolizumab (1%). Luminal activity was the most common indication(67%) followed by acute severe UC(17%) and need for post-operative prophylaxis(7%). Treatment was discontinued in, 27(6%) patients due to other reasons than PNR during induction therapy. PNR occurred in, 95(30%) of, 314 patients with available scores and was higher in UC patients (OR, 2.19,95%CI, 1.19–4.05,p=0.01.Table, 2), but lower in those who were former smokers (OR, 0.51,95%CI, 0.27–0.95,p=0.03). Clinical remission was achieved in, 234(52%) patients and lower in those with UC (OR, 0.48,95%CI, 0.32–0.74,p&amp;lt;0.01) or previous major surgery (OR, 0.48,95%CI, 0.25–0.92,p=0.03). LOR occurred in, 82(21%) of, 395 patients who received maintenance therapy. LOR rate was higher in patients with UC (HR, 2.00,95%CI, 1.20–3.33,p&amp;lt;0.01) and previous major surgery (HR, 2.85,95%CI, 1.47–5.52,p&amp;lt;0.01.Table, 3). UC was associated with a higher risk of drug discontinuation (HR, 1.85,95%CI, 1.20–2.85,p&amp;lt;0.01) and switch (HR, 2.01,95%CI, 1.17–3.46,p=0.01) whereas concomitant use of immunomodulator (IM) lowered the risk of both (HR, 0.47,95%CI, 0.27–0.81,p&amp;lt;0.01 and HR, 0.46,95%CI, 0.24–0.89,p=0.02.Table 4). Conclusion PNR occurred in one of four patients and LOR in one-fifth. Both PNR and LOR rates were higher in patients with UC. During maintenance therapy, UC patients had a higher risk of drug discontinuation and switch whereas concomitant use of IM decreased the risk of both. Funding: unrestricted grant from Takeda A/S, Louis-Hansen Fonden and public fund hosted by Hvidovre Hospital.",
@@ -923,9 +923,9 @@
       "Disease"
     ],
     "pmid": null,
-    "summary": null,
-    "summary_generated_at": "2026-05-24T17:53:22.990623+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary": "Researchers investigated factors predicting biological drug failure in IBD patients, finding ulcerative colitis increased non-response and loss of response, but immunomodulators reduced risk.",
+    "summary_generated_at": "2026-05-24T17:58:22.722615+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W4233622082": {
     "abstract": null,
@@ -948,8 +948,8 @@
     ],
     "pmid": null,
     "summary": null,
-    "summary_generated_at": "2026-05-24T17:54:53.098638+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary_generated_at": "2026-05-24T18:06:16.648907+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W4237072272": {
     "abstract": "Abstract Background: Maternal obesity is associated with adverse pregnancy outcomes. Probiotic supplementation during pregnancy may have positive effects on blood glucose, gestational weight gain (GWG), and the risk of gestational diabetes mellitus (GDM). The primary aim was to determine the feasibility of probiotic intervention in obese pregnant women from the early second trimester until delivery. The secondary aim was to investigate the effect of daily probiotic supplementation on GWG, maternal glucose homeostasis, infant birthweight, and maternal gut microbiota. We carried out a randomized double-blinded placebo-controlled study in 50 obese pregnant women. Participants were randomly allocated to two treatment groups, multi-strain probiotic [Vivomixx®] or placebo at 14–20 weeks of gestation until delivery. Participants were followed with two pre-delivery visits at gestational week 27-30 and 36-37 and with one post-delivery visit 2-3 days after birth. All visits included blood and fecal sampling. An oral glucose tolerance test was performed at inclusion and gestational week 27-30. Results: Forty-nine participants completed the study. Thirty-eight participants took more than 80% of the Vivomixx® capsules (n=21), placebo (n=17). There was no significant difference in HbA1c levels and the occurrence of GDM between groups. There was no significant difference in GWG and infant birth weight between groups in intention to treat analysis. There was, however, a lower mean GWG (11.9 vs 13.0 kg) and lower mean infant birthweight (3554 vs 3658 g) in the probiotic group in the per protocol analysis, due to sample size this difference did not reach statistical significance. Fecal microbiota analyses showed an overall increase in α-diversity over time in the Vivomixx® group only (p=0.016). Conclusions: Administration of probiotics during pregnancy is feasible in obese women. Multi-strain probiotic can modulate the gut microbiota in obese women during pregnancy. A larger study population is needed to uncover whether the results regarding lower GWG and infant birth weight after probiotic supplementation are significant. Trial registration: ClincalTrials.gov Identifier: NCT02508844, registered on May 11, 2015.",
@@ -978,8 +978,8 @@
     ],
     "pmid": null,
     "summary": null,
-    "summary_generated_at": "2026-05-24T17:54:19.181403+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary_generated_at": "2026-05-24T18:05:33.759965+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W4281636057": {
     "abstract": "BACKGROUND: Although several studies have reported the impact of fears relating to coronavirus-19 on several chronic illnesses, there are few studies focused on gastrointestinal conditions. Therefore, the aim of this study was to compare the fear of coronavirus-19 in patients with inflammatory bowel disease to other gastrointestinal conditions and how the fear of COVID-19 manifests across different demographical backgrounds among inflammatory bowel disease respondents. METHODS: Participants with gastrointestinal conditions (age ≥ 18) were recruited from 27 countries. Demographic, clinical, and psychosocial information was collected. An adapted scale for inflammatory bowel disease patients measuring the fear of coronavirus-19 and gastrointestinal-specific fear of coronavirus-19 was used. RESULTS: In 831 participants (312 inflammatory bowel disease), only significant increases in gastrointestinal-fear of coronavirus-19 were found in between inflammatory bowel disease and other gastrointestinal conditions (mean [standard deviation]: 13.5 [5.5] vs 10.9 [5.0], P < .01). Among inflammatory bowel disease respondents, persons on sick leave had significantly more fear of coronavirus-19 than those employed (median [IQR], 31.0 [28.5-39.5] vs 26.0 [20.0-33.0], P = .035) and significantly more gastrointestinal-fear of coronavirus-19 compared to the employed (18.0 [14.5-22.0] vs 13.0 [9.0-17.0], P = .033) or respondents outside of the labor market (12.0 [7.0-16.0], P = .022). Persons living in a rural setting had significantly more fear of coronavirus-19 compared to persons living in regional setting (29.5 [22.0-37.8] vs 25.0 [20.0-31.3], P = .007) and gastrointestinal-fear of coronavirus-19 (15.0 [11.0-19.8] vs 12.0 [9.0-16.0], P = .02). CONCLUSION: Respondents with inflammatory bowel disease are more afraid of coronavirus-19 regarding their disease; especially, persons on sick leave or persons living in a rural setting. This should be taken into consideration to personalize the support that health care providers can offer in mitigating fear related to coronavirus-19.",
@@ -1006,9 +1006,9 @@
       "Infectious disease (medical specialty)"
     ],
     "pmid": "35943147",
-    "summary": null,
-    "summary_generated_at": "2026-05-24T17:53:20.113373+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary": "This study tested COVID-19 fear in IBD patients versus other GI conditions, finding IBD patients experienced more GI-specific fear, especially if on sick leave or in rural settings.",
+    "summary_generated_at": "2026-05-24T17:58:14.397909+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W4285803981": {
     "abstract": "INTRODUCTION: The evaluation of endoscopic disease severity is a crucial component in managing patients with ulcerative colitis (UC). However, endoscopic assessment suffers from substantial intraobserver and interobserver variations, limiting the reliability of individual assessments. Therefore, we aimed to develop a deep learning model capable of distinguishing active from healed mucosa and differentiating between different endoscopic disease severity degrees. METHODS: One thousand four hundred eighty-four unique endoscopic images from 467 patients were extracted for classification. Two experts classified all images independently of one another according to the Mayo endoscopic subscore (MES). In cases of disagreement, a third expert classified the images. Different convolutional neural networks were considered for automatically classifying UC severity. Five-fold cross-validation was used to develop and select the final model. Afterward, unseen test data sets were used for model evaluation. RESULTS: In the most challenging task-distinguishing between all categories of MES-our final model achieved a test accuracy of 0.84. When evaluating this model on the binary tasks of distinguishing MES 0 vs 1-3 and 0-1 vs 2-3, it achieved accuracies of 0.94 and 0.93 and areas under the receiver operating characteristic curves of 0.997 and 0.998, respectively. DISCUSSION: We have developed a highly accurate, new, automated way of evaluating endoscopic images from patients with UC. We have demonstrated how our deep learning model is capable of distinguishing between all 4 MES levels of activity. This new automated approach may optimize and standardize the evaluation of disease severity measured by the MES across centers no matter the level of medical expertise.",
@@ -1029,9 +1029,9 @@
       "Computer science"
     ],
     "pmid": null,
-    "summary": null,
-    "summary_generated_at": "2026-05-24T17:53:16.753610+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary": "An AI model was developed and tested to automatically classify ulcerative colitis severity from endoscopic images, achieving high accuracy (up to 0.94) across different severity levels.",
+    "summary_generated_at": "2026-05-24T17:58:06.613399+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W4291298125": {
     "abstract": "Background & Aims: Data on the management of primary sclerosing cholangitis (PSC) in European expert centres are sparse. In this study, a PSC group from the ERN RARE-LIVER surveyed European hepatologists to uncover differences in real-life clinical practices. Methods: In April 2020 a survey questionnaire was sent to members of the International PSC Study Group and ERN RARE-LIVER. Participants were asked about the size of their PSC cohort, use of medical treatments including ursodeoxycholic acid (UDCA) and surveillance for cholangiocarcinoma, gallbladder polyps and inflammatory bowel disease (IBD). Data were presented descriptively. Results: Eighty-two of 278 members responded. Fifty percent of physicians prescribed UDCA routinely to all their patients with PSC, whereas 12% never prescribed UDCA. UDCA was used for one or more indications including: alkaline phosphatase >1.5x the upper limit of normal, severe PSC changes, pruritus, PSC-IBD or patient demand. Few physicians offered other medical treatments than UDCA. The use of medical treatments was generally comparable in small (<99 patients) and large (≥99 patients) cohorts, as well as for adult and paediatric physicians. Most physicians routinely screened for cholangiocarcinoma and the most frequent modalities used were MRI and ultrasound. At detection of a gallbladder polyp of 6 mm, 46% of physicians recommended repeated ultrasound after 3-6 months, whereas 44% of physicians recommended immediate cholecystectomy. In patients with PSC without IBD at PSC diagnosis, 68% of physicians repeated colonoscopy within 3-5 years whereas 27% referred only patients who developed symptoms of IBD. Conclusion: Substantial variations in treatment and monitoring of European patients with PSC were discovered. Harmonisation of strategies is desirable to enable improved interpretation of outcome data and to optimise clinical patient care. Lay summary: In this study, we explored how different centres in Europe manage primary sclerosing cholangitis (PSC), a rare inflammatory disease of the bile ducts. We collected information through a questionnaire sent to specialist physicians who were part of a European network for rare liver diseases. We found several differences in how patients with PSC were monitored and treated. This includes differences in surveillance for bile duct cancer, gallbladder polyps and inflammatory bowel disease. By pointing out these differences, we hope that management of PSC will be standardized, which could aid clinical research and benefit patients.",
@@ -1050,9 +1050,9 @@
       "Physics"
     ],
     "pmid": "36164416",
-    "summary": null,
-    "summary_generated_at": "2026-05-24T17:53:13.825403+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary": "A survey of European hepatologists found significant variations in how primary sclerosing cholangitis patients are treated and monitored for related conditions.",
+    "summary_generated_at": "2026-05-24T17:58:00.744371+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W4296778356": {
     "abstract": "BACKGROUND: Incidence rates of inflammatory bowel disease [IBD] reported from developed countries are rising, with some levelling out. The aim of this study was to assess the disease burden of IBD by estimating the incidence and prevalence across age groups and projecting these to 2030 in a high-incidence country. METHODS: Using an algorithm [incorporating ICD codes, medications and histopathology], patients [n = 69 862] diagnosed with Crohn's disease [CD] or ulcerative colitis [UC] between 1980 and 2017 were identified in the Danish National Patient Registry and included in a nationwide cohort. RESULTS: From 1980 to 2017 the overall incidence of CD increased from 5.1 [95% CI: 4.5-5.8] to 15.6 [95% CI: 14.6-16.6] per 100 000, while the incidence of UC increased from 6.2 [95% CI: 5.5-6.9] to 27.2 [95% CI: 25.9-28.6] per 100 000. For paediatric-onset CD [pCD], the incidence increased from 1.9 [95% CI: 1.2-2.8] to 9.9 [95% CI: 8.1-11.8] per 100 000 and from 1.8 [95% CI: 1.2-2.8] to 8.7 [95% CI: 7.1- 10.5] per 100 000 for paediatric-onset UC [pUC]. In 2017, the prevalence of CD and UC was 293 [95% CI: 288-297] and 523 [95% CI: 517-528] per 100 000. For pCD and pUC, the prevalence was 35 [95% CI: 31-38] and 28 [95% CI: 26-32] per 100 000. CONCLUSIONS: The incidence of paediatric- and adult-onset IBD in Denmark continues to increase and is among the highest in the world.",
@@ -1073,9 +1073,9 @@
       "Optics"
     ],
     "pmid": null,
-    "summary": null,
-    "summary_generated_at": "2026-05-24T17:53:10.427337+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary": "Researchers studying Inflammatory Bowel Disease (IBD) in Denmark found its incidence, for both children and adults, continuously rose to among the world's highest.",
+    "summary_generated_at": "2026-05-24T17:57:55.138209+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W4306412278": {
     "abstract": "BACKGROUND: Studies on early surgery among Crohn's disease patients are few and focus on ileocolonic resections. AIM: The aim of this nationwide cohort study was to investigate the disease course in all Crohn's disease patients who underwent early and late major abdominal surgery. METHODS: In a Danish nationwide cohort of Crohn's disease patients from 1997 to 2015 we included 493 patients (group 1) resected within 29 days, 472 patients (group 2) resected between 30 and 180 days, and 1,518 patients (group 3) resected after 180 days of diagnosis. Re-operation, hospitalisations and medications were analysed. RESULTS: The cumulative risk of re-operation was lower among patients from group 1 (five-year risk: 16.5% vs. group 2: 18.2% and group 3: 21.2%, p = 0.004). Fewer patients from group 2 and 3 required hospitalisations (269 (56.5%) and 803 (52.8%) vs. group 1: 329 (66.8%) p<0.001). Patients from group 3 had a higher cumulative use of immunomodulators in the first three years after initial surgery (one-year risk: 24.6% vs. group 1: 19.4% and group 2: 17.0%, p<0.001). CONCLUSION: Crohn's disease patients resected within 29 days of diagnosis had a lower cumulative risk of re-operation and a lower cumulative exposure to immunomodulators in the initial years after surgery.",
@@ -1237,8 +1237,8 @@
     ],
     "pmid": null,
     "summary": null,
-    "summary_generated_at": "2026-05-24T17:52:37.770483+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary_generated_at": "2026-05-24T18:02:58.288963+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W4391140258": {
     "abstract": "Abstract During the 20th century, inflammatory bowel disease (IBD) was considered a disease of early-industrialized regions in North America, Europe, and Oceania. At the turn of the 21st century, incidence of IBD increased in newly-industrialized and emerging regions in Africa, Asia, and Latin America, while prevalence in early-industrialized regions started to grow steadily. Changes in incidence and prevalence denote evolution of IBD across four epidemiologic stages: Stage 1 (Emergence), characterized by low incidence and prevalence; stage 2 (Acceleration in Incidence), characterized by rapidly rising incidence and low prevalence; and stage 3 (Compounding Prevalence), characterized by decelerating, plateauing, or declining incidence and steadily rising prevalence. A fourth stage (Prevalence Equilibrium) has been proposed where the slope of prevalence plateaus due to shifting demographics of an aging IBD population, but it has not yet been evidenced. To date, these stages have been theoretical without specific incidence/prevalence indicators defining transition points. Using real-world data from 490 population-based studies comprising 80 global regions and spanning over a century (1920–2023), we show spatiotemporal transitions across stages 1–3 and model transition towards stage 4. Understanding the evolution of IBD across epidemiologic stages allows healthcare systems to better prepare for the future worldwide burden of IBD.",
@@ -1382,8 +1382,8 @@
     ],
     "pmid": null,
     "summary": null,
-    "summary_generated_at": "2026-05-24T17:50:49.639430+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary_generated_at": "2026-05-24T18:02:44.424142+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W4394186745": {
     "abstract": "The Danish National Patient Registry (DNPR) has been the source of several epidemiological studies of inflammatory bowel disease (IBD). However, the validation dates back to 1996 and lacks outpatient records and disease classification. The aim of this study was to update the validation and assess the validity and reliability of using the registry in disease classification. Validation of the registry was done using a population-based inception cohort of IBD patients from 2003 to 2011 consisting of 513 patients. Specificity and sensitivity were calculated for the diagnoses of Crohn’s disease (CD) and ulcerative colitis (UC), age at diagnosis and disease classification according to the Montreal Classification at both time of diagnosis and end of follow-up. The registry showed high validity and reliability in identifying CD and UC patients concerning correct age classification and identifying perianal disease. The registry showed inconsistent, unreliable results in further disease classification. The DNPR has good validity and reliability in identifying patients with CD and UC, and defining the age of patients at diagnosis. However, categorising IBD patients according to the Montreal Classification should not be carried out using DNPR data in their current form, except when identifying CD patients with perianal disease.",
@@ -1410,9 +1410,9 @@
       "Philosophy"
     ],
     "pmid": null,
-    "summary": null,
-    "summary_generated_at": "2026-05-24T17:54:16.430192+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary": "A study assessed the Danish National Patient Registry's reliability for IBD data, finding it good for identifying patients and age, but unreliable for detailed disease classification.",
+    "summary_generated_at": "2026-05-24T18:05:19.179986+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W4399873248": {
     "abstract": "BACKGROUND AND AIMS: To demonstrate that administration of 7500 Trichuris suis ova [TSO] every second week over 24 weeks would reduce the intestinal inflammation in moderate ulcerative colitis. METHODS: A single-centre, randomised, double-blinded, placebo-controlled, phase 2b clinical trial of 7500 Trichuris suis ova every 2 weeks for 24 weeks compared with placebo in moderate activity of ulcerative colitis [Mayo score 6-10] were performed. Primary outcome: clinical remission; secondary outcomes: clinical response at 24 weeks, complete corticosteroid-free clinical remission, endoscopic remission, symptomatic remission at 12 and 24 weeks, and partial Mayo score over time. RESULTS: In all, 119 patients were randomised to Trichuris suis ova [n = 60] or placebo [n = 59]. At Week 24, clinical remission was achieved in 30% of Trichuris suis ova-treated vs 34% of placebo-treated (risk ratio [RR] = 0.89; 95% confidence interval [CI]: 0.52-1.50; p = 0.80, intention to treat). No difference was found in clinical response in any of the clinical response subgroups. However, in patients who did not need treatment with corticosteroids during the trial, a temporary effect of TSO was seen in the analysis of symptomatic remission at Week 12 [p = 0.01] and the partial Mayo score at Week 14 and Week 18 [p < 0.05 and p = 0.02]. CONCLUSIONS: Compared with placebo, Trichuris suis ova administration was not superior in achieving clinical remission at Week 24 in ulcerative colitis or in achieving clinical Mayo score reduction, complete corticosteroid-free clinical remission, or endoscopic remission. However, Trichuris suis ova treatment induced symptomatic temporary remission at Week 12.",
@@ -1609,8 +1609,8 @@
     ],
     "pmid": null,
     "summary": null,
-    "summary_generated_at": "2026-05-24T17:49:35.573515+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary_generated_at": "2026-05-24T18:02:30.548916+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W4413257836": {
     "abstract": "BACKGROUND: Ileal pouch-anal anastomosis (IPAA) is the preferred intervention for ulcerative colitis (UC) patients whose medical treatment fails. Acute severe ulcerative colitis (ASUC) can precipitate the need for urgent surgery, potentially influencing post-IPAA outcomes. OBJECTIVE: This study details the incidence, disease course, and treatment of pouchitis and pouch failure in a population-based cohort of UC patients following IPAA construction. METHODS: We included all UC patients who underwent IPAA construction within two administrative regions in Denmark between November 1993 and April 2021 in a population-based cohort. Data spanning from diagnosis to January 2023 were manually extracted from electronic patient records and analyzed. RESULTS: Among 233 patients, 118 (50.6%) experienced 519 pouchitis events. 437 (84.2%) had intermittent pouchitis, 60 (11.6%) had chronic antibiotic-dependent pouchitis, and 22 (4.2%) had chronic antibiotic-refractory pouchitis. There was no significant difference in the incidence of pouchitis between patients who underwent urgent surgery due to ASUC and those who underwent non-urgent surgery. Antibiotics were used in 89.6% of cases, with ciprofloxacin and metronidazole being the most common treatment. Thirty-two (13.7%) patients experienced 36 pouch failures, 6.9% experienced permanent pouch failure, with 8.3% of failures attributed to pouchitis. CONCLUSION: Half of the patients with IPAA experienced at least one episode of pouchitis. ASUC did not appear to increase the risk of pouchitis. The overall incidence of pouch failure was low, with pouchitis contributing to a minority of failures.",
@@ -1739,8 +1739,8 @@
     ],
     "pmid": null,
     "summary": null,
-    "summary_generated_at": "2026-05-24T17:49:33.700093+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary_generated_at": "2026-05-24T18:02:16.658630+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W4416337070": {
     "abstract": null,
@@ -1750,8 +1750,8 @@
     "openalex_concepts": [],
     "pmid": null,
     "summary": null,
-    "summary_generated_at": "2026-05-24T17:49:31.813757+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary_generated_at": "2026-05-24T18:02:02.772900+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W7126242282": {
     "abstract": null,
@@ -1773,8 +1773,8 @@
     ],
     "pmid": null,
     "summary": null,
-    "summary_generated_at": "2026-05-24T17:49:29.920364+00:00",
-    "summary_model": "gemini-3.5-flash"
+    "summary_generated_at": "2026-05-24T18:01:48.922380+00:00",
+    "summary_model": "gemini-2.5-flash"
   },
   "https://openalex.org/W7131294229": {
     "abstract": "OBJECTIVES: Decolonization treatment of asymptomatic methicillin-resistant Staphylococcus aureus (MRSA) carriage is recommended as a preventive measure in several countries, including Denmark. This study aimed to investigate the temporal dynamics of the nasal and throat microbiota in MRSA carriers undergoing decolonization treatment and to assess bacterial changes associated with treatment success. METHODS: Adults with asymptomatic nasal MRSA carriage (n = 34) were included in this prospective observational study. Participants underwent a 5-day decolonization regimen consisting of 2% mupirocin nasal ointment and daily skin cleansing with 4% chlorhexidine soap. Nasal and throat samples were collected at multiple time points from baseline to 6 months after treatment and analysed by 16S rRNA gene sequencing. A reference group of untreated community-dwelling adults (n = 116) served as comparison. RESULTS: At 1-month follow-up, 21 of 34 participants (62%) were successfully decolonized, whereas 13 (38%) remained MRSA positive at one or more body sites. At baseline, no nasal bacterial taxa were significantly associated with nasal MRSA decolonization outcome. The nasal bacterial community changed significantly within the first 2 days of treatment and remained distinct from the baseline composition for 30 days, both among those with successful decolonization and those who remained colonized with MRSA. Nasal community state types characterized by S. aureus, coagulase-negative staphylococci, Moraxella, and Dolosigranulum became less prevalent during treatment, whereas community state types dominated by Corynebacterium and Cutibacterium increased in prevalence. Among successfully decolonized participants, the nasal microbiota at 3 and 6 months after treatment continued to differ from baseline and from the reference group, mainly because of a sustained depletion of Dolosigranulum and Moraxella. In contrast, the throat microbiota showed only short-term compositional changes. CONCLUSIONS: Decolonization treatment significantly alters the nasal microbiota, with both short-term and persistent effects. Future strategies could consider supplementation with beneficial nasal commensals, such as Dolosigranulum, after treatment to promote microbiome recovery.",
