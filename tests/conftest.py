@@ -33,8 +33,7 @@ def _no_real_gemini(monkeypatch):
     deterministic behaviour — this is the belt-and-braces fallback.
     """
     monkeypatch.setenv("GEMINI_API_KEY", "test-key-not-real")
-    monkeypatch.setattr("google.generativeai.configure", lambda **kwargs: None)
-    monkeypatch.setattr("google.generativeai.GenerativeModel",
+    monkeypatch.setattr("google.genai.Client",
                         lambda *args, **kwargs: (_ for _ in ()).throw(
                             RuntimeError("_no_real_gemini: SDK blocked; use @patch('enrich.genai')")
                         ))
