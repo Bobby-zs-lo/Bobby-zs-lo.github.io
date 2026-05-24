@@ -1,1 +1,5 @@
 requests
+google-generativeai
+pyyaml
+pytest
+responses
