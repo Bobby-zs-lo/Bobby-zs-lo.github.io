@@ -1,36 +1,58 @@
-name: Update Publications
+name: Update site content
 
 on:
   schedule:
-    - cron: '0 0 * * 0' # Runs every Sunday at midnight
+    - cron: '0 0 * * 0'   # weekly, Sunday 00:00 UTC
   workflow_dispatch:
+    inputs:
+      max_new:
+        description: "Cap how many new papers to enrich this run (blank = unlimited)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
 
 jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository
+      - name: Check out
         uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: "3.11"
+          cache: "pip"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run script
-        run: python generate_publications.py
+      - name: Run tests
+        run: python -m pytest tests/ -q
 
-      - name: Commit and push if changed
-        uses: stefanzweifel/git-auto-commit-action@v4
+      - name: Generate publications + cache
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          if [ -n "${{ inputs.max_new }}" ]; then
+            python generate_publications.py --max-new ${{ inputs.max_new }}
+          else
+            python generate_publications.py
+          fi
+
+      - name: Render index.html research + outreach
+        run: python generate_index.py
+
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "Automated update of publications.html"
+          commit_message: "Automated update: publications + cache + index"
           branch: main
-          file_pattern: publications.html
+          file_pattern: "publications.html publications.xml index.html data/abstract_cache.json"
           commit_user_name: "GitHub Actions Bot"
           commit_user_email: "actions@github.com"
           commit_author: "GitHub Actions Bot <actions@github.com>"
