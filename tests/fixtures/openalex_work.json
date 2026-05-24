@@ -1,0 +1,29 @@
+{
+  "id": "https://openalex.org/W4392104410",
+  "doi": "https://doi.org/10.1053/j.gastro.2024.01.001",
+  "title": "Real-time AI for ulcerative colitis endoscopy",
+  "publication_year": 2024,
+  "publication_date": "2024-03-12",
+  "cited_by_count": 17,
+  "primary_location": {
+    "source": {"display_name": "Gastroenterology"}
+  },
+  "authorships": [
+    {"author": {"display_name": "Bobby Zhao Sheng Lo"}}
+  ],
+  "abstract_inverted_index": {
+    "We": [0],
+    "tested": [1],
+    "a": [2, 6],
+    "deep": [3],
+    "learning": [4],
+    "system": [5],
+    "live": [7],
+    "endoscopy": [8],
+    "video.": [9]
+  },
+  "concepts": [
+    {"display_name": "Gastroenterology", "level": 1},
+    {"display_name": "Machine learning", "level": 1}
+  ]
+}
