@@ -223,6 +223,7 @@
     });
   }
 
+  var HTML2PDF_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js';
   var JSPDF_CDN = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';
   var AUTHOR_ID = 'a5078664290';
   var MAILTO = 'bobby.lo@regionh.dk';
@@ -471,7 +472,18 @@
     return clone.textContent.trim().replace(/\s+/g, ' ');
   }
 
-  // -- Core PDF builder (used by both buttons) --
+  function getImageData(imgEl) {
+    try {
+      var canvas = document.createElement('canvas');
+      canvas.width = 120; canvas.height = 120;
+      var ctx = canvas.getContext('2d');
+      ctx.beginPath(); ctx.arc(60, 60, 60, 0, Math.PI * 2); ctx.clip();
+      ctx.drawImage(imgEl, 0, 0, 120, 120);
+      return canvas.toDataURL('image/jpeg', 0.85);
+    } catch (e) { return null; }
+  }
+
+  // -- Core PDF builder (used by plain version) --
   function buildPDF(pubs, styled) {
     var jsPDF = window.jspdf.jsPDF;
     var doc = new jsPDF({ unit: 'mm', format: 'a4' });
@@ -514,10 +526,25 @@
       doc.text('bobby.lo@regionh.dk  |  linkedin.com/in/bobby-lo-md  |  bobby-zs-lo.github.io', mL + 14, y);
       y += 5;
 
+      if (toggleState.photo) {
+        var heroImg = document.querySelector('.hero-portrait img');
+        if (heroImg) {
+          var imgData = getImageData(heroImg);
+          if (imgData) doc.addImage(imgData, 'JPEG', W - mR - 16, 16, 15, 15);
+        }
+      }
+
       drawRgb(ink); doc.setLineWidth(0.4);
       doc.line(mL, y, W - mR, y);
       y += 6;
     } else {
+      if (toggleState.photo) {
+        var heroImg2 = document.querySelector('.hero-portrait img');
+        if (heroImg2) {
+          var imgData2 = getImageData(heroImg2);
+          if (imgData2) doc.addImage(imgData2, 'JPEG', W - mR - 16, y - 2, 15, 15);
+        }
+      }
       doc.setFont('helvetica', 'bold'); doc.setFontSize(18); rgb(ink);
       doc.text('Bobby Zhao Sheng Lo, MD, PhD', W / 2, y, { align: 'center' });
       y += 7;
@@ -810,25 +837,60 @@
     doc.save('Bobby_Lo_CV_' + todayStr() + '.pdf');
   }
 
-  // -- Generate Styled PDF (primary) --
+  // -- Generate Visual PDF (primary, html2pdf.js) --
   function generateVisualPDF() {
     var btn = document.getElementById('eeGenBtn');
     btn.disabled = true;
     btn.innerHTML = '<span class="ee-spinner"></span>';
     var pubsPromise = toggleState.publications ? fetchPublications() : Promise.resolve([]);
 
-    function ensureJsPDF() {
-      if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve();
-      return loadScript(JSPDF_CDN);
-    }
+    Promise.all([loadScript(HTML2PDF_CDN), pubsPromise])
+      .then(function (results) {
+        var pubs = results[1];
 
-    Promise.all([ensureJsPDF(), pubsPromise])
-      .then(function (results) { buildPDF(results[1], true); })
+        var container = document.createElement('div');
+        container.id = 'ee-cv-render';
+        container.style.cssText = 'width:180mm;padding:0;margin:0;font-family:Inter,Helvetica,Arial,sans-serif;background:#FBFAF7;color:#1A1614;font-size:11px;line-height:1.5;';
+        container.innerHTML = buildCvHtml(pubs);
+
+        if (overlay) overlay.style.visibility = 'hidden';
+        document.body.appendChild(container);
+
+        return new Promise(function (resolve) { setTimeout(resolve, 200); })
+          .then(function () {
+            return window.html2pdf().set({
+              margin: [12, 12, 12, 12],
+              filename: 'Bobby_Lo_CV_' + todayStr() + '.pdf',
+              image: { type: 'jpeg', quality: 0.95 },
+              html2canvas: { scale: 2, useCORS: true, logging: false },
+              jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+              pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+            }).from(container).save();
+          })
+          .then(function () {
+            document.body.removeChild(container);
+            if (overlay) { overlay.style.visibility = ''; }
+          });
+      })
       .then(function () { btn.disabled = false; btn.textContent = 'Generate PDF →'; })
       .catch(function (err) {
-        console.error('PDF generation failed:', err);
-        btn.disabled = false; btn.textContent = 'Generate PDF →';
-        alert('PDF generation failed. Check console for details.');
+        console.error('Visual PDF failed, falling back to styled jsPDF:', err);
+        var old = document.getElementById('ee-cv-render');
+        if (old) old.parentNode.removeChild(old);
+        if (overlay) overlay.style.visibility = '';
+        var pubsPromise2 = toggleState.publications ? fetchPublications() : Promise.resolve([]);
+        function ensureJsPDF() {
+          if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve();
+          return loadScript(JSPDF_CDN);
+        }
+        return Promise.all([ensureJsPDF(), pubsPromise2])
+          .then(function (r) { buildPDF(r[1], true); })
+          .then(function () { btn.disabled = false; btn.textContent = 'Generate PDF →'; })
+          .catch(function (e2) {
+            console.error('Fallback also failed:', e2);
+            btn.disabled = false; btn.textContent = 'Generate PDF →';
+            alert('PDF generation failed. Check console.');
+          });
       });
   }
 
