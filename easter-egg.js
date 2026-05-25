@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
   'use strict';
 
   var trigger = document.getElementById('eeTrigger');
@@ -139,15 +139,9 @@
     genBtn.className = 'ee-gen-btn';
     genBtn.id = 'eeGenBtn';
     genBtn.textContent = 'Generate PDF →';
-    genBtn.addEventListener('click', function () { generateVisualPDF(); });
-
-    var textLink = document.createElement('button');
-    textLink.className = 'ee-text-link';
-    textLink.textContent = 'or download plain black & white version';
-    textLink.addEventListener('click', function () { generateTextPDF(); });
+    genBtn.addEventListener('click', function () { generatePDF(); });
 
     footer.appendChild(genBtn);
-    footer.appendChild(textLink);
 
     card.appendChild(closeBtn);
     card.appendChild(header);
@@ -223,7 +217,6 @@
     });
   }
 
-  var HTML2PDF_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js';
   var JSPDF_CDN = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';
   var AUTHOR_ID = 'a5078664290';
   var MAILTO = 'bobby.lo@regionh.dk';
@@ -232,8 +225,6 @@
     var d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
-
-  function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
   function fetchPublications() {
     var url;
@@ -250,220 +241,29 @@
     return fetch(url).then(function (r) { return r.json(); }).then(function (d) { return d.results || []; });
   }
 
-  // -- Build CV HTML for visual PDF --
-
-  function buildCvHtml(pubs) {
-    var h = '';
-    var mono = 'Courier New,Courier,monospace';
-    var serif = 'Georgia,Times New Roman,serif';
-    var sans = 'Helvetica,Arial,sans-serif';
-
-    // Header
-    h += '<table style="width:100%;border-bottom:2px solid #1A1614;padding-bottom:12px;margin-bottom:16px;border-collapse:collapse;"><tr>';
-    h += '<td style="vertical-align:top;">';
-    h += '<div style="display:inline-block;width:36px;height:36px;background:#7A1F2B;border-radius:5px;text-align:center;line-height:36px;margin-right:12px;vertical-align:top;">';
-    h += '<span style="color:#FBFAF7;font-family:' + serif + ';font-weight:700;font-size:14px;">BL</span></div>';
-    h += '<div style="display:inline-block;vertical-align:top;">';
-    h += '<div style="font-family:' + serif + ';font-size:24px;font-weight:bold;color:#1A1614;line-height:1.2;">Bobby Zhao Sheng Lo, MD, PhD</div>';
-    var roleEl = document.querySelector('.hero-role');
-    var roleText = roleEl ? roleEl.textContent.trim() : '';
-    h += '<div style="font-family:' + sans + ';font-size:11px;color:#4A4340;margin-top:4px;line-height:1.4;max-width:420px;">' + esc(roleText) + '</div>';
-    h += '<div style="font-family:' + mono + ';font-size:10px;color:#888280;margin-top:4px;">bobby.lo@regionh.dk · linkedin.com/in/bobby-lo-md · bobby-zs-lo.github.io</div>';
-    h += '</div></td>';
-
-    if (toggleState.photo) {
-      var img = document.querySelector('.hero-portrait img');
-      if (img) {
-        h += '<td style="vertical-align:top;text-align:right;width:70px;">';
-        h += '<img src="' + img.src + '" width="60" height="60" style="border-radius:50%;object-fit:cover;" crossorigin="anonymous">';
-        h += '</td>';
-      }
-    }
-    h += '</tr></table>';
-
-    function sec(t) {
-      return '<div style="font-family:' + mono + ';font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#C4302B;font-weight:bold;margin-top:18px;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #C4302B;">// ' + t + '</div>';
-    }
-    function subSec(t) {
-      return '<div style="font-family:' + sans + ';font-size:10px;font-weight:bold;color:#888280;letter-spacing:1px;text-transform:uppercase;margin-top:10px;margin-bottom:6px;">' + t + '</div>';
-    }
-    function tlRow(date, title, desc) {
-      var r = '<table style="width:100%;border-collapse:collapse;margin-bottom:2px;"><tr>';
-      r += '<td style="width:70px;vertical-align:top;padding:3px 8px 3px 0;font-family:' + mono + ';font-size:10px;color:#C4302B;font-weight:bold;">' + esc(date) + '</td>';
-      r += '<td style="vertical-align:top;padding:3px 0;border-bottom:1px solid #f0efeb;">';
-      if (title) r += '<strong style="font-family:' + sans + ';font-size:12px;color:#1A1614;">' + esc(title) + '</strong>';
-      if (desc) r += '<div style="font-family:' + sans + ';font-size:11px;color:#4A4340;margin-top:1px;">' + esc(desc) + '</div>';
-      r += '</td></tr></table>';
-      return r;
-    }
-
-    // Introduction
-    if (toggleState.intro) {
-      h += sec('Introduction');
-      document.querySelectorAll('#about .prose p').forEach(function (p) {
-        h += '<p style="font-family:' + sans + ';font-size:12px;color:#4A4340;line-height:1.6;margin:0 0 8px 0;">' + esc(p.textContent.trim()) + '</p>';
-      });
-    }
-
-    // Current positions
-    if (toggleState.current) {
-      h += sec('Current Positions');
-      document.querySelectorAll('#currently .role-card').forEach(function (c) {
-        var date = c.querySelector('.role-date');
-        var h3 = c.querySelector('h3');
-        var org = c.querySelector('.role-org');
-        var note = c.querySelector('.role-note');
-        h += tlRow(
-          date ? date.textContent.trim() : '',
-          (h3 ? h3.textContent.trim() : '') + (org ? ' — ' + org.textContent.trim() : ''),
-          note ? note.textContent.trim() : ''
-        );
-      });
-    }
-
-    // Experience
-    if (toggleState.experience) {
-      h += sec('Experience');
-      document.querySelectorAll('#experience .exp-col').forEach(function (col) {
-        var ct = col.querySelector('.exp-col-title');
-        if (ct) h += subSec(ct.textContent.trim());
-        col.querySelectorAll('.timeline li').forEach(function (li) {
-          var date = li.querySelector('.tl-date');
-          var strong = li.querySelector('strong');
-          var div = li.querySelector('div');
-          var title = strong ? strong.textContent.trim() : '';
-          var full = div ? extractEntry(div) : '';
-          var desc = full.replace(title, '').replace(/^\s*[-·]\s*/, '').trim();
-          h += tlRow(date ? date.textContent.trim() : '', title, desc);
-        });
-      });
-    }
-
-    // Education
-    if (toggleState.education) {
-      h += sec('Education & Awards');
-      document.querySelectorAll('#education .ed-grid > div').forEach(function (col) {
-        var ct = col.querySelector('.ed-col-title');
-        if (ct) h += subSec(ct.textContent.trim());
-        col.querySelectorAll('.timeline li').forEach(function (li) {
-          var date = li.querySelector('.tl-date');
-          var strong = li.querySelector('strong');
-          var div = li.querySelector('div');
-          var title = strong ? strong.textContent.trim() : '';
-          var full = div ? extractEntry(div) : '';
-          var desc = full.replace(title, '').replace(/^\s*[-·]\s*/, '').trim();
-          h += tlRow(date ? date.textContent.trim() : '', title, desc);
-        });
-      });
-    }
-
-    // Expertise
-    if (toggleState.expertise) {
-      h += sec('Expertise');
-      var compCards = document.querySelectorAll('#expertise .comp-card');
-      var skills = [];
-      compCards.forEach(function (c) {
-        var t = c.querySelector('h3');
-        var p = c.querySelector('p');
-        if (t) skills.push(t.textContent.trim());
-        if (p) p.textContent.split(/[·,]/).forEach(function (s) {
-          var tr = s.trim(); if (tr && skills.indexOf(tr) === -1) skills.push(tr);
-        });
-      });
-      var unique = [];
-      skills.forEach(function (s) { if (unique.indexOf(s) === -1) unique.push(s); });
-      h += '<div style="line-height:2.2;">';
-      unique.forEach(function (s) {
-        h += '<span style="display:inline-block;padding:2px 8px;margin:2px 3px;background:#fdf0ef;border-radius:4px;font-family:' + sans + ';font-size:11px;color:#4A4340;">' + esc(s) + '</span>';
-      });
-      h += '</div>';
-
-      if (expertiseMode === 'skills_courses') {
-        h += subSec('Continuing Education');
-        document.querySelectorAll('#expertise .course-list li').forEach(function (li) {
-          var date = li.querySelector('.tl-date');
-          var text = li.textContent.trim();
-          if (date) text = text.replace(date.textContent.trim(), '').trim();
-          h += tlRow(date ? date.textContent.trim() : '', text, '');
-        });
-      }
-    }
-
-    // Research
-    if (toggleState.research) {
-      h += sec('Research Projects');
-      document.querySelectorAll('#research .research-card').forEach(function (c) {
-        var tag = c.querySelector('.research-tag');
-        var title = c.querySelector('h3');
-        var desc = c.querySelector('p');
-        h += '<div style="margin-bottom:10px;">';
-        h += '<strong style="font-family:' + serif + ';font-size:14px;color:#1A1614;">' + esc(title ? title.textContent : '') + '</strong>';
-        if (tag) h += ' <span style="font-family:' + mono + ';font-size:9px;color:#C4302B;text-transform:uppercase;">[' + esc(tag.textContent.trim()) + ']</span>';
-        if (desc) h += '<div style="font-family:' + sans + ';font-size:11px;color:#4A4340;line-height:1.5;margin-top:3px;">' + esc(desc.textContent.trim()) + '</div>';
-        h += '</div>';
-      });
-    }
-
-    // Publications
-    if (toggleState.publications && pubs && pubs.length) {
-      h += sec('Publications');
-      pubs.forEach(function (p) {
-        var year = p.publication_year || '';
-        var title = p.title || 'Untitled';
-        var venue = (p.primary_location && p.primary_location.source && p.primary_location.source.display_name) || '';
-        var cites = p.cited_by_count || 0;
-        h += '<div style="padding:4px 0;border-bottom:1px solid #f0efeb;">';
-        h += '<div style="font-family:' + serif + ';font-size:12px;font-weight:bold;color:#1A1614;line-height:1.4;">' + esc(title) + '</div>';
-        h += '<div style="font-family:' + sans + ';font-size:10px;color:#C4302B;font-style:italic;margin-top:2px;">' + esc(venue) + (cites > 0 ? ' · ' + cites + ' citation' + (cites === 1 ? '' : 's') : '') + ' · ' + year + '</div>';
-        h += '</div>';
-      });
-    }
-
-    // Speaking
-    if (toggleState.speaking) {
-      h += sec('Speaking, Service & Outreach');
-      document.querySelectorAll('#speaking .sso-block').forEach(function (b) {
-        var title = b.querySelector('.sso-title');
-        if (title) h += subSec(title.textContent.trim());
-        b.querySelectorAll('.sso-list li').forEach(function (li) {
-          var date = li.querySelector('.tl-date');
-          var text = li.textContent.trim().replace(/\s+/g, ' ');
-          if (date) text = text.replace(date.textContent.trim(), '').trim();
-          h += tlRow(date ? date.textContent.trim() : '', text, '');
-        });
-        var ssoText = b.querySelector('.sso-text');
-        if (ssoText) h += '<p style="font-family:' + sans + ';font-size:11px;color:#4A4340;line-height:1.5;margin:4px 0;">' + esc(ssoText.textContent.trim()) + '</p>';
-        var aux = b.querySelector('.sso-aux');
-        if (aux) h += '<p style="font-family:' + sans + ';font-size:10px;color:#888280;font-style:italic;margin:4px 0;">' + esc(aux.textContent.trim()) + '</p>';
-      });
-    }
-
-    // Contact
-    if (toggleState.contact) {
-      h += sec('Contact');
-      document.querySelectorAll('#contact .contact-list li').forEach(function (li) {
-        var key = li.querySelector('.contact-key');
-        var val = li.querySelector('a') || li.querySelector('span:last-child');
-        if (key && val) {
-          h += '<div style="font-family:' + sans + ';font-size:12px;color:#4A4340;padding:2px 0;">';
-          h += '<strong style="font-family:' + mono + ';font-size:10px;color:#888280;text-transform:uppercase;">' + esc(key.textContent.trim()) + '</strong> ';
-          h += esc(val.textContent.trim()) + '</div>';
-        }
-      });
-      var affs = document.querySelectorAll('#contact .aff-marks span');
-      if (affs.length) {
-        h += '<div style="font-family:' + sans + ';font-size:10px;color:#888280;margin-top:6px;">' + Array.from(affs).map(function (a) { return esc(a.textContent.trim()); }).join(' · ') + '</div>';
-      }
-    }
-
-    return h;
-  }
-
-  // -- Sanitize text for jsPDF (replace unsupported Unicode) --
+  // -- Sanitize text for jsPDF --
+  var _charMap = {};
+  _charMap[0x2018] = "'"; _charMap[0x2019] = "'"; _charMap[0x201A] = "'";
+  _charMap[0x201C] = '"'; _charMap[0x201D] = '"'; _charMap[0x201E] = '"';
+  _charMap[0x2026] = '...'; _charMap[0x2013] = '-'; _charMap[0x2014] = '-';
+  _charMap[0x2192] = '>'; _charMap[0x00B7] = ' | '; _charMap[0x2022] = ' | ';
+  _charMap[0x22C5] = ' | '; _charMap[0x00A0] = ' ';
+  _charMap[0x00E6] = 'ae'; _charMap[0x00C6] = 'Ae';
+  _charMap[0x00F8] = 'o';  _charMap[0x00D8] = 'O';
+  _charMap[0x00E5] = 'aa'; _charMap[0x00C5] = 'Aa';
+  _charMap[0x00FC] = 'u';  _charMap[0x00DC] = 'U';
+  _charMap[0x00E9] = 'e';  _charMap[0x00C9] = 'E';
+  _charMap[0x00F6] = 'o';  _charMap[0x00E4] = 'a';
+  _charMap[0x00F1] = 'n';  _charMap[0x00E8] = 'e';
+  _charMap[0x00EA] = 'e';  _charMap[0x00EB] = 'e';
+  _charMap[0x00E0] = 'a';  _charMap[0x00E1] = 'a';
+  _charMap[0x00ED] = 'i';  _charMap[0x00F3] = 'o';
+  _charMap[0x00FA] = 'u';  _charMap[0x00E7] = 'c';
+  var _tagRe = new RegExp('\x3c[^\x3e]*\x3e', 'g');
   function sanitize(s) {
-    return s.replace(/→/g, '->').replace(/’/g, "'").replace(/‘/g, "'")
-            .replace(/“/g, '"').replace(/”/g, '"').replace(/—/g, '--')
-            .replace(/–/g, '-').replace(/·/g, '.').replace(/…/g, '...');
+    return s.replace(_tagRe, '').replace(/[^\x00-\x7F]/g, function (ch) {
+      return _charMap[ch.charCodeAt(0)] || '';
+    });
   }
 
   // -- Extract text from a timeline <div> with <strong> + <br> --
@@ -477,12 +277,16 @@
 
   function getImageData(imgEl) {
     try {
+      var size = 400;
       var canvas = document.createElement('canvas');
-      canvas.width = 120; canvas.height = 120;
+      canvas.width = size; canvas.height = size;
       var ctx = canvas.getContext('2d');
-      ctx.beginPath(); ctx.arc(60, 60, 60, 0, Math.PI * 2); ctx.clip();
-      ctx.drawImage(imgEl, 0, 0, 120, 120);
-      return canvas.toDataURL('image/jpeg', 0.85);
+      ctx.beginPath(); ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2); ctx.clip();
+      var sw = imgEl.naturalWidth, sh = imgEl.naturalHeight;
+      var scale = Math.max(size / sw, size / sh);
+      var dw = sw * scale, dh = sh * scale;
+      ctx.drawImage(imgEl, (size - dw) / 2, (size - dh) / 2, dw, dh);
+      return canvas.toDataURL('image/jpeg', 0.92);
     } catch (e) { return null; }
   }
 
@@ -533,7 +337,7 @@
         var heroImg = document.querySelector('.hero-portrait img');
         if (heroImg) {
           var imgData = getImageData(heroImg);
-          if (imgData) doc.addImage(imgData, 'JPEG', W - mR - 16, 16, 15, 15);
+          if (imgData) doc.addImage(imgData, 'JPEG', W - mR - 22, 14, 20, 20);
         }
       }
 
@@ -545,7 +349,7 @@
         var heroImg2 = document.querySelector('.hero-portrait img');
         if (heroImg2) {
           var imgData2 = getImageData(heroImg2);
-          if (imgData2) doc.addImage(imgData2, 'JPEG', W - mR - 16, y - 2, 15, 15);
+          if (imgData2) doc.addImage(imgData2, 'JPEG', W - mR - 22, y - 2, 20, 20);
         }
       }
       doc.setFont('helvetica', 'bold'); doc.setFontSize(18); rgb(ink);
@@ -840,68 +644,11 @@
     doc.save('Bobby_Lo_CV_' + todayStr() + '.pdf');
   }
 
-  // -- Generate Visual PDF (primary, html2pdf.js) --
-  function generateVisualPDF() {
+  // -- Single PDF generator --
+  function generatePDF() {
     var btn = document.getElementById('eeGenBtn');
     btn.disabled = true;
     btn.innerHTML = '<span class="ee-spinner"></span>';
-    var pubsPromise = toggleState.publications ? fetchPublications() : Promise.resolve([]);
-
-    Promise.all([loadScript(HTML2PDF_CDN), pubsPromise])
-      .then(function (results) {
-        var pubs = results[1];
-
-        var container = document.createElement('div');
-        container.id = 'ee-cv-render';
-        container.style.cssText = 'width:700px;padding:30px;margin:0 auto;font-family:Helvetica,Arial,sans-serif;background:#FBFAF7;color:#1A1614;font-size:12px;line-height:1.5;';
-        container.innerHTML = buildCvHtml(pubs);
-
-        if (overlay) overlay.style.visibility = 'hidden';
-        document.body.appendChild(container);
-
-        return new Promise(function (resolve) { setTimeout(resolve, 200); })
-          .then(function () {
-            return window.html2pdf().set({
-              margin: [12, 12, 12, 12],
-              filename: 'Bobby_Lo_CV_' + todayStr() + '.pdf',
-              image: { type: 'jpeg', quality: 0.95 },
-              html2canvas: { scale: 2, useCORS: true, logging: false },
-              jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-              pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-            }).from(container).save();
-          })
-          .then(function () {
-            document.body.removeChild(container);
-            if (overlay) { overlay.style.visibility = ''; }
-          });
-      })
-      .then(function () { btn.disabled = false; btn.textContent = 'Generate PDF →'; })
-      .catch(function (err) {
-        console.error('Visual PDF failed, falling back to styled jsPDF:', err);
-        var old = document.getElementById('ee-cv-render');
-        if (old) old.parentNode.removeChild(old);
-        if (overlay) overlay.style.visibility = '';
-        var pubsPromise2 = toggleState.publications ? fetchPublications() : Promise.resolve([]);
-        function ensureJsPDF() {
-          if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve();
-          return loadScript(JSPDF_CDN);
-        }
-        return Promise.all([ensureJsPDF(), pubsPromise2])
-          .then(function (r) { buildPDF(r[1], true); })
-          .then(function () { btn.disabled = false; btn.textContent = 'Generate PDF →'; })
-          .catch(function (e2) {
-            console.error('Fallback also failed:', e2);
-            btn.disabled = false; btn.textContent = 'Generate PDF →';
-            alert('PDF generation failed. Check console.');
-          });
-      });
-  }
-
-  // -- Generate Plain PDF (secondary) --
-  function generateTextPDF() {
-    var btn = document.querySelector('.ee-text-link');
-    var origText = btn.textContent;
-    btn.textContent = 'generating...'; btn.style.pointerEvents = 'none';
     var pubsPromise = toggleState.publications ? fetchPublications() : Promise.resolve([]);
 
     function ensureJsPDF() {
@@ -910,11 +657,11 @@
     }
 
     Promise.all([ensureJsPDF(), pubsPromise])
-      .then(function (results) { buildPDF(results[1], false); })
-      .then(function () { btn.textContent = origText; btn.style.pointerEvents = ''; })
+      .then(function (results) { buildPDF(results[1], true); })
+      .then(function () { btn.disabled = false; btn.textContent = 'Generate PDF →'; })
       .catch(function (err) {
         console.error('PDF generation failed:', err);
-        btn.textContent = origText; btn.style.pointerEvents = '';
+        btn.disabled = false; btn.textContent = 'Generate PDF →';
         alert('PDF generation failed. Check console for details.');
       });
   }
