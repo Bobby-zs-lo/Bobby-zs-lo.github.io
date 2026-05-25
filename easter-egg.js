@@ -224,7 +224,7 @@
   }
 
   var HTML2PDF_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js';
-  var JSPDF_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js';
+  var JSPDF_CDN = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';
   var AUTHOR_ID = 'a5078664290';
   var MAILTO = 'bobby.lo@regionh.dk';
 
@@ -468,20 +468,30 @@
     Promise.all([loadScript(HTML2PDF_CDN), pubsPromise])
       .then(function (results) {
         var pubs = results[1];
-        var container = document.createElement('div');
-        container.style.cssText = 'position:fixed;top:0;left:0;width:170mm;padding:20mm;font-family:Inter,system-ui,sans-serif;background:#FBFAF7;color:#1A1614;z-index:1;overflow:hidden;';
-        container.innerHTML = buildCvHtml(pubs);
-        document.body.appendChild(container);
 
-        return window.html2pdf().set({
-          margin: [20, 20, 20, 20],
-          filename: 'Bobby_Lo_CV_' + todayStr() + '.pdf',
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-        }).from(container).save().then(function () {
+        var container = document.createElement('div');
+        container.id = 'ee-cv-render';
+        container.style.cssText = 'position:absolute;top:0;left:0;width:680px;padding:40px;background:#FBFAF7;color:#1A1614;font-family:Inter,Helvetica,Arial,sans-serif;font-size:11px;line-height:1.5;z-index:1;';
+        container.innerHTML = buildCvHtml(pubs);
+
+        if (overlay) overlay.style.display = 'none';
+        document.body.appendChild(container);
+        window.scrollTo(0, 0);
+
+        return new Promise(function (resolve) {
+          setTimeout(resolve, 300);
+        }).then(function () {
+          return window.html2pdf().set({
+            margin: [10, 10, 10, 10],
+            filename: 'Bobby_Lo_CV_' + todayStr() + '.pdf',
+            image: { type: 'jpeg', quality: 0.95 },
+            html2canvas: { scale: 2, useCORS: true, logging: true, scrollY: 0, windowWidth: 760 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+          }).from(container).save();
+        }).then(function () {
           document.body.removeChild(container);
+          if (overlay) { overlay.style.display = ''; overlay.classList.add('is-open'); }
         });
       })
       .then(function () {
@@ -490,9 +500,12 @@
       })
       .catch(function (err) {
         console.error('PDF generation failed:', err);
+        var old = document.getElementById('ee-cv-render');
+        if (old) document.body.removeChild(old);
+        if (overlay) { overlay.style.display = ''; overlay.classList.add('is-open'); }
         btn.disabled = false;
         btn.textContent = 'Generate PDF →';
-        alert('PDF generation failed. Please try again.');
+        alert('PDF generation failed. Check browser console (F12) for details.');
       });
   }
 
@@ -506,11 +519,15 @@
 
     var pubsPromise = toggleState.publications ? fetchPublications() : Promise.resolve([]);
 
-    var jspdfReady = window.jspdf ? Promise.resolve() : loadScript(JSPDF_CDN);
+    function getJsPDF() {
+      if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve();
+      return loadScript(JSPDF_CDN);
+    }
 
-    Promise.all([jspdfReady, pubsPromise])
+    Promise.all([getJsPDF(), pubsPromise])
       .then(function (results) {
         var pubs = results[1];
+        if (!window.jspdf || !window.jspdf.jsPDF) throw new Error('jsPDF failed to load');
         var jsPDF = window.jspdf.jsPDF;
         var doc = new jsPDF({ unit: 'mm', format: 'a4' });
         var pageW = 210;
