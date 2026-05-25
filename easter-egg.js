@@ -143,7 +143,7 @@
 
     var textLink = document.createElement('button');
     textLink.className = 'ee-text-link';
-    textLink.textContent = 'or download text-selectable version';
+    textLink.textContent = 'or download plain black & white version';
     textLink.addEventListener('click', function () { generateTextPDF(); });
 
     footer.appendChild(genBtn);
@@ -223,7 +223,6 @@
     });
   }
 
-  var HTML2PDF_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js';
   var JSPDF_CDN = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';
   var AUTHOR_ID = 'a5078664290';
   var MAILTO = 'bobby.lo@regionh.dk';
@@ -456,374 +455,402 @@
     return h;
   }
 
-  // -- Generate Visual PDF --
+  // -- Sanitize text for jsPDF (replace unsupported Unicode) --
+  function sanitize(s) {
+    return s.replace(/→/g, '->').replace(/’/g, "'").replace(/‘/g, "'")
+            .replace(/“/g, '"').replace(/”/g, '"').replace(/—/g, '--')
+            .replace(/–/g, '-').replace(/·/g, '.').replace(/…/g, '...');
+  }
 
+  // -- Extract text from a timeline <div> with <strong> + <br> --
+  function extractEntry(div) {
+    if (!div) return '';
+    var clone = div.cloneNode(true);
+    var brs = clone.querySelectorAll('br');
+    brs.forEach(function (br) { br.replaceWith(' - '); });
+    return clone.textContent.trim().replace(/\s+/g, ' ');
+  }
+
+  // -- Core PDF builder (used by both buttons) --
+  function buildPDF(pubs, styled) {
+    var jsPDF = window.jspdf.jsPDF;
+    var doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    var W = 210, mL = 18, mR = 18, cW = W - mL - mR, y = 18;
+    var ox = { r: 196, g: 48, b: 43 };
+    var ink = { r: 26, g: 22, b: 20 };
+    var ink2 = { r: 74, g: 67, b: 64 };
+    var ink3 = { r: 136, g: 130, b: 128 };
+
+    function rgb(c) { doc.setTextColor(c.r, c.g, c.b); }
+    function drawRgb(c) { doc.setDrawColor(c.r, c.g, c.b); }
+    function fillRgb(c) { doc.setFillColor(c.r, c.g, c.b); }
+
+    function checkPage(needed) {
+      if (y + needed > 280) { doc.addPage(); y = 18; }
+    }
+
+    // -- HEADER --
+    if (styled) {
+      fillRgb({ r: 122, g: 31, b: 43 });
+      doc.roundedRect(mL, y - 2, 10, 10, 1.5, 1.5, 'F');
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(7);
+      doc.setTextColor(251, 250, 247);
+      doc.text('BL', mL + 2.8, y + 4.5);
+
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(16);
+      rgb(ink);
+      doc.text('Bobby Zhao Sheng Lo, MD, PhD', mL + 14, y + 3);
+      y += 9;
+
+      var roleEl = document.querySelector('.hero-role');
+      var roleText = roleEl ? sanitize(roleEl.textContent.trim()) : '';
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
+      rgb(ink2);
+      var roleLines = doc.splitTextToSize(roleText, cW - 14);
+      doc.text(roleLines, mL + 14, y);
+      y += roleLines.length * 3.2 + 1.5;
+
+      doc.setFontSize(6.5); rgb(ink3);
+      doc.text('bobby.lo@regionh.dk  |  linkedin.com/in/bobby-lo-md  |  bobby-zs-lo.github.io', mL + 14, y);
+      y += 5;
+
+      drawRgb(ink); doc.setLineWidth(0.4);
+      doc.line(mL, y, W - mR, y);
+      y += 6;
+    } else {
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(18); rgb(ink);
+      doc.text('Bobby Zhao Sheng Lo, MD, PhD', W / 2, y, { align: 'center' });
+      y += 7;
+      var roleEl2 = document.querySelector('.hero-role');
+      var roleText2 = roleEl2 ? sanitize(roleEl2.textContent.trim()) : '';
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); rgb(ink2);
+      var rl2 = doc.splitTextToSize(roleText2, cW);
+      doc.text(rl2, W / 2, y, { align: 'center' });
+      y += rl2.length * 3.5 + 2;
+      doc.setFontSize(7); rgb(ink3);
+      doc.text('bobby.lo@regionh.dk  |  linkedin.com/in/bobby-lo-md  |  bobby-zs-lo.github.io', W / 2, y, { align: 'center' });
+      y += 5;
+      drawRgb(ink); doc.setLineWidth(0.3); doc.line(mL, y, W - mR, y); y += 6;
+    }
+
+    // -- Helpers --
+    function heading(title) {
+      checkPage(12);
+      if (styled) {
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(7);
+        rgb(ox);
+        doc.text('// ' + title.toUpperCase(), mL, y);
+        y += 1.5;
+        drawRgb(ox); doc.setLineWidth(0.2);
+        doc.line(mL, y, W - mR, y);
+      } else {
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+        rgb(ink);
+        doc.text(title.toUpperCase(), mL, y);
+        y += 1;
+        drawRgb(ink); doc.setLineWidth(0.15);
+        doc.line(mL, y, W - mR, y);
+      }
+      y += 5;
+    }
+
+    function body(text) {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); rgb(ink2);
+      var lines = doc.splitTextToSize(sanitize(text), cW);
+      lines.forEach(function (l) { checkPage(3.5); doc.text(l, mL, y); y += 3.5; });
+      y += 1.5;
+    }
+
+    function tlEntry(date, title, desc) {
+      date = sanitize(date).replace(/->/g, '-');
+      checkPage(8);
+      if (styled) {
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(7); rgb(ox);
+      } else {
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); rgb(ink2);
+      }
+      doc.text(date, mL, y);
+
+      var xR = mL + 26;
+      var wR = cW - 26;
+      if (title) {
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(8); rgb(ink);
+        var tLines = doc.splitTextToSize(sanitize(title), wR);
+        tLines.forEach(function (l) { doc.text(l, xR, y); y += 3.3; });
+      }
+      if (desc) {
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); rgb(ink2);
+        var dLines = doc.splitTextToSize(sanitize(desc), wR);
+        dLines.forEach(function (l) { checkPage(3.2); doc.text(l, xR, y); y += 3.2; });
+      }
+      y += 1.8;
+    }
+
+    function subHeading(text) {
+      checkPage(6);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(7);
+      if (styled) { rgb(ink3); } else { rgb(ink); }
+      doc.text(text.toUpperCase(), mL, y);
+      y += 4;
+    }
+
+    // -- INTRODUCTION --
+    if (toggleState.intro) {
+      heading('Introduction');
+      document.querySelectorAll('#about .prose p').forEach(function (p) {
+        body(p.textContent.trim());
+      });
+    }
+
+    // -- CURRENT POSITIONS --
+    if (toggleState.current) {
+      heading('Current Positions');
+      document.querySelectorAll('#currently .role-card').forEach(function (c) {
+        var date = c.querySelector('.role-date');
+        var h3 = c.querySelector('h3');
+        var org = c.querySelector('.role-org');
+        var note = c.querySelector('.role-note');
+        tlEntry(
+          date ? date.textContent.trim() : '',
+          (h3 ? h3.textContent.trim() : '') + (org ? ' — ' + org.textContent.trim() : ''),
+          note ? note.textContent.trim() : ''
+        );
+      });
+    }
+
+    // -- EXPERIENCE --
+    if (toggleState.experience) {
+      heading('Experience');
+      document.querySelectorAll('#experience .exp-col').forEach(function (col) {
+        var ct = col.querySelector('.exp-col-title');
+        if (ct) subHeading(ct.textContent.trim());
+        col.querySelectorAll('.timeline li').forEach(function (li) {
+          var date = li.querySelector('.tl-date');
+          var strong = li.querySelector('strong');
+          var div = li.querySelector('div');
+          var title = strong ? strong.textContent.trim() : '';
+          var full = div ? extractEntry(div) : '';
+          var desc = full.replace(title, '').replace(/^\s*[-·]\s*/, '').trim();
+          tlEntry(date ? date.textContent.trim() : '', title, desc);
+        });
+        y += 1;
+      });
+    }
+
+    // -- EDUCATION & AWARDS --
+    if (toggleState.education) {
+      heading('Education & Awards');
+      document.querySelectorAll('#education .ed-grid > div').forEach(function (col) {
+        var ct = col.querySelector('.ed-col-title');
+        if (ct) subHeading(ct.textContent.trim());
+        col.querySelectorAll('.timeline li').forEach(function (li) {
+          var date = li.querySelector('.tl-date');
+          var strong = li.querySelector('strong');
+          var div = li.querySelector('div');
+          var title = strong ? strong.textContent.trim() : '';
+          var full = div ? extractEntry(div) : '';
+          var desc = full.replace(title, '').replace(/^\s*[-·]\s*/, '').trim();
+          tlEntry(date ? date.textContent.trim() : '', title, desc);
+        });
+        y += 1;
+      });
+    }
+
+    // -- EXPERTISE --
+    if (toggleState.expertise) {
+      heading('Expertise');
+      var compCards = document.querySelectorAll('#expertise .comp-card');
+      var skills = [];
+      compCards.forEach(function (c) {
+        var t = c.querySelector('h3');
+        var p = c.querySelector('p');
+        if (t) skills.push(t.textContent.trim());
+        if (p) p.textContent.split(/[·,]/).forEach(function (s) {
+          var tr = s.trim(); if (tr && skills.indexOf(tr) === -1) skills.push(tr);
+        });
+      });
+
+      if (styled) {
+        var chipX = mL, chipY = y;
+        skills.forEach(function (s) {
+          var txt = sanitize(s);
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
+          var tw = doc.getTextWidth(txt) + 4;
+          if (chipX + tw > W - mR) { chipX = mL; chipY += 5.5; checkPage(5.5); }
+          fillRgb({ r: 250, g: 240, b: 239 });
+          doc.roundedRect(chipX, chipY - 2.8, tw, 4.2, 1, 1, 'F');
+          rgb(ink2);
+          doc.text(txt, chipX + 2, chipY);
+          chipX += tw + 2;
+        });
+        y = chipY + 5;
+      } else {
+        body(skills.join('  ·  '));
+      }
+
+      if (expertiseMode === 'skills_courses') {
+        y += 1;
+        subHeading('Continuing Education');
+        document.querySelectorAll('#expertise .course-list li').forEach(function (li) {
+          var date = li.querySelector('.tl-date');
+          var text = li.textContent.trim().replace(/\s+/g, ' ');
+          if (date) text = text.replace(date.textContent.trim(), '').trim();
+          tlEntry(date ? date.textContent.trim() : '', text, '');
+        });
+      }
+    }
+
+    // -- RESEARCH PROJECTS --
+    if (toggleState.research) {
+      heading('Research Projects');
+      document.querySelectorAll('#research .research-card').forEach(function (c) {
+        var tag = c.querySelector('.research-tag');
+        var h3 = c.querySelector('h3');
+        var desc = c.querySelector('p');
+        checkPage(12);
+
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(9); rgb(ink);
+        doc.text(h3 ? sanitize(h3.textContent) : '', mL, y);
+        if (tag) {
+          var tagText = sanitize(tag.textContent.trim());
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
+          var nameW = doc.getTextWidth(h3 ? sanitize(h3.textContent) : '');
+          doc.setFont('helvetica', 'italic'); doc.setFontSize(7);
+          if (styled) { rgb(ox); } else { rgb(ink3); }
+          doc.text('  [' + tagText + ']', mL + nameW + 1, y);
+        }
+        y += 4;
+        if (desc) body(desc.textContent.trim());
+      });
+    }
+
+    // -- PUBLICATIONS --
+    if (toggleState.publications && pubs && pubs.length) {
+      heading('Publications');
+      pubs.forEach(function (p) {
+        var year = p.publication_year || '';
+        var title = sanitize(p.title || 'Untitled');
+        var venue = sanitize((p.primary_location && p.primary_location.source && p.primary_location.source.display_name) || '');
+        var cites = p.cited_by_count || 0;
+        checkPage(9);
+
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); rgb(ink);
+        var tLines = doc.splitTextToSize(title, cW);
+        tLines.forEach(function (l) { checkPage(3.2); doc.text(l, mL, y); y += 3.2; });
+
+        doc.setFont('helvetica', 'italic'); doc.setFontSize(6.5);
+        if (styled) { rgb(ox); } else { rgb(ink3); }
+        var meta = venue + (cites > 0 ? ' · ' + cites + ' citation' + (cites === 1 ? '' : 's') : '') + ' · ' + year;
+        doc.text(sanitize(meta), mL, y);
+        y += 4.5;
+      });
+    }
+
+    // -- SPEAKING & SERVICE --
+    if (toggleState.speaking) {
+      heading('Speaking, Service & Outreach');
+      document.querySelectorAll('#speaking .sso-block').forEach(function (b) {
+        var title = b.querySelector('.sso-title');
+        if (title) subHeading(title.textContent.trim());
+
+        b.querySelectorAll('.sso-list li').forEach(function (li) {
+          var date = li.querySelector('.tl-date');
+          var text = li.textContent.trim().replace(/\s+/g, ' ');
+          if (date) text = text.replace(date.textContent.trim(), '').trim();
+          tlEntry(date ? date.textContent.trim() : '', text, '');
+        });
+
+        var ssoText = b.querySelector('.sso-text');
+        if (ssoText) body(ssoText.textContent.trim());
+
+        var aux = b.querySelector('.sso-aux');
+        if (aux) {
+          doc.setFont('helvetica', 'italic'); doc.setFontSize(6.5); rgb(ink3);
+          var aLines = doc.splitTextToSize(sanitize(aux.textContent.trim()), cW);
+          aLines.forEach(function (l) { checkPage(3.2); doc.text(l, mL, y); y += 3.2; });
+          y += 2;
+        }
+      });
+    }
+
+    // -- CONTACT --
+    if (toggleState.contact) {
+      heading('Contact');
+      document.querySelectorAll('#contact .contact-list li').forEach(function (li) {
+        var key = li.querySelector('.contact-key');
+        var val = li.querySelector('a') || li.querySelector('span:last-child');
+        if (key && val) {
+          checkPage(5);
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); rgb(ink3);
+          doc.text(sanitize(key.textContent.trim()).toUpperCase(), mL, y);
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(8); rgb(ink2);
+          doc.text(sanitize(val.textContent.trim()), mL + 22, y);
+          y += 4.5;
+        }
+      });
+    }
+
+    // -- WATERMARK + PAGE NUMBERS --
+    var pageCount = doc.internal.getNumberOfPages();
+    for (var i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      if (styled) {
+        doc.setGState(new doc.GState({ opacity: 0.06 }));
+        fillRgb({ r: 122, g: 31, b: 43 });
+        doc.roundedRect(W - mR - 10, 280, 8, 8, 1.2, 1.2, 'F');
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(5);
+        doc.setTextColor(251, 250, 247);
+        doc.text('BL', W - mR - 7.5, 285);
+        doc.setGState(new doc.GState({ opacity: 1 }));
+      }
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(7); rgb(ink3);
+      doc.text(i + ' / ' + pageCount, W / 2, 290, { align: 'center' });
+    }
+
+    doc.save('Bobby_Lo_CV_' + todayStr() + '.pdf');
+  }
+
+  // -- Generate Styled PDF (primary) --
   function generateVisualPDF() {
     var btn = document.getElementById('eeGenBtn');
     btn.disabled = true;
     btn.innerHTML = '<span class="ee-spinner"></span>';
-
     var pubsPromise = toggleState.publications ? fetchPublications() : Promise.resolve([]);
 
-    Promise.all([loadScript(HTML2PDF_CDN), pubsPromise])
-      .then(function (results) {
-        var pubs = results[1];
-
-        var container = document.createElement('div');
-        container.id = 'ee-cv-render';
-        container.style.cssText = 'position:absolute;top:0;left:0;width:680px;padding:40px;background:#FBFAF7;color:#1A1614;font-family:Inter,Helvetica,Arial,sans-serif;font-size:11px;line-height:1.5;z-index:1;';
-        container.innerHTML = buildCvHtml(pubs);
-
-        if (overlay) overlay.style.display = 'none';
-        document.body.appendChild(container);
-        window.scrollTo(0, 0);
-
-        return new Promise(function (resolve) {
-          setTimeout(resolve, 300);
-        }).then(function () {
-          return window.html2pdf().set({
-            margin: [10, 10, 10, 10],
-            filename: 'Bobby_Lo_CV_' + todayStr() + '.pdf',
-            image: { type: 'jpeg', quality: 0.95 },
-            html2canvas: { scale: 2, useCORS: true, logging: true, scrollY: 0, windowWidth: 760 },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-          }).from(container).save();
-        }).then(function () {
-          document.body.removeChild(container);
-          if (overlay) { overlay.style.display = ''; overlay.classList.add('is-open'); }
-        });
-      })
-      .then(function () {
-        btn.disabled = false;
-        btn.textContent = 'Generate PDF →';
-      })
-      .catch(function (err) {
-        console.error('PDF generation failed:', err);
-        var old = document.getElementById('ee-cv-render');
-        if (old) document.body.removeChild(old);
-        if (overlay) { overlay.style.display = ''; overlay.classList.add('is-open'); }
-        btn.disabled = false;
-        btn.textContent = 'Generate PDF →';
-        alert('PDF generation failed. Check browser console (F12) for details.');
-      });
-  }
-
-  // -- Generate Text-Selectable PDF --
-
-  function generateTextPDF() {
-    var btn = document.querySelector('.ee-text-link');
-    var origText = btn.textContent;
-    btn.textContent = 'generating...';
-    btn.style.pointerEvents = 'none';
-
-    var pubsPromise = toggleState.publications ? fetchPublications() : Promise.resolve([]);
-
-    function getJsPDF() {
+    function ensureJsPDF() {
       if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve();
       return loadScript(JSPDF_CDN);
     }
 
-    Promise.all([getJsPDF(), pubsPromise])
-      .then(function (results) {
-        var pubs = results[1];
-        if (!window.jspdf || !window.jspdf.jsPDF) throw new Error('jsPDF failed to load');
-        var jsPDF = window.jspdf.jsPDF;
-        var doc = new jsPDF({ unit: 'mm', format: 'a4' });
-        var pageW = 210;
-        var marginL = 20;
-        var marginR = 20;
-        var contentW = pageW - marginL - marginR;
-        var y = 20;
-
-        function checkPage(needed) {
-          if (y + needed > 277) { doc.addPage(); y = 20; }
-        }
-
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(18);
-        doc.text('Bobby Zhao Sheng Lo, MD, PhD', pageW / 2, y, { align: 'center' });
-        y += 7;
-
-        var roleEl = document.querySelector('.hero-role');
-        var roleText = roleEl ? roleEl.textContent.trim() : '';
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8);
-        doc.setTextColor(74, 67, 64);
-        var roleLines = doc.splitTextToSize(roleText, contentW);
-        doc.text(roleLines, pageW / 2, y, { align: 'center' });
-        y += roleLines.length * 3.5 + 2;
-
-        doc.setFontSize(7);
-        doc.setTextColor(136, 130, 128);
-        doc.text('bobby.lo@regionh.dk  |  linkedin.com/in/bobby-lo-md  |  bobby-zs-lo.github.io', pageW / 2, y, { align: 'center' });
-        y += 5;
-
-        doc.setDrawColor(26, 22, 20);
-        doc.setLineWidth(0.3);
-        doc.line(marginL, y, pageW - marginR, y);
-        y += 6;
-
-        function sectionHeading(title) {
-          checkPage(12);
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(9);
-          doc.setTextColor(26, 22, 20);
-          doc.text(title.toUpperCase(), marginL, y);
-          y += 1;
-          doc.setDrawColor(26, 22, 20);
-          doc.setLineWidth(0.15);
-          doc.line(marginL, y, pageW - marginR, y);
-          y += 5;
-        }
-
-        function bodyText(text) {
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(8.5);
-          doc.setTextColor(74, 67, 64);
-          var lines = doc.splitTextToSize(text, contentW);
-          lines.forEach(function (line) {
-            checkPage(4);
-            doc.text(line, marginL, y);
-            y += 3.8;
-          });
-          y += 2;
-        }
-
-        function timelineEntry(date, text) {
-          checkPage(6);
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(7.5);
-          doc.setTextColor(74, 67, 64);
-          doc.text(date, marginL, y);
-          var entryLines = doc.splitTextToSize(text, contentW - 30);
-          entryLines.forEach(function (line, i) {
-            doc.text(line, marginL + 28, y + (i * 3.5));
-          });
-          y += Math.max(entryLines.length * 3.5, 4) + 1.5;
-        }
-
-        if (toggleState.intro) {
-          sectionHeading('Introduction');
-          var paras = document.querySelectorAll('#about .prose p');
-          paras.forEach(function (p) { bodyText(p.textContent.trim()); });
-        }
-
-        if (toggleState.current) {
-          sectionHeading('Current Positions');
-          var roleCards = document.querySelectorAll('#currently .role-card');
-          roleCards.forEach(function (c) {
-            var date = c.querySelector('.role-date');
-            var title = c.querySelector('h3');
-            var org = c.querySelector('.role-org');
-            var note = c.querySelector('.role-note');
-            var text = (title ? title.textContent : '') + (org ? ' — ' + org.textContent : '') + (note ? '. ' + note.textContent : '');
-            timelineEntry(date ? date.textContent : '', text);
-          });
-        }
-
-        if (toggleState.experience) {
-          sectionHeading('Experience');
-          var expCols = document.querySelectorAll('#experience .exp-col');
-          expCols.forEach(function (col) {
-            var colTitle = col.querySelector('.exp-col-title');
-            if (colTitle) {
-              checkPage(6);
-              doc.setFont('helvetica', 'bold');
-              doc.setFontSize(7.5);
-              doc.setTextColor(26, 22, 20);
-              doc.text(colTitle.textContent.trim().toUpperCase(), marginL, y);
-              y += 4;
-            }
-            var items = col.querySelectorAll('.timeline li');
-            items.forEach(function (li) {
-              var date = li.querySelector('.tl-date');
-              var div = li.querySelector('div');
-              timelineEntry(date ? date.textContent : '', div ? div.textContent.trim().replace(/\s+/g, ' ') : '');
-            });
-            y += 2;
-          });
-        }
-
-        if (toggleState.education) {
-          sectionHeading('Education & Awards');
-          var edCols = document.querySelectorAll('#education .ed-grid > div');
-          edCols.forEach(function (col) {
-            var colTitle = col.querySelector('.ed-col-title');
-            if (colTitle) {
-              checkPage(6);
-              doc.setFont('helvetica', 'bold');
-              doc.setFontSize(7.5);
-              doc.setTextColor(26, 22, 20);
-              doc.text(colTitle.textContent.trim().toUpperCase(), marginL, y);
-              y += 4;
-            }
-            var items = col.querySelectorAll('.timeline li');
-            items.forEach(function (li) {
-              var date = li.querySelector('.tl-date');
-              var div = li.querySelector('div');
-              timelineEntry(date ? date.textContent : '', div ? div.textContent.trim().replace(/\s+/g, ' ') : '');
-            });
-            y += 2;
-          });
-        }
-
-        if (toggleState.expertise) {
-          sectionHeading('Expertise');
-          var compCards = document.querySelectorAll('#expertise .comp-card');
-          var skills = [];
-          compCards.forEach(function (c) {
-            var t = c.querySelector('h3');
-            var p = c.querySelector('p');
-            if (t) skills.push(t.textContent.trim());
-            if (p) {
-              p.textContent.split(/[·,]/).forEach(function (s) {
-                var trimmed = s.trim();
-                if (trimmed && skills.indexOf(trimmed) === -1) skills.push(trimmed);
-              });
-            }
-          });
-          bodyText(skills.join('  ·  '));
-
-          if (expertiseMode === 'skills_courses') {
-            checkPage(6);
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(7.5);
-            doc.setTextColor(26, 22, 20);
-            doc.text('CONTINUING EDUCATION', marginL, y);
-            y += 4;
-            var courses = document.querySelectorAll('#expertise .course-list li');
-            courses.forEach(function (li) {
-              var date = li.querySelector('.tl-date');
-              var text = li.textContent.trim().replace(/\s+/g, ' ');
-              if (date) text = text.replace(date.textContent.trim(), '').trim();
-              timelineEntry(date ? date.textContent.trim() : '', text);
-            });
-          }
-        }
-
-        if (toggleState.research) {
-          sectionHeading('Research Projects');
-          var rCards = document.querySelectorAll('#research .research-card');
-          rCards.forEach(function (c) {
-            var tag = c.querySelector('.research-tag');
-            var title = c.querySelector('h3');
-            var desc = c.querySelector('p');
-            checkPage(10);
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(9);
-            doc.setTextColor(26, 22, 20);
-            doc.text((title ? title.textContent : ''), marginL, y);
-            if (tag) {
-              doc.setFont('helvetica', 'normal');
-              doc.setFontSize(7);
-              doc.setTextColor(136, 130, 128);
-              doc.text('  [' + tag.textContent.trim() + ']', marginL + doc.getTextWidth(title ? title.textContent : '') + 2, y);
-            }
-            y += 4;
-            if (desc) bodyText(desc.textContent.trim());
-          });
-        }
-
-        if (toggleState.publications && pubs && pubs.length) {
-          sectionHeading('Publications');
-          pubs.forEach(function (p) {
-            var year = p.publication_year || '';
-            var title = p.title || 'Untitled';
-            var venue = (p.primary_location && p.primary_location.source && p.primary_location.source.display_name) || '';
-            var cites = p.cited_by_count || 0;
-            checkPage(8);
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(8);
-            doc.setTextColor(26, 22, 20);
-            var titleLines = doc.splitTextToSize(title, contentW);
-            titleLines.forEach(function (line) {
-              doc.text(line, marginL, y);
-              y += 3.5;
-            });
-            doc.setFont('helvetica', 'italic');
-            doc.setFontSize(7);
-            doc.setTextColor(136, 130, 128);
-            doc.text(venue + (cites > 0 ? ' · ' + cites + ' citation' + (cites === 1 ? '' : 's') : '') + ' · ' + year, marginL, y);
-            y += 5;
-          });
-        }
-
-        if (toggleState.speaking) {
-          sectionHeading('Speaking, Service & Outreach');
-          var blocks = document.querySelectorAll('#speaking .sso-block');
-          blocks.forEach(function (b) {
-            var title = b.querySelector('.sso-title');
-            if (title) {
-              checkPage(6);
-              doc.setFont('helvetica', 'bold');
-              doc.setFontSize(7.5);
-              doc.setTextColor(26, 22, 20);
-              doc.text(title.textContent.trim(), marginL, y);
-              y += 4;
-            }
-            var items = b.querySelectorAll('.sso-list li');
-            items.forEach(function (li) {
-              var date = li.querySelector('.tl-date');
-              var text = li.textContent.trim().replace(/\s+/g, ' ');
-              if (date) text = text.replace(date.textContent.trim(), '').trim();
-              timelineEntry(date ? date.textContent.trim() : '', text);
-            });
-            var ssoText = b.querySelector('.sso-text');
-            if (ssoText) bodyText(ssoText.textContent.trim());
-            var aux = b.querySelector('.sso-aux');
-            if (aux) {
-              doc.setFont('helvetica', 'italic');
-              doc.setFontSize(7);
-              doc.setTextColor(136, 130, 128);
-              var auxLines = doc.splitTextToSize(aux.textContent.trim(), contentW);
-              auxLines.forEach(function (line) { checkPage(4); doc.text(line, marginL, y); y += 3.5; });
-              y += 2;
-            }
-          });
-        }
-
-        if (toggleState.contact) {
-          sectionHeading('Contact');
-          var contacts = document.querySelectorAll('#contact .contact-list li');
-          contacts.forEach(function (li) {
-            var key = li.querySelector('.contact-key');
-            var val = li.querySelector('a') || li.querySelector('span:last-child');
-            if (key && val) {
-              checkPage(5);
-              doc.setFont('helvetica', 'bold');
-              doc.setFontSize(7);
-              doc.setTextColor(136, 130, 128);
-              doc.text(key.textContent.trim().toUpperCase(), marginL, y);
-              doc.setFont('helvetica', 'normal');
-              doc.setFontSize(8);
-              doc.setTextColor(74, 67, 64);
-              doc.text(val.textContent.trim(), marginL + 22, y);
-              y += 4.5;
-            }
-          });
-        }
-
-        var pageCount = doc.internal.getNumberOfPages();
-        for (var i = 1; i <= pageCount; i++) {
-          doc.setPage(i);
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(7);
-          doc.setTextColor(136, 130, 128);
-          doc.text(i + ' / ' + pageCount, pageW / 2, 290, { align: 'center' });
-        }
-
-        doc.save('Bobby_Lo_CV_' + todayStr() + '.pdf');
-      })
-      .then(function () {
-        btn.textContent = origText;
-        btn.style.pointerEvents = '';
-      })
+    Promise.all([ensureJsPDF(), pubsPromise])
+      .then(function (results) { buildPDF(results[1], true); })
+      .then(function () { btn.disabled = false; btn.textContent = 'Generate PDF →'; })
       .catch(function (err) {
-        console.error('Text PDF generation failed:', err);
-        btn.textContent = origText;
-        btn.style.pointerEvents = '';
-        alert('PDF generation failed. Please try again.');
+        console.error('PDF generation failed:', err);
+        btn.disabled = false; btn.textContent = 'Generate PDF →';
+        alert('PDF generation failed. Check console for details.');
+      });
+  }
+
+  // -- Generate Plain PDF (secondary) --
+  function generateTextPDF() {
+    var btn = document.querySelector('.ee-text-link');
+    var origText = btn.textContent;
+    btn.textContent = 'generating...'; btn.style.pointerEvents = 'none';
+    var pubsPromise = toggleState.publications ? fetchPublications() : Promise.resolve([]);
+
+    function ensureJsPDF() {
+      if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve();
+      return loadScript(JSPDF_CDN);
+    }
+
+    Promise.all([ensureJsPDF(), pubsPromise])
+      .then(function (results) { buildPDF(results[1], false); })
+      .then(function () { btn.textContent = origText; btn.style.pointerEvents = ''; })
+      .catch(function (err) {
+        console.error('PDF generation failed:', err);
+        btn.textContent = origText; btn.style.pointerEvents = '';
+        alert('PDF generation failed. Check console for details.');
       });
   }
 })();
