@@ -22,10 +22,12 @@
 
   var toggleState = {};
   var pubMode = 'all';
+  var expertiseMode = 'skills';
 
   function initState() {
     SECTIONS.forEach(function (s) { toggleState[s.key] = true; });
     pubMode = 'all';
+    expertiseMode = 'skills';
   }
 
   function buildModal() {
@@ -76,6 +78,10 @@
           var sub = document.getElementById('eePubSub');
           if (sub) sub.classList.toggle('is-open', this.checked);
         }
+        if (s.key === 'expertise') {
+          var expSub = document.getElementById('eeExpSub');
+          if (expSub) expSub.classList.toggle('is-open', this.checked);
+        }
       });
       var track = document.createElement('span');
       track.className = 'ee-toggle-track';
@@ -88,6 +94,24 @@
       row.appendChild(left);
       row.appendChild(toggle);
       togglesWrap.appendChild(row);
+
+      if (s.key === 'expertise') {
+        var expSub = document.createElement('div');
+        expSub.className = 'ee-pub-sub is-open';
+        expSub.id = 'eeExpSub';
+        var expSelect = document.createElement('select');
+        expSelect.className = 'ee-pub-select';
+        expSelect.setAttribute('aria-label', 'Expertise detail level');
+        [['skills', 'Skills only'], ['skills_courses', 'Skills + Courses']].forEach(function (pair) {
+          var opt = document.createElement('option');
+          opt.value = pair[0];
+          opt.textContent = pair[1];
+          expSelect.appendChild(opt);
+        });
+        expSelect.addEventListener('change', function () { expertiseMode = this.value; });
+        expSub.appendChild(expSelect);
+        togglesWrap.appendChild(expSub);
+      }
 
       if (s.key === 'publications') {
         var sub = document.createElement('div');
@@ -145,10 +169,11 @@
     } else {
       initState();
       overlay.querySelectorAll('input[type="checkbox"]').forEach(function (cb) { cb.checked = true; });
-      var sel = overlay.querySelector('.ee-pub-select');
-      if (sel) sel.value = 'all';
+      overlay.querySelectorAll('.ee-pub-select').forEach(function (sel) { sel.selectedIndex = 0; });
       var sub = document.getElementById('eePubSub');
       if (sub) sub.classList.add('is-open');
+      var expSub = document.getElementById('eeExpSub');
+      if (expSub) expSub.classList.add('is-open');
     }
     previousFocus = document.activeElement;
     requestAnimationFrame(function () {
@@ -346,6 +371,20 @@
         return '<span style="display:inline-block;padding:1px 6px;background:rgba(196,48,43,0.06);border-radius:3px;margin:1px 2px;font-size:7.5px;">' + esc(s) + '</span>';
       }).join(' ');
       h += '</div>';
+
+      if (expertiseMode === 'skills_courses') {
+        h += '<div style="margin-top:8px;font-size:7px;font-weight:600;color:#888280;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Continuing Education</div>';
+        var courses = document.querySelectorAll('#expertise .course-list li');
+        courses.forEach(function (li) {
+          var date = li.querySelector('.tl-date');
+          var text = li.textContent.trim();
+          if (date) text = text.replace(date.textContent.trim(), '').trim();
+          h += '<div style="display:grid;grid-template-columns:36px 1fr;gap:6px;padding:2px 0;border-bottom:0.5px solid rgba(0,0,0,0.04);font-size:7px;color:#4A4340;line-height:1.4;">';
+          h += '<span style="font-family:JetBrains Mono,monospace;font-size:6.5px;color:#C4302B;letter-spacing:0.3px;font-weight:500;">' + (date ? esc(date.textContent) : '') + '</span>';
+          h += '<span>' + esc(text) + '</span>';
+          h += '</div>';
+        });
+      }
     }
 
     if (toggleState.research) {
@@ -430,7 +469,7 @@
       .then(function (results) {
         var pubs = results[1];
         var container = document.createElement('div');
-        container.style.cssText = 'position:absolute;left:-9999px;top:0;width:170mm;font-family:Inter,system-ui,sans-serif;background:#FBFAF7;color:#1A1614;padding:0;';
+        container.style.cssText = 'position:fixed;top:0;left:0;width:170mm;padding:20mm;font-family:Inter,system-ui,sans-serif;background:#FBFAF7;color:#1A1614;z-index:1;overflow:hidden;';
         container.innerHTML = buildCvHtml(pubs);
         document.body.appendChild(container);
 
@@ -467,7 +506,9 @@
 
     var pubsPromise = toggleState.publications ? fetchPublications() : Promise.resolve([]);
 
-    Promise.all([loadScript(JSPDF_CDN), pubsPromise])
+    var jspdfReady = window.jspdf ? Promise.resolve() : loadScript(JSPDF_CDN);
+
+    Promise.all([jspdfReady, pubsPromise])
       .then(function (results) {
         var pubs = results[1];
         var jsPDF = window.jspdf.jsPDF;
@@ -626,6 +667,22 @@
             }
           });
           bodyText(skills.join('  ·  '));
+
+          if (expertiseMode === 'skills_courses') {
+            checkPage(6);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7.5);
+            doc.setTextColor(26, 22, 20);
+            doc.text('CONTINUING EDUCATION', marginL, y);
+            y += 4;
+            var courses = document.querySelectorAll('#expertise .course-list li');
+            courses.forEach(function (li) {
+              var date = li.querySelector('.tl-date');
+              var text = li.textContent.trim().replace(/\s+/g, ' ');
+              if (date) text = text.replace(date.textContent.trim(), '').trim();
+              timelineEntry(date ? date.textContent.trim() : '', text);
+            });
+          }
         }
 
         if (toggleState.research) {
