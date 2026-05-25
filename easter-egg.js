@@ -254,204 +254,207 @@
 
   function buildCvHtml(pubs) {
     var h = '';
+    var mono = 'Courier New,Courier,monospace';
+    var serif = 'Georgia,Times New Roman,serif';
+    var sans = 'Helvetica,Arial,sans-serif';
 
-    h += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;padding-bottom:10px;border-bottom:1.5px solid #1A1614;">';
-    h += '<div style="display:flex;align-items:flex-start;gap:10px;">';
-    h += '<div style="width:28px;height:28px;background:#7A1F2B;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">';
-    h += '<span style="color:#FBFAF7;font-family:Georgia,serif;font-weight:700;font-size:10px;letter-spacing:0.5px;">BL</span></div>';
-    h += '<div>';
-    h += '<div style="font-family:Fraunces,Georgia,serif;font-size:18px;font-weight:500;letter-spacing:-0.5px;line-height:1.15;color:#1A1614;">Bobby Zhao Sheng Lo, MD, PhD</div>';
-
+    // Header
+    h += '<table style="width:100%;border-bottom:2px solid #1A1614;padding-bottom:12px;margin-bottom:16px;border-collapse:collapse;"><tr>';
+    h += '<td style="vertical-align:top;">';
+    h += '<div style="display:inline-block;width:36px;height:36px;background:#7A1F2B;border-radius:5px;text-align:center;line-height:36px;margin-right:12px;vertical-align:top;">';
+    h += '<span style="color:#FBFAF7;font-family:' + serif + ';font-weight:700;font-size:14px;">BL</span></div>';
+    h += '<div style="display:inline-block;vertical-align:top;">';
+    h += '<div style="font-family:' + serif + ';font-size:24px;font-weight:bold;color:#1A1614;line-height:1.2;">Bobby Zhao Sheng Lo, MD, PhD</div>';
     var roleEl = document.querySelector('.hero-role');
     var roleText = roleEl ? roleEl.textContent.trim() : '';
-    h += '<div style="font-size:9px;color:#4A4340;margin-top:3px;line-height:1.4;">' + esc(roleText) + '</div>';
-    h += '<div style="font-family:JetBrains Mono,monospace;font-size:7px;color:#888280;letter-spacing:0.5px;margin-top:4px;">bobby.lo@regionh.dk &middot; linkedin.com/in/bobby-lo-md &middot; bobby-zs-lo.github.io</div>';
-    h += '</div></div>';
+    h += '<div style="font-family:' + sans + ';font-size:11px;color:#4A4340;margin-top:4px;line-height:1.4;max-width:420px;">' + esc(roleText) + '</div>';
+    h += '<div style="font-family:' + mono + ';font-size:10px;color:#888280;margin-top:4px;">bobby.lo@regionh.dk · linkedin.com/in/bobby-lo-md · bobby-zs-lo.github.io</div>';
+    h += '</div></td>';
 
     if (toggleState.photo) {
       var img = document.querySelector('.hero-portrait img');
       if (img) {
-        h += '<img src="' + img.src + '" style="width:52px;height:52px;border-radius:50%;object-fit:cover;flex-shrink:0;margin-left:12px;" crossorigin="anonymous">';
+        h += '<td style="vertical-align:top;text-align:right;width:70px;">';
+        h += '<img src="' + img.src + '" width="60" height="60" style="border-radius:50%;object-fit:cover;" crossorigin="anonymous">';
+        h += '</td>';
       }
     }
-    h += '</div>';
+    h += '</tr></table>';
 
-    function sectionTitle(t) {
-      return '<div style="font-family:JetBrains Mono,monospace;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#C4302B;font-weight:500;margin-top:14px;margin-bottom:6px;padding-bottom:4px;border-bottom:0.5px solid rgba(0,0,0,0.08);">// ' + t + '</div>';
+    function sec(t) {
+      return '<div style="font-family:' + mono + ';font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#C4302B;font-weight:bold;margin-top:18px;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #C4302B;">// ' + t + '</div>';
+    }
+    function subSec(t) {
+      return '<div style="font-family:' + sans + ';font-size:10px;font-weight:bold;color:#888280;letter-spacing:1px;text-transform:uppercase;margin-top:10px;margin-bottom:6px;">' + t + '</div>';
+    }
+    function tlRow(date, title, desc) {
+      var r = '<table style="width:100%;border-collapse:collapse;margin-bottom:2px;"><tr>';
+      r += '<td style="width:70px;vertical-align:top;padding:3px 8px 3px 0;font-family:' + mono + ';font-size:10px;color:#C4302B;font-weight:bold;">' + esc(date) + '</td>';
+      r += '<td style="vertical-align:top;padding:3px 0;border-bottom:1px solid #f0efeb;">';
+      if (title) r += '<strong style="font-family:' + sans + ';font-size:12px;color:#1A1614;">' + esc(title) + '</strong>';
+      if (desc) r += '<div style="font-family:' + sans + ';font-size:11px;color:#4A4340;margin-top:1px;">' + esc(desc) + '</div>';
+      r += '</td></tr></table>';
+      return r;
     }
 
+    // Introduction
     if (toggleState.intro) {
-      h += sectionTitle('Introduction');
-      var paras = document.querySelectorAll('#about .prose p');
-      paras.forEach(function (p) {
-        h += '<div style="font-size:8.5px;color:#4A4340;line-height:1.5;margin-bottom:4px;">' + esc(p.textContent.trim()) + '</div>';
+      h += sec('Introduction');
+      document.querySelectorAll('#about .prose p').forEach(function (p) {
+        h += '<p style="font-family:' + sans + ';font-size:12px;color:#4A4340;line-height:1.6;margin:0 0 8px 0;">' + esc(p.textContent.trim()) + '</p>';
       });
     }
 
+    // Current positions
     if (toggleState.current) {
-      h += sectionTitle('Current Positions');
-      var cards = document.querySelectorAll('#currently .role-card');
-      cards.forEach(function (c) {
+      h += sec('Current Positions');
+      document.querySelectorAll('#currently .role-card').forEach(function (c) {
         var date = c.querySelector('.role-date');
-        var title = c.querySelector('h3');
+        var h3 = c.querySelector('h3');
         var org = c.querySelector('.role-org');
         var note = c.querySelector('.role-note');
-        h += '<div style="margin-bottom:6px;">';
-        if (date) h += '<span style="font-family:JetBrains Mono,monospace;font-size:7px;color:#C4302B;letter-spacing:0.3px;">' + esc(date.textContent) + '</span> ';
-        if (title) h += '<strong style="font-size:9px;color:#1A1614;">' + esc(title.textContent) + '</strong>';
-        if (org) h += '<div style="font-size:8px;color:#4A4340;">' + esc(org.textContent) + '</div>';
-        if (note) h += '<div style="font-size:7.5px;color:#888280;">' + esc(note.textContent) + '</div>';
-        h += '</div>';
+        h += tlRow(
+          date ? date.textContent.trim() : '',
+          (h3 ? h3.textContent.trim() : '') + (org ? ' — ' + org.textContent.trim() : ''),
+          note ? note.textContent.trim() : ''
+        );
       });
     }
 
+    // Experience
     if (toggleState.experience) {
-      h += sectionTitle('Experience');
-      h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;">';
-      var expCols = document.querySelectorAll('#experience .exp-col');
-      expCols.forEach(function (col) {
-        h += '<div>';
-        var colTitle = col.querySelector('.exp-col-title');
-        if (colTitle) h += '<div style="font-size:7px;font-weight:600;color:#888280;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">' + esc(colTitle.textContent) + '</div>';
-        var items = col.querySelectorAll('.timeline li');
-        items.forEach(function (li) {
+      h += sec('Experience');
+      document.querySelectorAll('#experience .exp-col').forEach(function (col) {
+        var ct = col.querySelector('.exp-col-title');
+        if (ct) h += subSec(ct.textContent.trim());
+        col.querySelectorAll('.timeline li').forEach(function (li) {
           var date = li.querySelector('.tl-date');
-          var rest = li.querySelector('div');
-          h += '<div style="display:grid;grid-template-columns:48px 1fr;gap:8px;padding:3px 0;border-bottom:0.5px solid rgba(0,0,0,0.04);font-size:8px;color:#4A4340;line-height:1.4;">';
-          h += '<span style="font-family:JetBrains Mono,monospace;font-size:7px;color:#C4302B;letter-spacing:0.3px;font-weight:500;">' + (date ? esc(date.textContent) : '') + '</span>';
-          h += '<div>' + (rest ? rest.innerHTML : '') + '</div>';
-          h += '</div>';
+          var strong = li.querySelector('strong');
+          var div = li.querySelector('div');
+          var title = strong ? strong.textContent.trim() : '';
+          var full = div ? extractEntry(div) : '';
+          var desc = full.replace(title, '').replace(/^\s*[-·]\s*/, '').trim();
+          h += tlRow(date ? date.textContent.trim() : '', title, desc);
         });
-        h += '</div>';
       });
-      h += '</div>';
     }
 
+    // Education
     if (toggleState.education) {
-      h += sectionTitle('Education & Awards');
-      h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;">';
-      var edCols = document.querySelectorAll('#education .ed-grid > div');
-      edCols.forEach(function (col) {
-        h += '<div>';
-        var colTitle = col.querySelector('.ed-col-title');
-        if (colTitle) h += '<div style="font-size:7px;font-weight:600;color:#888280;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">' + esc(colTitle.textContent) + '</div>';
-        var items = col.querySelectorAll('.timeline li');
-        items.forEach(function (li) {
+      h += sec('Education & Awards');
+      document.querySelectorAll('#education .ed-grid > div').forEach(function (col) {
+        var ct = col.querySelector('.ed-col-title');
+        if (ct) h += subSec(ct.textContent.trim());
+        col.querySelectorAll('.timeline li').forEach(function (li) {
           var date = li.querySelector('.tl-date');
-          var rest = li.querySelector('div');
-          h += '<div style="display:grid;grid-template-columns:48px 1fr;gap:8px;padding:3px 0;border-bottom:0.5px solid rgba(0,0,0,0.04);font-size:8px;color:#4A4340;line-height:1.4;">';
-          h += '<span style="font-family:JetBrains Mono,monospace;font-size:7px;color:#C4302B;letter-spacing:0.3px;font-weight:500;">' + (date ? esc(date.textContent) : '') + '</span>';
-          h += '<div>' + (rest ? rest.innerHTML : '') + '</div>';
-          h += '</div>';
+          var strong = li.querySelector('strong');
+          var div = li.querySelector('div');
+          var title = strong ? strong.textContent.trim() : '';
+          var full = div ? extractEntry(div) : '';
+          var desc = full.replace(title, '').replace(/^\s*[-·]\s*/, '').trim();
+          h += tlRow(date ? date.textContent.trim() : '', title, desc);
         });
-        h += '</div>';
       });
-      h += '</div>';
     }
 
+    // Expertise
     if (toggleState.expertise) {
-      h += sectionTitle('Expertise');
-      h += '<div style="font-size:8px;color:#4A4340;line-height:1.7;">';
+      h += sec('Expertise');
       var compCards = document.querySelectorAll('#expertise .comp-card');
       var skills = [];
       compCards.forEach(function (c) {
         var t = c.querySelector('h3');
         var p = c.querySelector('p');
         if (t) skills.push(t.textContent.trim());
-        if (p) {
-          p.textContent.split(/[·,]/).forEach(function (s) {
-            var trimmed = s.trim();
-            if (trimmed) skills.push(trimmed);
-          });
-        }
+        if (p) p.textContent.split(/[·,]/).forEach(function (s) {
+          var tr = s.trim(); if (tr && skills.indexOf(tr) === -1) skills.push(tr);
+        });
       });
       var unique = [];
       skills.forEach(function (s) { if (unique.indexOf(s) === -1) unique.push(s); });
-      h += unique.map(function (s) {
-        return '<span style="display:inline-block;padding:1px 6px;background:rgba(196,48,43,0.06);border-radius:3px;margin:1px 2px;font-size:7.5px;">' + esc(s) + '</span>';
-      }).join(' ');
+      h += '<div style="line-height:2.2;">';
+      unique.forEach(function (s) {
+        h += '<span style="display:inline-block;padding:2px 8px;margin:2px 3px;background:#fdf0ef;border-radius:4px;font-family:' + sans + ';font-size:11px;color:#4A4340;">' + esc(s) + '</span>';
+      });
       h += '</div>';
 
       if (expertiseMode === 'skills_courses') {
-        h += '<div style="margin-top:8px;font-size:7px;font-weight:600;color:#888280;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">Continuing Education</div>';
-        var courses = document.querySelectorAll('#expertise .course-list li');
-        courses.forEach(function (li) {
+        h += subSec('Continuing Education');
+        document.querySelectorAll('#expertise .course-list li').forEach(function (li) {
           var date = li.querySelector('.tl-date');
           var text = li.textContent.trim();
           if (date) text = text.replace(date.textContent.trim(), '').trim();
-          h += '<div style="display:grid;grid-template-columns:36px 1fr;gap:6px;padding:2px 0;border-bottom:0.5px solid rgba(0,0,0,0.04);font-size:7px;color:#4A4340;line-height:1.4;">';
-          h += '<span style="font-family:JetBrains Mono,monospace;font-size:6.5px;color:#C4302B;letter-spacing:0.3px;font-weight:500;">' + (date ? esc(date.textContent) : '') + '</span>';
-          h += '<span>' + esc(text) + '</span>';
-          h += '</div>';
+          h += tlRow(date ? date.textContent.trim() : '', text, '');
         });
       }
     }
 
+    // Research
     if (toggleState.research) {
-      h += sectionTitle('Research Projects');
-      var rCards = document.querySelectorAll('#research .research-card');
-      rCards.forEach(function (c) {
+      h += sec('Research Projects');
+      document.querySelectorAll('#research .research-card').forEach(function (c) {
         var tag = c.querySelector('.research-tag');
         var title = c.querySelector('h3');
         var desc = c.querySelector('p');
-        h += '<div style="margin-bottom:6px;">';
-        if (tag) h += '<span style="font-family:JetBrains Mono,monospace;font-size:6.5px;color:#C4302B;letter-spacing:1.5px;text-transform:uppercase;">' + esc(tag.textContent) + '</span> ';
-        if (title) h += '<strong style="font-family:Fraunces,Georgia,serif;font-size:10px;color:#1A1614;">' + esc(title.textContent) + '</strong>';
-        if (desc) h += '<div style="font-size:8px;color:#4A4340;line-height:1.5;margin-top:2px;">' + esc(desc.textContent) + '</div>';
+        h += '<div style="margin-bottom:10px;">';
+        h += '<strong style="font-family:' + serif + ';font-size:14px;color:#1A1614;">' + esc(title ? title.textContent : '') + '</strong>';
+        if (tag) h += ' <span style="font-family:' + mono + ';font-size:9px;color:#C4302B;text-transform:uppercase;">[' + esc(tag.textContent.trim()) + ']</span>';
+        if (desc) h += '<div style="font-family:' + sans + ';font-size:11px;color:#4A4340;line-height:1.5;margin-top:3px;">' + esc(desc.textContent.trim()) + '</div>';
         h += '</div>';
       });
     }
 
+    // Publications
     if (toggleState.publications && pubs && pubs.length) {
-      h += sectionTitle('Publications');
+      h += sec('Publications');
       pubs.forEach(function (p) {
         var year = p.publication_year || '';
         var title = p.title || 'Untitled';
         var venue = (p.primary_location && p.primary_location.source && p.primary_location.source.display_name) || '';
         var cites = p.cited_by_count || 0;
-        h += '<div style="padding:2.5px 0;border-bottom:0.5px solid rgba(0,0,0,0.04);font-size:8px;">';
-        h += '<span style="font-family:Fraunces,Georgia,serif;font-size:8.5px;font-weight:500;color:#1A1614;">' + esc(title) + '</span>';
-        h += '<div style="font-size:7px;color:#888280;font-style:italic;margin-top:1px;">' + esc(venue) + (cites > 0 ? ' &middot; ' + cites + ' citation' + (cites === 1 ? '' : 's') : '') + ' &middot; ' + year + '</div>';
+        h += '<div style="padding:4px 0;border-bottom:1px solid #f0efeb;">';
+        h += '<div style="font-family:' + serif + ';font-size:12px;font-weight:bold;color:#1A1614;line-height:1.4;">' + esc(title) + '</div>';
+        h += '<div style="font-family:' + sans + ';font-size:10px;color:#C4302B;font-style:italic;margin-top:2px;">' + esc(venue) + (cites > 0 ? ' · ' + cites + ' citation' + (cites === 1 ? '' : 's') : '') + ' · ' + year + '</div>';
         h += '</div>';
       });
     }
 
+    // Speaking
     if (toggleState.speaking) {
-      h += sectionTitle('Speaking, Service & Outreach');
-      var blocks = document.querySelectorAll('#speaking .sso-block');
-      blocks.forEach(function (b) {
+      h += sec('Speaking, Service & Outreach');
+      document.querySelectorAll('#speaking .sso-block').forEach(function (b) {
         var title = b.querySelector('.sso-title');
-        if (title) h += '<div style="font-size:8px;font-weight:600;color:#1A1614;margin-top:6px;margin-bottom:3px;">' + esc(title.textContent) + '</div>';
-        var items = b.querySelectorAll('.sso-list li');
-        items.forEach(function (li) {
-          h += '<div style="font-size:7.5px;color:#4A4340;line-height:1.4;padding:1px 0;">' + esc(li.textContent.trim()) + '</div>';
+        if (title) h += subSec(title.textContent.trim());
+        b.querySelectorAll('.sso-list li').forEach(function (li) {
+          var date = li.querySelector('.tl-date');
+          var text = li.textContent.trim().replace(/\s+/g, ' ');
+          if (date) text = text.replace(date.textContent.trim(), '').trim();
+          h += tlRow(date ? date.textContent.trim() : '', text, '');
         });
-        var text = b.querySelector('.sso-text');
-        if (text) h += '<div style="font-size:7.5px;color:#4A4340;line-height:1.5;">' + esc(text.textContent.trim()) + '</div>';
+        var ssoText = b.querySelector('.sso-text');
+        if (ssoText) h += '<p style="font-family:' + sans + ';font-size:11px;color:#4A4340;line-height:1.5;margin:4px 0;">' + esc(ssoText.textContent.trim()) + '</p>';
         var aux = b.querySelector('.sso-aux');
-        if (aux) h += '<div style="font-size:7px;color:#888280;font-style:italic;margin-top:2px;">' + esc(aux.textContent.trim()) + '</div>';
+        if (aux) h += '<p style="font-family:' + sans + ';font-size:10px;color:#888280;font-style:italic;margin:4px 0;">' + esc(aux.textContent.trim()) + '</p>';
       });
     }
 
+    // Contact
     if (toggleState.contact) {
-      h += sectionTitle('Contact');
-      var contacts = document.querySelectorAll('#contact .contact-list li');
-      contacts.forEach(function (li) {
+      h += sec('Contact');
+      document.querySelectorAll('#contact .contact-list li').forEach(function (li) {
         var key = li.querySelector('.contact-key');
         var val = li.querySelector('a') || li.querySelector('span:last-child');
         if (key && val) {
-          h += '<div style="font-size:8px;color:#4A4340;padding:1px 0;"><strong style="font-family:JetBrains Mono,monospace;font-size:7px;color:#888280;letter-spacing:1px;text-transform:uppercase;">' + esc(key.textContent) + '</strong> ' + esc(val.textContent.trim()) + '</div>';
+          h += '<div style="font-family:' + sans + ';font-size:12px;color:#4A4340;padding:2px 0;">';
+          h += '<strong style="font-family:' + mono + ';font-size:10px;color:#888280;text-transform:uppercase;">' + esc(key.textContent.trim()) + '</strong> ';
+          h += esc(val.textContent.trim()) + '</div>';
         }
       });
       var affs = document.querySelectorAll('#contact .aff-marks span');
       if (affs.length) {
-        h += '<div style="font-size:7px;color:#888280;margin-top:4px;">' + Array.from(affs).map(function (a) { return esc(a.textContent.trim()); }).join(' &middot; ') + '</div>';
+        h += '<div style="font-family:' + sans + ';font-size:10px;color:#888280;margin-top:6px;">' + Array.from(affs).map(function (a) { return esc(a.textContent.trim()); }).join(' · ') + '</div>';
       }
     }
-
-    h += '<div style="position:fixed;bottom:20mm;right:20mm;opacity:0.045;">';
-    h += '<svg viewBox="0 0 64 64" width="48" height="48"><rect width="64" height="64" rx="10" fill="#7A1F2B"/><text x="18" y="43" font-family="Georgia,serif" font-weight="700" font-size="26" fill="#FBFAF7">B</text><text x="37" y="43" font-family="Georgia,serif" font-weight="700" font-size="26" fill="#FBFAF7">L</text></svg>';
-    h += '</div>';
 
     return h;
   }
@@ -850,7 +853,7 @@
 
         var container = document.createElement('div');
         container.id = 'ee-cv-render';
-        container.style.cssText = 'width:180mm;padding:0;margin:0;font-family:Inter,Helvetica,Arial,sans-serif;background:#FBFAF7;color:#1A1614;font-size:11px;line-height:1.5;';
+        container.style.cssText = 'width:700px;padding:30px;margin:0 auto;font-family:Helvetica,Arial,sans-serif;background:#FBFAF7;color:#1A1614;font-size:12px;line-height:1.5;';
         container.innerHTML = buildCvHtml(pubs);
 
         if (overlay) overlay.style.visibility = 'hidden';
