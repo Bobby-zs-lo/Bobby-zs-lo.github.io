@@ -277,7 +277,7 @@
 
   function getImageData(imgEl) {
     try {
-      var size = 400;
+      var size = 500;
       var canvas = document.createElement('canvas');
       canvas.width = size; canvas.height = size;
       var ctx = canvas.getContext('2d');
@@ -285,8 +285,9 @@
       var sw = imgEl.naturalWidth, sh = imgEl.naturalHeight;
       var scale = Math.max(size / sw, size / sh);
       var dw = sw * scale, dh = sh * scale;
-      ctx.drawImage(imgEl, (size - dw) / 2, (size - dh) / 2, dw, dh);
-      return canvas.toDataURL('image/jpeg', 0.92);
+      var offsetY = sh > sw ? -(dh - size) * 0.3 : (size - dh) / 2;
+      ctx.drawImage(imgEl, (size - dw) / 2, offsetY, dw, dh);
+      return canvas.toDataURL('image/jpeg', 0.95);
     } catch (e) { return null; }
   }
 
@@ -337,7 +338,7 @@
         var heroImg = document.querySelector('.hero-portrait img');
         if (heroImg) {
           var imgData = getImageData(heroImg);
-          if (imgData) doc.addImage(imgData, 'JPEG', W - mR - 22, 14, 20, 20);
+          if (imgData) doc.addImage(imgData, 'JPEG', W - mR - 27, 12, 25, 25);
         }
       }
 
@@ -504,23 +505,7 @@
         });
       });
 
-      if (styled) {
-        var chipX = mL, chipY = y;
-        skills.forEach(function (s) {
-          var txt = sanitize(s);
-          doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
-          var tw = doc.getTextWidth(txt) + 4;
-          if (chipX + tw > W - mR) { chipX = mL; chipY += 5.5; checkPage(5.5); }
-          fillRgb({ r: 250, g: 240, b: 239 });
-          doc.roundedRect(chipX, chipY - 2.8, tw, 4.2, 1, 1, 'F');
-          rgb(ink2);
-          doc.text(txt, chipX + 2, chipY);
-          chipX += tw + 2;
-        });
-        y = chipY + 5;
-      } else {
-        body(skills.join('  ·  '));
-      }
+      body(skills.map(function (s) { return sanitize(s); }).join(', '));
 
       if (expertiseMode === 'skills_courses') {
         y += 1;
@@ -624,19 +609,10 @@
       });
     }
 
-    // -- WATERMARK + PAGE NUMBERS --
+    // -- PAGE NUMBERS --
     var pageCount = doc.internal.getNumberOfPages();
     for (var i = 1; i <= pageCount; i++) {
       doc.setPage(i);
-      if (styled) {
-        doc.setGState(new doc.GState({ opacity: 0.06 }));
-        fillRgb({ r: 122, g: 31, b: 43 });
-        doc.roundedRect(W - mR - 10, 280, 8, 8, 1.2, 1.2, 'F');
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(5);
-        doc.setTextColor(251, 250, 247);
-        doc.text('BL', W - mR - 7.5, 285);
-        doc.setGState(new doc.GState({ opacity: 1 }));
-      }
       doc.setFont('helvetica', 'normal'); doc.setFontSize(7); rgb(ink3);
       doc.text(i + ' / ' + pageCount, W / 2, 290, { align: 'center' });
     }
