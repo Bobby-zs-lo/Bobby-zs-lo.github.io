@@ -204,11 +204,11 @@
     img.crossOrigin = 'anonymous';
     img.onload = function () {
       var c = document.createElement('canvas');
-      c.width = 64; c.height = 64;
-      c.getContext('2d').drawImage(img, 0, 0, 64, 64);
+      c.width = 512; c.height = 512;
+      c.getContext('2d').drawImage(img, 0, 0, 512, 512);
       window._eeFaviconData = c.toDataURL('image/png');
     };
-    img.src = 'image/favicon-64.png';
+    img.src = 'image/favicon-512.png';
   })();
 
   trigger.addEventListener('click', openModal);
