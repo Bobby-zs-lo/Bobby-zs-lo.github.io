@@ -246,8 +246,8 @@
   _charMap[0x2018] = "'"; _charMap[0x2019] = "'"; _charMap[0x201A] = "'";
   _charMap[0x201C] = '"'; _charMap[0x201D] = '"'; _charMap[0x201E] = '"';
   _charMap[0x2026] = '...'; _charMap[0x2013] = '-'; _charMap[0x2014] = '-';
-  _charMap[0x2192] = '>'; _charMap[0x00B7] = ' | '; _charMap[0x2022] = ' | ';
-  _charMap[0x22C5] = ' | '; _charMap[0x00A0] = ' ';
+  _charMap[0x2192] = '>'; _charMap[0x00B7] = '\xB7'; _charMap[0x2022] = '\xB7';
+  _charMap[0x22C5] = '\xB7'; _charMap[0x00A0] = ' ';
   _charMap[0x00E6] = 'ae'; _charMap[0x00C6] = 'Ae';
   _charMap[0x00F8] = 'o';  _charMap[0x00D8] = 'O';
   _charMap[0x00E5] = 'aa'; _charMap[0x00C5] = 'Aa';
@@ -281,6 +281,8 @@
       var canvas = document.createElement('canvas');
       canvas.width = size; canvas.height = size;
       var ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, size, size);
       ctx.beginPath(); ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2); ctx.clip();
       var sw = imgEl.naturalWidth, sh = imgEl.naturalHeight;
       var scale = Math.max(size / sw, size / sh);
@@ -331,7 +333,7 @@
       y += roleLines.length * 3.2 + 1.5;
 
       doc.setFontSize(6.5); rgb(ink3);
-      doc.text('bobby.lo@regionh.dk  |  linkedin.com/in/bobby-lo-md  |  bobby-zs-lo.github.io', mL + 14, y);
+      doc.text('bobby.lo@regionh.dk  \xB7  linkedin.com/in/bobby-lo-md  \xB7  bobbylo.dk', mL + 14, y);
       y += 5;
 
       if (toggleState.photo) {
@@ -363,7 +365,7 @@
       doc.text(rl2, W / 2, y, { align: 'center' });
       y += rl2.length * 3.5 + 2;
       doc.setFontSize(7); rgb(ink3);
-      doc.text('bobby.lo@regionh.dk  |  linkedin.com/in/bobby-lo-md  |  bobby-zs-lo.github.io', W / 2, y, { align: 'center' });
+      doc.text('bobby.lo@regionh.dk  \xB7  linkedin.com/in/bobby-lo-md  \xB7  bobbylo.dk', W / 2, y, { align: 'center' });
       y += 5;
       drawRgb(ink); doc.setLineWidth(0.3); doc.line(mL, y, W - mR, y); y += 6;
     }
@@ -391,7 +393,8 @@
 
     function body(text) {
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8); rgb(ink2);
-      var lines = doc.splitTextToSize(sanitize(text), cW);
+      var clean = sanitize(text).replace(/\s+/g, ' ').trim();
+      var lines = doc.splitTextToSize(clean, cW);
       lines.forEach(function (l) { checkPage(3.5); doc.text(l, mL, y); y += 3.5; });
       y += 1.5;
     }
@@ -410,12 +413,12 @@
       var wR = cW - 26;
       if (title) {
         doc.setFont('helvetica', 'bold'); doc.setFontSize(8); rgb(ink);
-        var tLines = doc.splitTextToSize(sanitize(title), wR);
+        var tLines = doc.splitTextToSize(sanitize(title).replace(/\s+/g, ' ').trim(), wR);
         tLines.forEach(function (l) { doc.text(l, xR, y); y += 3.3; });
       }
       if (desc) {
         doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); rgb(ink2);
-        var dLines = doc.splitTextToSize(sanitize(desc), wR);
+        var dLines = doc.splitTextToSize(sanitize(desc).replace(/\s+/g, ' ').trim(), wR);
         dLines.forEach(function (l) { checkPage(3.2); doc.text(l, xR, y); y += 3.2; });
       }
       y += 1.8;
@@ -505,7 +508,7 @@
         });
       });
 
-      body(skills.map(function (s) { return sanitize(s); }).join(', '));
+      body(skills.map(function (s) { return sanitize(s); }).join('  \xB7  '));
 
       if (expertiseMode === 'skills_courses') {
         y += 1;
@@ -550,17 +553,16 @@
         var year = p.publication_year || '';
         var title = sanitize(p.title || 'Untitled');
         var venue = sanitize((p.primary_location && p.primary_location.source && p.primary_location.source.display_name) || '');
-        var cites = p.cited_by_count || 0;
         checkPage(9);
 
         doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); rgb(ink);
-        var tLines = doc.splitTextToSize(title, cW);
+        var tLines = doc.splitTextToSize(title.replace(/\s+/g, ' ').trim(), cW);
         tLines.forEach(function (l) { checkPage(3.2); doc.text(l, mL, y); y += 3.2; });
 
         doc.setFont('helvetica', 'italic'); doc.setFontSize(6.5);
         if (styled) { rgb(ox); } else { rgb(ink3); }
-        var meta = venue + (cites > 0 ? ' · ' + cites + ' citation' + (cites === 1 ? '' : 's') : '') + ' · ' + year;
-        doc.text(sanitize(meta), mL, y);
+        var meta = venue + (year ? ' \xB7 ' + year : '');
+        doc.text(meta, mL, y);
         y += 4.5;
       });
     }
