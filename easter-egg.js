@@ -199,6 +199,18 @@
     }
   }
 
+  (function preloadFavicon() {
+    var img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function () {
+      var c = document.createElement('canvas');
+      c.width = 64; c.height = 64;
+      c.getContext('2d').drawImage(img, 0, 0, 64, 64);
+      window._eeFaviconData = c.toDataURL('image/png');
+    };
+    img.src = 'image/favicon-64.png';
+  })();
+
   trigger.addEventListener('click', openModal);
   trigger.addEventListener('keydown', function (e) {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openModal(); }
@@ -313,11 +325,15 @@
 
     // -- HEADER --
     if (styled) {
-      fillRgb({ r: 122, g: 31, b: 43 });
-      doc.roundedRect(mL, y - 2, 10, 10, 1.5, 1.5, 'F');
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(7);
-      doc.setTextColor(251, 250, 247);
-      doc.text('BL', mL + 2.8, y + 4.5);
+      if (window._eeFaviconData) {
+        doc.addImage(window._eeFaviconData, 'PNG', mL, y - 2, 10, 10);
+      } else {
+        fillRgb({ r: 122, g: 31, b: 43 });
+        doc.roundedRect(mL, y - 2, 10, 10, 1.5, 1.5, 'F');
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(7);
+        doc.setTextColor(251, 250, 247);
+        doc.text('BL', mL + 2.8, y + 4.5);
+      }
 
       doc.setFont('helvetica', 'bold'); doc.setFontSize(16);
       rgb(ink);
@@ -325,7 +341,7 @@
       y += 9;
 
       var roleEl = document.querySelector('.hero-role');
-      var roleText = roleEl ? sanitize(roleEl.textContent.trim()) : '';
+      var roleText = roleEl ? sanitize(roleEl.textContent.trim()).replace(/\s+/g, ' ').trim() : '';
       doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
       rgb(ink2);
       var roleLines = doc.splitTextToSize(roleText, cW - 14);
