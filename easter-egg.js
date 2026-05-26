@@ -23,11 +23,15 @@
   var toggleState = {};
   var pubMode = 'all';
   var expertiseMode = 'skills';
+  var customPubs = [];
+  var allPubsCache = [];
 
   function initState() {
     SECTIONS.forEach(function (s) { toggleState[s.key] = true; });
     pubMode = 'all';
     expertiseMode = 'skills';
+    customPubs = [];
+    allPubsCache = [];
   }
 
   function buildModal() {
@@ -120,10 +124,10 @@
         var select = document.createElement('select');
         select.className = 'ee-pub-select';
         select.setAttribute('aria-label', 'Publication filter');
-        ['all', 'top10', 'latest10'].forEach(function (val) {
+        [['all', 'All publications'], ['top10', 'Top 10 by citations'], ['latest10', 'Latest 10'], ['custom', 'Custom selection']].forEach(function (pair) {
           var opt = document.createElement('option');
-          opt.value = val;
-          opt.textContent = val === 'all' ? 'All publications' : val === 'top10' ? 'Top 10 by citations' : 'Latest 10';
+          opt.value = pair[0];
+          opt.textContent = pair[1];
           select.appendChild(opt);
         });
         select.addEventListener('change', function () { pubMode = this.value; });
@@ -143,10 +147,104 @@
 
     footer.appendChild(genBtn);
 
+    // Step 1 wrapper (so we can show/hide it as a group)
+    var step1 = document.createElement('div');
+    step1.id = 'eeStep1';
+    step1.appendChild(header);
+    step1.appendChild(togglesWrap);
+    step1.appendChild(footer);
+
+    // Step 2 panel (publication picker, hidden by default)
+    var step2 = document.createElement('div');
+    step2.className = 'ee-step2';
+    step2.id = 'eeStep2';
+
+    var s2dots = document.createElement('div');
+    s2dots.className = 'ee-step-dots';
+    s2dots.innerHTML = '<span class="ee-step-dot ee-step-dot-done">1</span><span class="ee-step-dot ee-step-dot-active">2</span>';
+
+    var s2header = document.createElement('div');
+    s2header.className = 'ee-header';
+    s2header.innerHTML = '<h2 class="ee-title">Select publications</h2><div class="ee-subtitle">// step 2 of 2</div>';
+
+    var s2search = document.createElement('input');
+    s2search.className = 'ee-pub-search';
+    s2search.type = 'text';
+    s2search.placeholder = 'Search publications...';
+    s2search.setAttribute('aria-label', 'Search publications');
+
+    var s2list = document.createElement('div');
+    s2list.className = 'ee-pub-list';
+    s2list.id = 'eePubList';
+
+    var s2count = document.createElement('div');
+    s2count.className = 'ee-pub-count';
+    s2count.id = 'eePubCount';
+    s2count.innerHTML = '<span>0 of 0 selected</span><span><a id="eePubSelAll">Select all</a> &middot; <a id="eePubClear">Clear</a></span>';
+
+    var s2footer = document.createElement('div');
+    s2footer.className = 'ee-step2-footer';
+    var s2back = document.createElement('button');
+    s2back.className = 'ee-step2-back';
+    s2back.textContent = '← Back';
+    var s2gen = document.createElement('button');
+    s2gen.className = 'ee-step2-gen';
+    s2gen.id = 'eeStep2Gen';
+    s2gen.textContent = 'Generate PDF →';
+    s2gen.disabled = true;
+    s2footer.appendChild(s2back);
+    s2footer.appendChild(s2gen);
+
+    step2.appendChild(s2dots);
+    step2.appendChild(s2header);
+    step2.appendChild(s2search);
+    step2.appendChild(s2list);
+    step2.appendChild(s2count);
+    step2.appendChild(s2footer);
+
+    // Step 2 event listeners
+    s2search.addEventListener('input', function () {
+      var q = this.value.toLowerCase();
+      s2list.querySelectorAll('.ee-pub-row').forEach(function (row) {
+        var text = row.textContent.toLowerCase();
+        row.classList.toggle('is-hidden', q && !text.includes(q));
+      });
+    });
+
+    s2back.addEventListener('click', function () {
+      step2.classList.remove('is-visible');
+      step1.style.display = '';
+      closeBtn.style.display = '';
+    });
+
+    s2gen.addEventListener('click', function () {
+      var selected = [];
+      s2list.querySelectorAll('.ee-pub-row').forEach(function (row) {
+        if (row.querySelector('.is-checked')) {
+          selected.push(JSON.parse(row.dataset.pub));
+        }
+      });
+      customPubs = selected;
+      step2.classList.remove('is-visible');
+      step1.style.display = '';
+      closeBtn.style.display = '';
+      doGeneratePDF(customPubs);
+    });
+
+    s2count.querySelector('#eePubSelAll').addEventListener('click', function (e) {
+      e.preventDefault();
+      s2list.querySelectorAll('.ee-pub-row:not(.is-hidden) .ee-pub-cb').forEach(function (cb) { cb.classList.add('is-checked'); });
+      updatePubCount();
+    });
+    s2count.querySelector('#eePubClear').addEventListener('click', function (e) {
+      e.preventDefault();
+      s2list.querySelectorAll('.ee-pub-cb').forEach(function (cb) { cb.classList.remove('is-checked'); });
+      updatePubCount();
+    });
+
     card.appendChild(closeBtn);
-    card.appendChild(header);
-    card.appendChild(togglesWrap);
-    card.appendChild(footer);
+    card.appendChild(step1);
+    card.appendChild(step2);
     overlay.appendChild(card);
 
     overlay.addEventListener('click', function (e) {
@@ -154,6 +252,53 @@
     });
 
     document.body.appendChild(overlay);
+  }
+
+  function updatePubCount() {
+    var total = document.querySelectorAll('#eePubList .ee-pub-row').length;
+    var checked = document.querySelectorAll('#eePubList .ee-pub-cb.is-checked').length;
+    var countEl = document.querySelector('#eePubCount span:first-child');
+    if (countEl) countEl.textContent = checked + ' of ' + total + ' selected';
+    var genBtn = document.getElementById('eeStep2Gen');
+    if (genBtn) genBtn.disabled = checked === 0;
+  }
+
+  function populateStep2(pubs) {
+    var list = document.getElementById('eePubList');
+    if (!list) return;
+    list.innerHTML = '';
+    if (!pubs.length) {
+      list.innerHTML = '<div class="ee-pub-empty">No publications found.</div>';
+      return;
+    }
+    pubs.forEach(function (p) {
+      var row = document.createElement('div');
+      row.className = 'ee-pub-row';
+      row.dataset.pub = JSON.stringify({ title: p.title, publication_year: p.publication_year, primary_location: p.primary_location, cited_by_count: p.cited_by_count });
+      var cb = document.createElement('div');
+      cb.className = 'ee-pub-cb';
+      var info = document.createElement('div');
+      var venue = (p.primary_location && p.primary_location.source && p.primary_location.source.display_name) || '';
+      info.innerHTML = '<div class="ee-pub-row-title">' + (p.title || 'Untitled').replace(/</g, '&lt;') + '</div>' +
+        '<div class="ee-pub-row-meta">' + venue.replace(/</g, '&lt;') + (p.publication_year ? ' &middot; ' + p.publication_year : '') + '</div>';
+      row.appendChild(cb);
+      row.appendChild(info);
+      row.addEventListener('click', function () {
+        cb.classList.toggle('is-checked');
+        updatePubCount();
+      });
+      list.appendChild(row);
+    });
+    updatePubCount();
+  }
+
+  function showStep2() {
+    var step1 = document.getElementById('eeStep1');
+    var step2 = document.getElementById('eeStep2');
+    var closeBtn = overlay.querySelector('.ee-close');
+    if (step1) step1.style.display = 'none';
+    if (closeBtn) closeBtn.style.display = 'none';
+    if (step2) step2.classList.add('is-visible');
   }
 
   function openModal() {
@@ -168,6 +313,10 @@
       if (sub) sub.classList.add('is-open');
       var expSub = document.getElementById('eeExpSub');
       if (expSub) expSub.classList.add('is-open');
+      var s2 = document.getElementById('eeStep2');
+      if (s2) s2.classList.remove('is-visible');
+      var s1 = document.getElementById('eeStep1');
+      if (s1) s1.style.display = '';
     }
     previousFocus = document.activeElement;
     requestAnimationFrame(function () {
@@ -566,6 +715,11 @@
     // -- PUBLICATIONS --
     if (toggleState.publications && pubs && pubs.length) {
       heading('Publications');
+      if (pubMode !== 'custom') {
+        doc.setFont('helvetica', 'italic'); doc.setFontSize(6); rgb(ink3);
+        doc.text('Publication list generated automatically from OpenAlex. Errors may occur.', mL, y);
+        y += 4;
+      }
       pubs.forEach(function (p) {
         var year = p.publication_year || '';
         var title = sanitize(p.title || 'Untitled');
@@ -639,25 +793,65 @@
     doc.save('Bobby_Lo_CV_' + todayStr() + '.pdf');
   }
 
-  // -- Single PDF generator --
-  function generatePDF() {
+  function ensureJsPDF() {
+    if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve();
+    return loadScript(JSPDF_CDN);
+  }
+
+  // -- Actual PDF generation (called after pubs are resolved) --
+  function doGeneratePDF(pubs) {
     var btn = document.getElementById('eeGenBtn');
     btn.disabled = true;
     btn.innerHTML = '<span class="ee-spinner"></span>';
-    var pubsPromise = toggleState.publications ? fetchPublications() : Promise.resolve([]);
 
-    function ensureJsPDF() {
-      if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve();
-      return loadScript(JSPDF_CDN);
-    }
-
-    Promise.all([ensureJsPDF(), pubsPromise])
-      .then(function (results) { buildPDF(results[1], true); })
+    ensureJsPDF()
+      .then(function () { buildPDF(pubs, true); })
       .then(function () { btn.disabled = false; btn.textContent = 'Generate PDF →'; })
       .catch(function (err) {
         console.error('PDF generation failed:', err);
         btn.disabled = false; btn.textContent = 'Generate PDF →';
         alert('PDF generation failed. Check console for details.');
       });
+  }
+
+  // -- Main generate handler (conditional: step 2 or direct) --
+  function generatePDF() {
+    if (pubMode === 'custom' && toggleState.publications) {
+      var btn = document.getElementById('eeGenBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="ee-spinner"></span>';
+
+      var fetchAll = allPubsCache.length ? Promise.resolve(allPubsCache) :
+        fetch('https://api.openalex.org/works?filter=authorships.author.id:' + AUTHOR_ID + '&per_page=200&sort=publication_date%3Adesc&mailto=' + MAILTO)
+          .then(function (r) { return r.json(); })
+          .then(function (d) { allPubsCache = d.results || []; return allPubsCache; });
+
+      fetchAll
+        .then(function (pubs) {
+          populateStep2(pubs);
+          showStep2();
+          btn.disabled = false;
+          btn.textContent = 'Generate PDF →';
+        })
+        .catch(function (err) {
+          console.error('Failed to fetch publications:', err);
+          btn.disabled = false; btn.textContent = 'Generate PDF →';
+          alert('Failed to load publications from OpenAlex.');
+        });
+    } else {
+      var pubsPromise = toggleState.publications ? fetchPublications() : Promise.resolve([]);
+      var btn2 = document.getElementById('eeGenBtn');
+      btn2.disabled = true;
+      btn2.innerHTML = '<span class="ee-spinner"></span>';
+
+      Promise.all([ensureJsPDF(), pubsPromise])
+        .then(function (results) { buildPDF(results[1], true); })
+        .then(function () { btn2.disabled = false; btn2.textContent = 'Generate PDF →'; })
+        .catch(function (err) {
+          console.error('PDF generation failed:', err);
+          btn2.disabled = false; btn2.textContent = 'Generate PDF →';
+          alert('PDF generation failed. Check console for details.');
+        });
+    }
   }
 })();
