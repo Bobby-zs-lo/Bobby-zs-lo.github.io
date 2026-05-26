@@ -768,6 +768,12 @@
     // -- CONTACT --
     if (toggleState.contact) {
       heading('Contact');
+      checkPage(5);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); rgb(ink3);
+      doc.text('PHONE', mL, y);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); rgb(ink2);
+      doc.text('+45 2858 0410', mL + 22, y);
+      y += 4.5;
       document.querySelectorAll('#contact .contact-list li').forEach(function (li) {
         var key = li.querySelector('.contact-key');
         var val = li.querySelector('a') || li.querySelector('span:last-child');

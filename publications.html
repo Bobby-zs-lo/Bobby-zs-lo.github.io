@@ -59,7 +59,8 @@
             <h2>Peer-reviewed publications</h2>
             <div class="topic-chips" role="group" aria-label="Filter by topic"><button class="topic-chip" data-topic="all" aria-pressed="true">All</button><button class="topic-chip" data-topic="IBD" aria-pressed="false">IBD</button><button class="topic-chip" data-topic="Crohn&#x27;s" aria-pressed="false">Crohn&#x27;s</button><button class="topic-chip" data-topic="UC" aria-pressed="false">UC</button><button class="topic-chip" data-topic="Microbiome" aria-pressed="false">Microbiome</button><button class="topic-chip" data-topic="AI" aria-pressed="false">AI</button><button class="topic-chip" data-topic="Endoscopy" aria-pressed="false">Endoscopy</button><button class="topic-chip" data-topic="Epidemiology" aria-pressed="false">Epidemiology</button></div>
             <input type="text" id="searchBox" onkeyup="filterPublications()" placeholder="Search publications&hellip;" class="pubs-search" />
-            <button id="toggleAllBtn" onclick="toggleAll()" class="btn btn-outline" style="margin-bottom:18px">Expand All</button>
+            <button id="toggleAllBtn" onclick="toggleAll()" class="btn btn-outline" style="margin-bottom:10px">Expand All</button>
+            <p style="font-size:11px;font-style:italic;color:var(--ink-3);margin-bottom:18px;">Publication data is automatically retrieved from OpenAlex and may contain occasional errors or omissions.</p>
             <div id="publicationsList">
               <div class="collapsible-section">
                 <button class="collapsible">2026</button>
@@ -133,11 +134,12 @@
     </main>
     <footer class="site-footer">
       <div class="container site-footer-inner">
-        <span>&copy; 2026 Bobby Zhao Sheng Lo.</span>
+        <span><img src="image/favicon.svg" alt="" width="20" height="20" class="ee-trigger" role="button" tabindex="0" aria-label="Easter egg" id="eeTrigger">&copy; 2026 Bobby Zhao Sheng Lo.</span>
         <span class="site-footer-meta">All rights reserved.</span>
       </div>
     </footer>
     <button id="toTopBtn" title="Go to top" aria-label="Scroll to top">&uarr;</button>
     <script src="script.js"></script>
+    <script src="easter-egg.js" defer></script>
 </body>
 </html>
