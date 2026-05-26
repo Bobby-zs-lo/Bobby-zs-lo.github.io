@@ -344,7 +344,8 @@
       var roleText = roleEl ? sanitize(roleEl.textContent.trim()).replace(/\s+/g, ' ').trim() : '';
       doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
       rgb(ink2);
-      var roleLines = doc.splitTextToSize(roleText, cW - 14);
+      var roleW = toggleState.photo ? cW - 14 - 30 : cW - 14;
+      var roleLines = doc.splitTextToSize(roleText, roleW);
       doc.text(roleLines, mL + 14, y);
       y += roleLines.length * 3.2 + 1.5;
 
