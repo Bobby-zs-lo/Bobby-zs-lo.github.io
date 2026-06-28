@@ -1,4 +1,4 @@
-const CACHE = 'pixel-timer-v4';
+const CACHE = 'pixel-timer-v5';
 const ASSETS = [
   './', './index.html', './css/shell.css', './css/crt.css',
   './js/main.js', './js/timer.js', './js/audio.js', './js/input.js',

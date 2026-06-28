@@ -119,8 +119,12 @@ export async function renderRun(ctx, { themeId, durationMs }) {
   function frame(now) {
     const dt = now - last;
     last = now;
-    if (engine.state !== 'done') engine.tick();
-    scene.update(engine.getProgress(), dt, engine.getRemainingMs());
+    // While paused, freeze the countdown AND the scene animation (just keep
+    // re-rendering the frozen frame so the HUD/scene stay drawn).
+    if (!paused) {
+      if (engine.state !== 'done') engine.tick();
+      scene.update(engine.getProgress(), dt, engine.getRemainingMs());
+    }
     scene.render();
     // HUD clock top-left — font scale relative to stage width
     const ms = engine.getRemainingMs();
