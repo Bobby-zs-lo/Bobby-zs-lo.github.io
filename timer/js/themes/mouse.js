@@ -22,10 +22,15 @@
  * Resolution-relative: band + grid recomputed in layout(W,H); aspect-aware
  * (more columns allowed in landscape). Backdrop: warm tan gradient + vignette.
  *
+ * Mixed fidelity (intentional): apples/cores/cheese/crumb are 16-bit PIXEL art
+ * (nearest-neighbor); the MOUSE is a smooth, anti-aliased HD cartoon sprite drawn
+ * with imageSmoothing ENABLED for just its blit, then restored to false.
+ *
  * Sprite sheet: assets/mouse.png + mouse.json
- * Frames: apple, apple_bite, core, cheese, crumb,
- *         apple_s, core_s, cheese_s, mouse_s,
- *         mouse_eat0, mouse_eat1, mouse_cheese, mouse_full
+ * Pixel frames: apple, apple_bite, core, cheese, crumb, apple_s, core_s, cheese_s
+ * HD mouse frames (128x112 box, facing left):
+ *         mouse_eat0..3 (chew cycle), mouse_hop0..2 (hop to next apple),
+ *         mouse_cheese (nibble cheese finale), mouse_full (big-belly finale)
  */
 import { Scene, blit } from '../scene.js';
 import { audio }       from '../audio.js';
@@ -38,18 +43,23 @@ const C = {
 };
 
 // ── Sprite base dimensions (1:1 with sheet) ──────────────────────────────────
-// Detailed (large-cell) tier
+// Pixel apple/cheese — detailed (large-cell) tier
 const APPLE_W = 22, APPLE_H = 26;
 const CHEESE_W = 26, CHEESE_H = 20;
-const MOUSE_W = 26, MOUSE_H = 24;     // eat frames
-const MOUSEC_W = 30, MOUSEC_H = 26;   // mouse_cheese
-const MOUSEF_W = 30, MOUSEF_H = 24;   // mouse_full
-// Simplified (small-cell) tier
+// Pixel apple/cheese — simplified (small-cell) tier
 const APPLE_SW = 12, APPLE_SH = 13;
 const CHEESE_SW = 14, CHEESE_SH = 11;
-const MOUSE_SW = 14, MOUSE_SH = 12;
 
-// Cells whose square size (px) is below this use the simplified small tier.
+// HD mouse: every mouse frame shares one 128x112 box (smooth, anti-aliased).
+const MOUSE_W = 128, MOUSE_H = 112;
+const EAT_FRAMES = ['mouse_eat0', 'mouse_eat1', 'mouse_eat2', 'mouse_eat3'];
+const CHEW_MS = 150;     // per chew frame
+const TWEEN_MS = 300;    // hop travel time between apples
+const MOUSE_FILL = 1.3;  // mouse ~1.3x a cell while eating
+const MOUSE_MIN = 30;    // never smaller than this (readable at tiny 60-min cells)
+
+// Cells whose square size (px) is below this use the simplified small pixel tier
+// (mouse always uses the smooth HD frames, scaled, regardless of cell size).
 const DETAIL_MIN = 26;
 // How much of a cell a sprite fills (small consistent gaps, like the reference).
 const FILL = 0.92;
@@ -169,8 +179,10 @@ export class MouseScene extends Scene {
 
     this._lastEaten = 0;
     this._chewT = 0;
-    this._chewFr = 0;
-    this._hopT = 0;
+    this._chewFr = 0;         // index into EAT_FRAMES (0..3)
+    this._tweenT = TWEEN_MS;  // >= TWEEN_MS means "not hopping"
+    this._tweenFromCell = this.appleCount;   // start on the farthest apple
+    this._tweenToCell = this.appleCount;
     this._crumbs = [];
     this._finCrumbT = 0;
   }
@@ -194,25 +206,29 @@ export class MouseScene extends Scene {
     // Advance finale timer BEFORE any reduced-motion early-return (run-screen gate).
     if (this.finale > 0) this.finale += dtMs;
 
-    // Detect an apple being finished → "nom" sfx + crumb burst + hop.
+    // Detect an apple being finished → "nom" sfx + crumb burst + start a hop
+    // that tweens the mouse from the finished apple to the next one.
     if (this.finale === 0) {
       const { eaten, active } = eatState(progress, this.appleCount);
       if (eaten > this._lastEaten) {
+        const fromCell = cellForApple(this._lastEaten, this.appleCount); // just-finished apple
+        const toCell = active >= 0 ? cellForApple(active, this.appleCount) : 0; // next apple (or cheese)
         this._lastEaten = eaten;
         audio.sfx('coin');
-        this._hopT = 150;
-        const cell = active >= 0 ? cellForApple(active, this.appleCount) : 0;
-        const { cx, cy } = this._cellCenter(cell);
+        this._tweenFromCell = fromCell;
+        this._tweenToCell = toCell;
+        this._tweenT = 0;
+        const { cx, cy } = this._cellCenter(fromCell);
         this._spawnCrumbs(cx - 0.2 * this.cell, cy - 0.1 * this.cell, 4);
       }
     }
 
-    if (this.reducedMotion) { this._crumbs.length = 0; return; }
+    if (this.reducedMotion) { this._tweenT = TWEEN_MS; this._crumbs.length = 0; return; }
 
-    // Chew animation
+    // Chew animation (4-frame cycle) + hop tween advance
     this._chewT += dtMs;
-    if (this._chewT >= 170) { this._chewFr = 1 - this._chewFr; this._chewT = 0; }
-    if (this._hopT > 0) { this._hopT -= dtMs; if (this._hopT < 0) this._hopT = 0; }
+    if (this._chewT >= CHEW_MS) { this._chewT -= CHEW_MS; this._chewFr = (this._chewFr + 1) % EAT_FRAMES.length; }
+    if (this._tweenT < TWEEN_MS) { this._tweenT += dtMs; if (this._tweenT > TWEEN_MS) this._tweenT = TWEEN_MS; }
 
     // Finale: crumbs as the cheese is nibbled
     if (this.finale > 0 && this.finale < 850) {
@@ -301,34 +317,40 @@ export class MouseScene extends Scene {
       this._blitCell(ctx, sh, kind, cx, cy);
     }
 
-    // ── Mouse at the active cell ───────────────────────────────────────────────
+    // ── Mouse (smooth HD sprite) ───────────────────────────────────────────────
+    // Pre-anti-aliased, so we draw it with imageSmoothing ENABLED (interpolated)
+    // and restore nearest-neighbor afterward so apples/cores/cheese stay crisp.
     {
-      const { cx, cy } = this._cellCenter(activeCell);
-      const hop = (this._hopT > 0 && !this.reducedMotion)
-        ? -Math.sin((this._hopT / 150) * Math.PI) * cell * 0.12 : 0;
-      const chewBob = (!this.reducedMotion && this._chewFr) ? cell * 0.04 : 0;
+      let mx, my, jumpY = 0, frame, target;
 
       if (inFinale) {
-        // Finale mouse is kept at a comfortable, clearly-visible size regardless
-        // of cell size (the climax should read even when apples are tiny).
-        const name = this.finale >= 850 ? 'mouse_full' : 'mouse_cheese';
-        const nw = this.finale >= 850 ? MOUSEF_W : MOUSEC_W;
-        const nh = this.finale >= 850 ? MOUSEF_H : MOUSEC_H;
-        const target = Math.max(cell * 1.25, 30);
-        const scale = target / Math.max(MOUSEC_W, MOUSEC_H);
-        const dw = nw * scale, dh = nh * scale;
-        blit(ctx, sh, name, Math.round(cx - dw / 2), Math.round(cy - dh / 2 + chewBob), scale);
+        const c = this._cellCenter(0);                 // at the cheese (goal)
+        mx = c.cx; my = c.cy;
+        frame = this.finale >= 850 ? 'mouse_full' : 'mouse_cheese';
+        target = Math.max(cell * 1.45, 36);            // keep the climax clearly visible
+      } else if (!this.reducedMotion && this._tweenT < TWEEN_MS) {
+        // Hop: tween across the gap to the next apple with a jump arc.
+        const tp = this._tweenT / TWEEN_MS;
+        const a = this._cellCenter(this._tweenFromCell);
+        const b = this._cellCenter(this._tweenToCell);
+        mx = a.cx + (b.cx - a.cx) * tp;
+        my = a.cy + (b.cy - a.cy) * tp;
+        jumpY = -Math.sin(tp * Math.PI) * cell * 0.55;
+        frame = tp < 0.34 ? 'mouse_hop0' : tp < 0.7 ? 'mouse_hop1' : 'mouse_hop2';
+        target = Math.max(cell * MOUSE_FILL, MOUSE_MIN);
       } else {
-        const big = cell >= DETAIL_MIN;
-        const name = big ? (this._chewFr ? 'mouse_eat1' : 'mouse_eat0') : 'mouse_s';
-        const nw = big ? MOUSE_W : MOUSE_SW;
-        const nh = big ? MOUSE_H : MOUSE_SH;
-        // Mouse a touch bigger than an apple; sits slightly over its cell.
-        const scale = cell * 1.0 / Math.max(nw, nh);
-        const dw = nw * scale, dh = nh * scale;
-        const dy = hop + chewBob + cell * 0.08;
-        blit(ctx, sh, name, Math.round(cx - dw / 2), Math.round(cy - dh / 2 + dy), scale);
+        const c = this._cellCenter(activeCell);        // eating at the active apple
+        mx = c.cx; my = c.cy;
+        frame = this.reducedMotion ? EAT_FRAMES[0] : EAT_FRAMES[this._chewFr];
+        target = Math.max(cell * MOUSE_FILL, MOUSE_MIN);
       }
+
+      const scale = target / Math.max(MOUSE_W, MOUSE_H);
+      const dw = MOUSE_W * scale, dh = MOUSE_H * scale;
+      const dy = jumpY + cell * 0.06;                  // sit a touch over its cell
+      ctx.imageSmoothingEnabled = true;
+      blit(ctx, sh, frame, mx - dw / 2, my - dh / 2 + dy, scale);
+      ctx.imageSmoothingEnabled = false;
     }
 
     // ── Crumb particles ────────────────────────────────────────────────────────

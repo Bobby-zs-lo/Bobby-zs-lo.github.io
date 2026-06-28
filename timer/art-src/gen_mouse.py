@@ -2,29 +2,38 @@
 Run from timer/art-src/:  python gen_mouse.py
 Outputs: timer/assets/mouse.png + mouse.json
 
-Original high-detail pixel art (dithered "32-bit feel") for a Mouse-Timer style
-grid-depletion countdown: a mouse eats a row/grid of apples (turning them into
-cores) advancing toward a cheese-wedge goal, then sits content with a full belly.
+MIXED FIDELITY (intentional): the apples / cores / cheese / crumb are 16-bit
+dithered PIXEL art. The MOUSE is a smooth, high-res cartoon character drawn by
+SUPERSAMPLING (rendered ~4x with filled curves, downsampled with LANCZOS) so its
+edges are anti-aliased — NOT chunky pixels. The scene draws the mouse with
+imageSmoothing ENABLED and everything else with nearest-neighbor.
 
-Frames (HARD contract with js/themes/mouse.js)
-----------------------------------------------
+Pixel frames (HARD contract with js/themes/mouse.js)
+----------------------------------------------------
 apple        full red apple (cell = remaining time)
 apple_bite   apple with a bite taken (active cell, mouse mid-eat)
 core         eaten apple core (persists)
 cheese       cheese wedge (final goal cell)
 crumb        4x4 yellow crumb particle
-mouse_eat0   mouse eating, jaw up   (chew frame 0)
-mouse_eat1   mouse eating, jaw down (chew frame 1)
-mouse_cheese mouse nibbling the cheese (finale beat)
-mouse_full   content mouse with big round belly (finale end)
 
-Small (simplified) tier — used by the scene when cells get tiny (e.g. 60-min
-grids) so apples/cores/cheese/mouse still read cleanly instead of muddy
-downscales of the detailed sprites:
+HD mouse frames (128x112 box each, smooth/anti-aliased, facing LEFT)
+--------------------------------------------------------------------
+mouse_eat0   chew cycle a: neutral, mouth closed, holding apple
+mouse_eat1   chew cycle b: body squash + mouth open + cheek puff
+mouse_eat2   chew cycle c: neutral (mouth closed)
+mouse_eat3   chew cycle d: squash + mouth open + crumb fleck
+mouse_hop0   hop: crouch  (squashed, gathering)
+mouse_hop1   hop: airborne (stretched, legs tucked)
+mouse_hop2   hop: land    (squashed, absorbing)
+mouse_cheese finale beat: nibbling a cheese chunk, medium belly
+mouse_full   finale end : big round belly, happy closed eyes, sparkle
+
+Small (simplified) PIXEL tier — used by the scene when cells get tiny (e.g.
+60-min grids) so apples/cores/cheese still read cleanly instead of muddy
+downscales of the detailed sprites (the mouse always uses the smooth HD frames):
 apple_s      12x13 simplified apple
 core_s       12x13 simplified core
 cheese_s     14x11 simplified cheese wedge
-mouse_s      14x12 simplified mouse (facing left)
 """
 import sys, os, math
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -33,7 +42,10 @@ from common import save
 from PIL import Image, ImageDraw
 
 # ── Sheet ───────────────────────────────────────────────────────────────────────
-SW, SH = 140, 80
+# Top-left region (y<=72) holds the 16-bit PIXEL sprites (apples/cores/cheese/
+# crumb + small tier). The HD ANTI-ALIASED mouse frames live in a separate region
+# lower down (y>=96), supersampled+downsampled so their edges stay smooth.
+SW, SH = 540, 470
 img = Image.new('RGBA', (SW, SH), (0, 0, 0, 0))
 d   = ImageDraw.Draw(img)
 frames = {}
@@ -234,122 +246,228 @@ P(102, 3, (220, 150, 30))
 frames['crumb'] = [100, 0, 4, 4]
 
 # ═════════════════════════════════════════════════════════════════════════════════
-#  MOUSE  — shared body builder, facing LEFT (snout at left)
+#  HD MOUSE  — smooth supersampled cartoon mouse (facing LEFT)
+#  Rendered at 4x with filled curves, then LANCZOS-downsampled so edges are
+#  ANTI-ALIASED (no chunky pixels). Original cute grey cartoon design.
 # ═════════════════════════════════════════════════════════════════════════════════
-def mouse_body(ox, oy, belly=0, jaw=0, happy=False, hold=None):
-    """belly: 0 normal .. 2 stuffed; jaw: 0 up/1 down; happy: closed eyes;
-       hold: None|'cheese'|'apple' small item at the mouth."""
-    # ── Tail (from lower-right curling back) ──
-    for i in range(10):
-        tx = ox + 21 + int(2.4 * math.sin(i * 0.5))
-        ty = oy + 18 - i
-        P(tx, ty, TAIL[1])
-        P(tx + 1, ty, TAIL[2])
-    R(ox + 20, oy + 18, 3, 2, TAIL[1])
+# Supersample factor: draw big, then LANCZOS-downsample for smooth AA edges.
+SSAMP = 4
+FW, FH = 128, 112          # every HD mouse frame is this fixed box (stable centring)
 
-    # ── Body blob (right) ──
-    bcx, bcy = ox + 14, oy + 15
-    brx = 8.0 + belly * 1.2
-    bry = 6.5 + belly * 1.6
-    for y in range(oy + 6, oy + 24):
-        for x in range(ox + 5, ox + 24):
-            nx = (x - bcx) / brx; ny = (y - bcy) / bry
-            r2 = nx * nx + ny * ny
-            if r2 > 1.0:
-                continue
-            dark = 0.42 + 0.40 * nx + 0.40 * ny
-            if r2 > 0.82:
-                dark += 0.25
-            col = shade(GREY, dark, x, y)
-            P(x, y, col)
-    # belly highlight patch (lighter underside-left)
-    for y in range(oy + 13, oy + 23):
-        for x in range(ox + 8, ox + 18):
-            nx = (x - (bcx - 2)) / (brx * 0.7); ny = (y - (bcy + 3)) / (bry * 0.75)
-            if nx * nx + ny * ny <= 1.0:
-                P(x, y, M_BELLY)
+# ── Cartoon mouse palette (opaque RGBA) ───────────────────────────────────────
+M_OUT   = (94, 86, 108, 255)     # soft dark outline (not harsh black)
+M_BASE  = (179, 183, 198, 255)   # body grey
+M_SHADE = (147, 151, 170, 255)   # underside shadow grey
+M_LIGHT = (227, 230, 239, 255)   # belly / highlight
+M_PAW   = (200, 203, 216, 255)   # paws / feet
+EARP    = (246, 184, 202, 255)   # ear inner pink
+EARP_D  = (228, 153, 179, 255)   # ear inner pink shadow
+NOSEP   = (241, 128, 152, 255)   # nose pink
+NOSEP_H = (255, 180, 198, 255)   # nose highlight
+M_EYE   = (47, 41, 52, 255)      # friendly dark eye
+TAILP   = (215, 171, 183, 255)   # tail pink-grey
+WHISK   = (206, 208, 220, 215)   # whiskers (slightly translucent)
+MOUTH_D = (122, 64, 80, 255)     # open mouth
+TONGUE  = (229, 122, 138, 255)
+SMILE   = (120, 74, 86, 255)
+# held snack colours (smooth — part of the character, distinct from grid apples)
+AP_R, AP_RD, AP_RH = (227, 64, 64, 255), (189, 38, 46, 255), (255, 152, 142, 255)
+AP_STM = (122, 84, 52, 255)
+CHS, CHS_D, CHS_H = (255, 207, 86, 255), (233, 169, 42, 255), (206, 138, 22, 255)
+SPK = (255, 247, 212, 255)       # finale sparkle
 
-    # ── Head (left), pointed snout ──
-    hcx, hcy = ox + 8, oy + 13
-    for y in range(oy + 7, oy + 21):
-        for x in range(ox + 1, ox + 14):
-            nx = (x - hcx) / 6.2; ny = (y - hcy) / 6.0
-            r2 = nx * nx + ny * ny
-            # taper the snout toward the left
-            if x < hcx:
-                r2 = ((x - hcx) / (6.2 - (hcx - x) * 0.28)) ** 2 + ny * ny
-            if r2 > 1.0:
-                continue
-            dark = 0.40 + 0.42 * nx + 0.36 * ny
-            if r2 > 0.84:
-                dark += 0.22
-            P(x, y, shade(GREY, dark, x, y))
-    # snout tip + nose
-    R(ox + 1, oy + 13, 2, 3, GREY[2])
-    P(ox + 0, oy + 14, NOSE)
-    P(ox + 1, oy + 14, NOSE)
-    P(ox + 1, oy + 15, (210, 96, 116))
 
-    # ── Ear (big round, upper) ──
-    ecx, ecy, er = ox + 11, oy + 6, 5
-    for y in range(ecy - er, ecy + er + 1):
-        for x in range(ecx - er, ecx + er + 1):
-            dd = (x - ecx) ** 2 + (y - ecy) ** 2
-            if dd <= er * er:
-                if dd <= (er - 2) ** 2:
-                    P(x, y, EAR_IN if (x + y) % 5 else EAR_IN_D)
-                else:
-                    dark = 0.42 + 0.4 * ((x - ecx) / er) + 0.3 * ((y - ecy) / er)
-                    P(x, y, shade(GREY, dark, x, y))
+class HD:
+    """A supersampled drawing surface; .out() returns the AA-downsampled frame."""
+    def __init__(self, w, h):
+        self.w, self.h, self.k = w, h, SSAMP
+        self.img = Image.new('RGBA', (w * SSAMP, h * SSAMP), (0, 0, 0, 0))
+        self.d = ImageDraw.Draw(self.img)
+
+    def ell(self, cx, cy, rx, ry, c):
+        k = self.k
+        self.d.ellipse([(cx - rx) * k, (cy - ry) * k, (cx + rx) * k, (cy + ry) * k], fill=c)
+
+    def cir(self, cx, cy, r, c):
+        self.ell(cx, cy, r, r, c)
+
+    def poly(self, pts, c):
+        k = self.k
+        self.d.polygon([(x * k, y * k) for x, y in pts], fill=c)
+
+    def line(self, pts, c, w):
+        k = self.k
+        self.d.line([(x * k, y * k) for x, y in pts], fill=c, width=max(1, int(w * k)), joint='curve')
+
+    def out(self):
+        return self.img.resize((self.w, self.h), Image.LANCZOS)
+
+
+def hd_tail(hd, p0, p1, p2, w0, w1, col, outline):
+    """Smooth tapering tail along a quadratic Bezier (outline pass, then fill)."""
+    N = 26
+    samp = []
+    for i in range(N + 1):
+        t = i / N
+        x = (1 - t) ** 2 * p0[0] + 2 * (1 - t) * t * p1[0] + t * t * p2[0]
+        y = (1 - t) ** 2 * p0[1] + 2 * (1 - t) * t * p1[1] + t * t * p2[1]
+        w = w0 + (w1 - w0) * t
+        samp.append((x, y, w))
+    for x, y, w in samp:
+        hd.cir(x, y, w / 2 + 1.5, outline)
+    for x, y, w in samp:
+        hd.cir(x, y, max(0.6, w / 2), col)
+
+
+def draw_mouse(hd, belly=0, mouth='closed', eyes='open', hold='apple',
+               squash=0.0, sparkle=False, crumb=False, legs='sit'):
+    """Draw the cartoon mouse (facing LEFT) into an HD surface.
+       belly 0..2 (round-belly finale); mouth closed|open|happy;
+       squash >0 squashes (crouch/chew bob), <0 stretches (mid-hop);
+       legs sit|crouch|tuck|rest; hold None|'apple'|'cheese'."""
+    syf = 1.0 - 0.15 * squash          # vertical squash/stretch
+    sxf = 1.0 + 0.12 * squash
+    base = 96.0
+    bg = belly
+
+    bry = 31 * syf * (1 + 0.09 * bg)
+    brx = 31 * sxf * (1 + 0.07 * bg)
+    BX = 82.0
+    BY = base + 4 - bry                # body centre (bottom rests near `base`)
+    hr = 25 * (1 + 0.015 * bg)
+    HX = 44.0
+    HY = BY - 6                        # head centre
+    MX, MY, mr = 26.0, HY + 8, 13.0    # muzzle
+
+    # ── Tail (behind body) ──
+    hd_tail(hd, (BX + 22, BY + 4), (126, BY - 10), (112, HY - 26), 9.0, 2.2, TAILP, M_OUT)
+
+    # ── Back ear ──
+    bex, bey, ber = 60.0, HY - 22, 16.0
+    hd.cir(bex, bey, ber + 1.6, M_OUT)
+    hd.cir(bex, bey, ber, M_BASE)
+    hd.cir(bex + 1, bey + 1, ber - 5, EARP)
+    hd.cir(bex + 2, bey + 3, ber - 8, EARP_D)
+
+    # ── Body + head + muzzle: outline pass, then fill pass (no inner seams) ──
+    hd.ell(BX, BY, brx + 1.7, bry + 1.7, M_OUT)
+    hd.cir(HX, HY, hr + 1.7, M_OUT)
+    hd.cir(MX, MY, mr + 1.7, M_OUT)
+    hd.ell(BX, BY, brx, bry, M_BASE)
+    hd.cir(HX, HY, hr, M_BASE)
+    hd.cir(MX, MY, mr, M_BASE)
+
+    # soft 3-tone shading (opaque ellipses kept inside the silhouette)
+    hd.ell(58, BY + 10 * syf, 22 * sxf * (1 + 0.06 * bg), 16 * syf * (1 + 0.08 * bg), M_LIGHT)
+    hd.ell(97, BY + 6, 12, 9, M_SHADE)
+    hd.cir(HX - 5, HY - 8, 7.5, M_LIGHT)
+
+    # ── Feet ──
+    if legs in ('sit', 'crouch', 'rest'):
+        fy = base + (3 if legs == 'crouch' else 1)
+        for fx in (70, 46):
+            hd.ell(fx, fy, 9, 5.2, M_OUT)
+            hd.ell(fx, fy - 0.4, 7.4, 4.0, M_PAW)
+    elif legs == 'tuck':
+        for fx in (62, 50):
+            hd.ell(fx, BY + 19, 6, 4, M_OUT)
+            hd.ell(fx, BY + 18.6, 4.6, 2.9, M_PAW)
+
+    # ── Front ear (over the head) ──
+    fex, fey, fer = 36.0, HY - 25, 19.0
+    hd.cir(fex, fey, fer + 1.6, M_OUT)
+    hd.cir(fex, fey, fer, M_BASE)
+    hd.cir(fex - 1, fey + 1, fer - 5, EARP)
+    hd.cir(fex - 1, fey + 3, fer - 9, EARP_D)
+
+    # ── Nose ──
+    hd.cir(15.5, MY + 1, 6.2 + 1.5, M_OUT)
+    hd.cir(15.5, MY + 1, 6.2, NOSEP)
+    hd.cir(13.5, MY - 1, 2.2, NOSEP_H)
+
+    # ── Whiskers ──
+    for wy in (-3.0, 2.0, 7.0):
+        hd.line([(17, MY + wy * 0.55), (2, MY + wy * 1.25)], WHISK, 1.2)
 
     # ── Eye ──
-    if happy:
-        # closed happy arc ^
-        P(ox + 6, oy + 11, EYE); P(ox + 7, oy + 10, EYE); P(ox + 8, oy + 11, EYE)
+    if eyes == 'happy':
+        hd.line([(31, HY - 2), (36, HY - 6), (41, HY - 2)], M_EYE, 2.4)
     else:
-        R(ox + 6, oy + 10, 2, 3, EYE)
-        P(ox + 6, oy + 10, WHT)
-    # whiskers
-    P(ox + 0, oy + 12, GREY[4]); P(ox + 0, oy + 17, GREY[4])
+        hd.cir(37, HY - 2, 5.4 + 1.1, M_OUT)
+        hd.cir(37, HY - 2, 5.0, M_EYE)
+        hd.cir(35.2, HY - 3.6, 1.9, (255, 255, 255, 255))
 
-    # ── Front paws (near mouth, holding) ──
-    R(ox + 3, oy + 17, 3, 2, GREY[1])
-    R(ox + 5, oy + 18, 3, 2, GREY[1])
-
-    # ── Mouth / held item ──
-    my = oy + 16 + (1 if jaw else 0)
-    if hold == 'cheese':
-        # little cheese triangle at mouth
-        for k in range(4):
-            R(ox + 2, my - 1 + k, 5 - k, 1, CH[1])
-        P(ox + 2, my - 1, CH[0]); P(ox + 4, my + 1, CH[3])
-    elif hold == 'apple':
-        R(ox + 2, my - 1, 4, 4, RED[1])
-        P(ox + 2, my - 1, R_SPEC); P(ox + 5, my + 2, RED[3])
+    # ── Mouth ──
+    if mouth == 'open':
+        hd.cir(30, MY + 4, 6.5, M_BASE)                 # cheek puff
+        hd.ell(24, MY + 11, 5.2, 4.2, MOUTH_D)
+        hd.ell(24, MY + 12.5, 3.2, 2.0, TONGUE)
+    elif mouth == 'happy':
+        hd.line([(17, MY + 8), (24, MY + 12), (31, MY + 8)], SMILE, 2.2)
     else:
-        # plain chewing mouth
-        R(ox + 2, my, 3, 1, GREY[4])
-    # happy full mouth: tiny smile
-    if happy:
-        R(ox + 3, oy + 17, 4, 1, (120, 84, 92))
+        hd.line([(20, MY + 10), (28, MY + 10)], SMILE, 1.8)
 
-    # paws resting on belly when stuffed
-    if belly >= 2:
-        R(ox + 9, oy + 18, 3, 2, GREY[1])
-        R(ox + 12, oy + 19, 3, 2, GREY[1])
+    # ── Arms + held snack (front-most) ──
+    if hold == 'apple':
+        ax, ay, ar = 26.0, BY + 15, 10.0
+        hd.cir(ax, ay, ar + 1.5, M_OUT)
+        hd.cir(ax, ay, ar, AP_R)
+        hd.ell(ax + 3.5, ay + 3.5, ar * 0.55, ar * 0.55, AP_RD)
+        hd.cir(ax - 4, ay - 4, 3.4, AP_RH)
+        hd.line([(ax, ay - ar + 1), (ax + 1.5, ay - ar - 3)], AP_STM, 2.0)
+        for px, py in ((ax - 7, ay + 2), (ax + 7, ay + 4)):
+            hd.ell(px, py, 5.4, 4.0, M_OUT)
+            hd.ell(px, py - 0.4, 4.1, 3.0, M_PAW)
+    elif hold == 'cheese':
+        op = [(7, MY + 10), (31, MY + 1), (31, MY + 19)]
+        pts = [(9, MY + 10), (29, MY + 3), (29, MY + 17)]
+        hd.poly(op, M_OUT)
+        hd.poly(pts, CHS)
+        hd.poly([(20, MY + 7), (28, MY + 5), (28, MY + 11)], CHS_D)
+        hd.cir(22, MY + 11, 1.6, CHS_H)
+        hd.cir(25, MY + 8, 1.3, CHS_H)
+        for px, py in ((12, MY + 17), (28, MY + 17)):
+            hd.ell(px, py, 5.2, 3.8, M_OUT)
+            hd.ell(px, py - 0.4, 3.9, 2.9, M_PAW)
 
-# mouse_eat0 (jaw up)
-mouse_body(0, 28, belly=0, jaw=0, hold='apple')
-frames['mouse_eat0'] = [0, 28, 26, 24]
-# mouse_eat1 (jaw down)
-mouse_body(28, 28, belly=0, jaw=1, hold='apple')
-frames['mouse_eat1'] = [28, 28, 26, 24]
-# mouse_cheese (nibbling cheese; frame 30 wide)
-mouse_body(56, 28, belly=1, jaw=1, hold='cheese')
-frames['mouse_cheese'] = [56, 28, 30, 26]
-# mouse_full (content, big belly, happy)
-mouse_body(90, 28, belly=2, jaw=0, happy=True, hold=None)
-frames['mouse_full'] = [90, 28, 30, 24]
+    # paws resting on the round belly (full finale)
+    if legs == 'rest':
+        for px in (44, 58):
+            hd.ell(px, BY + 15, 6.0, 4.4, M_OUT)
+            hd.ell(px, BY + 14.6, 4.6, 3.2, M_PAW)
+
+    # ── Crumb flecks (mid-chew) ──
+    if crumb:
+        for cxx, cyy, rr in [(11, MY + 17, 1.9), (7, MY + 11, 1.4), (14, MY + 21, 1.6)]:
+            hd.cir(cxx, cyy, rr, (236, 196, 120, 255))
+
+    # ── Sparkle / "burp" twinkle (finale) ──
+    if sparkle:
+        for spx, spy, sr in [(92, HY - 30, 5.0), (73, HY - 35, 3.0)]:
+            hd.poly([(spx - sr, spy), (spx, spy - sr), (spx + sr, spy), (spx, spy + sr)], SPK)
+            hd.poly([(spx - sr * 0.45, spy), (spx, spy - sr * 1.7),
+                     (spx + sr * 0.45, spy), (spx, spy + sr * 1.7)], SPK)
+
+
+def render_mouse(x, y, name, **pose):
+    hd = HD(FW, FH)
+    draw_mouse(hd, **pose)
+    img.alpha_composite(hd.out(), (x, y))
+    frames[name] = [x, y, FW, FH]
+
+# Eat / chew cycle (body squash bob + jaw/cheek chew while holding an apple)
+render_mouse(  0, 96, 'mouse_eat0', belly=0, mouth='closed', hold='apple', squash=0.0)
+render_mouse(132, 96, 'mouse_eat1', belly=0, mouth='open',   hold='apple', squash=0.55)
+render_mouse(264, 96, 'mouse_eat2', belly=0, mouth='closed', hold='apple', squash=0.12)
+render_mouse(396, 96, 'mouse_eat3', belly=0, mouth='open',   hold='apple', squash=0.55, crumb=True)
+# Hop / move (crouch -> airborne -> land) — used to skip to the next apple
+render_mouse(  0, 216, 'mouse_hop0', belly=0, mouth='closed', hold=None, squash=0.95, legs='crouch')
+render_mouse(132, 216, 'mouse_hop1', belly=0, mouth='open',   hold=None, squash=-0.85, legs='tuck')
+render_mouse(264, 216, 'mouse_hop2', belly=0, mouth='closed', hold=None, squash=0.70, legs='crouch')
+# Finale: nibbling cheese, then content big-belly with a sparkle
+render_mouse(  0, 336, 'mouse_cheese', belly=1, mouth='open',  hold='cheese', squash=0.20)
+render_mouse(132, 336, 'mouse_full',   belly=2, mouth='happy', eyes='happy', hold=None,
+             squash=0.30, sparkle=True, legs='rest')
 
 # ═════════════════════════════════════════════════════════════════════════════════
 #  SMALL (simplified) TIER — clean tiny sprites for dense grids (e.g. 60 min)
@@ -421,46 +539,13 @@ def draw_cheese_s(ox, oy):
         P(hx, hy, CH_HOLE); P(hx + 1, hy, CH_HOLE)
         P(hx, hy + 1, CH_HOLE_S)
 
-def draw_mouse_s(ox, oy):
-    # facing LEFT (snout left), mirrors the detailed mouse
-    for i in range(5):                 # tail curling back-right
-        P(ox + 11 + (i % 2), oy + 9 - i, TAIL[1])
-    bcx, bcy = ox + 8, oy + 7          # body blob (right)
-    for y in range(oy + 2, oy + 12):
-        for x in range(ox + 3, ox + 13):
-            nx = (x - bcx) / 4.5; ny = (y - bcy) / 4.2
-            if nx * nx + ny * ny > 1.0:
-                continue
-            P(x, y, shade(GREY, 0.45 + 0.40 * nx + 0.40 * ny, x, y))
-    for y in range(oy + 7, oy + 11):   # belly highlight
-        for x in range(ox + 5, ox + 10):
-            nx = (x - (bcx - 1)) / 3.0; ny = (y - (bcy + 2)) / 2.6
-            if nx * nx + ny * ny <= 1.0:
-                P(x, y, M_BELLY)
-    hcx, hcy = ox + 4, oy + 7          # head (left), tapered snout
-    for y in range(oy + 4, oy + 12):
-        for x in range(ox, ox + 8):
-            nx = (x - hcx) / 3.4; ny = (y - hcy) / 3.2
-            if nx * nx + ny * ny > 1.0:
-                continue
-            P(x, y, shade(GREY, 0.45 + 0.42 * nx + 0.36 * ny, x, y))
-    P(ox, oy + 8, NOSE)                # nose tip
-    ecx, ecy, er = ox + 6, oy + 3, 2   # ear
-    for y in range(ecy - er, ecy + er + 1):
-        for x in range(ecx - er, ecx + er + 1):
-            dd = (x - ecx) ** 2 + (y - ecy) ** 2
-            if dd <= er * er:
-                P(x, y, EAR_IN if dd <= 1 else GREY[2])
-    P(ox + 3, oy + 7, EYE)             # eye
-
 draw_apple_s(0, 58)
 frames['apple_s'] = [0, 58, 12, 13]
 draw_core_s(14, 58)
 frames['core_s'] = [14, 58, 12, 13]
 draw_cheese_s(28, 58)
 frames['cheese_s'] = [28, 58, 14, 11]
-draw_mouse_s(44, 58)
-frames['mouse_s'] = [44, 58, 14, 12]
+# (no mouse_s tier: the smooth HD mouse downscales cleanly at any cell size.)
 
 # ── Save ───────────────────────────────────────────────────────────────────────
 save(img, frames, 'mouse')
