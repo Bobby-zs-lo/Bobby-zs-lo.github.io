@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  appleCountForDuration, eatState, cellForApple, gridDims, clampN,
+  appleCountForDuration, eatState, cellForApple, gridDims, chooseGrid, clampN,
 } from '../js/themes/mouse.js';
 
 test('appleCountForDuration: ~1 apple per 10s, clamped 5..48', () => {
@@ -39,6 +39,21 @@ test('gridDims: single row for small totals, balanced wrap when large', () => {
 test('gridDims respects the row cap (within capacity)', () => {
   // Scene caps total to colCap*rowCap before calling gridDims.
   const g = gridDims(27, 9, 3);   // landscape-ish caps, exactly at capacity
+  assert.ok(g.rows <= 3 && g.cols <= 9 && g.cols * g.rows >= 27);
+});
+
+test('chooseGrid: matches band aspect so the grid fills the stage', () => {
+  // Portrait (tall) band, sparse timer -> fewer cols, more rows.
+  assert.deepEqual(chooseGrid(7, 216, 370, 6, 13), { cols: 2, rows: 4 });
+  // Landscape (wide) band, sparse timer -> single wide row.
+  assert.deepEqual(chooseGrid(7, 475, 154, 9, 5), { cols: 5, rows: 2 });
+  // Full timer fills a portrait grid within caps.
+  const g = chooseGrid(49, 216, 370, 6, 13);
+  assert.ok(g.cols <= 6 && g.rows <= 13 && g.cols * g.rows >= 49);
+});
+
+test('chooseGrid: falls back to column cap when rows overflow', () => {
+  const g = chooseGrid(27, 9, 3, 9, 3);   // capacity-limited landscape
   assert.ok(g.rows <= 3 && g.cols <= 9 && g.cols * g.rows >= 27);
 });
 

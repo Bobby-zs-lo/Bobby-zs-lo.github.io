@@ -68,6 +68,24 @@ export function gridDims(total, colCap, rowCap) {
   return { cols, rows };
 }
 
+/**
+ * Choose cols/rows so the grid's aspect roughly matches the band's aspect —
+ * this fills the available stage (wide grid in landscape, taller grid in
+ * portrait) instead of leaving a small centred block. Clamped to caps; if the
+ * row count would overflow, fall back to the column cap.
+ */
+export function chooseGrid(total, bandW, bandH, colCap, rowCap) {
+  const aspect = bandW / bandH;
+  let cols = clampN(Math.round(Math.sqrt(total * aspect)), 1, colCap);
+  let rows = Math.ceil(total / cols);
+  if (rows > rowCap) {
+    rows = rowCap;
+    cols = clampN(Math.ceil(total / rows), 1, colCap);
+    rows = Math.ceil(total / cols);
+  }
+  return { cols, rows };
+}
+
 // ── MouseScene ───────────────────────────────────────────────────────────────
 export class MouseScene extends Scene {
 
@@ -76,11 +94,14 @@ export class MouseScene extends Scene {
     this.H = H;
     this._layoutDone = true;
 
-    // Content band clear of the top-left clock and bottom controls.
-    this.bandX0 = Math.round(W * 0.06);
-    this.bandX1 = Math.round(W * 0.94);
-    this.bandY0 = Math.round(H * 0.21);
-    this.bandY1 = Math.round(H * 0.80);
+    // Large content band that fills most of the stage while leaving safe
+    // margins for the top-left clock and the bottom controls. Landscape keeps
+    // a slightly taller top margin (the clock font scales with width).
+    const landscape = W > H;
+    this.bandX0 = Math.round(W * 0.05);
+    this.bandX1 = Math.round(W * 0.95);
+    this.bandY0 = Math.round(H * (landscape ? 0.17 : 0.13));
+    this.bandY1 = Math.round(H * (landscape ? 0.85 : 0.87));
     this.bandW = this.bandX1 - this.bandX0;
     this.bandH = this.bandY1 - this.bandY0;
 
@@ -89,35 +110,34 @@ export class MouseScene extends Scene {
 
   _computeGrid() {
     const landscape = this.W > this.H;
-    const GAPX = 1.3, GAPY = 1.5;            // pitch = sprite*scale*gap
-    const maxColsCap = landscape ? 9 : 6;
+    const colCapHard = landscape ? 9 : 6;
 
-    // Capacity at sprite-scale 1.
-    const colCap = Math.max(1, Math.min(maxColsCap, Math.floor(this.bandW / (APPLE_W * GAPX))));
-    const rowCap = Math.max(1, Math.floor(this.bandH / (APPLE_H * GAPY)));
+    // Caps keep cells big enough for a readable sprite (>= ~scale 1).
+    const MINW = APPLE_W * 1.05, MINH = APPLE_H * 1.05;
+    const colCap = clampN(Math.floor(this.bandW / MINW), 1, colCapHard);
+    const rowCap = Math.max(1, Math.floor(this.bandH / MINH));
     const capacity = colCap * rowCap;
 
     const total = Math.min(appleCountForDuration(this._durMs) + 1, capacity);
-    const { cols, rows } = gridDims(total, colCap, rowCap);
+    const { cols, rows } = chooseGrid(total, this.bandW, this.bandH, colCap, rowCap);
 
-    // Largest integer sprite scale that fits the chosen grid.
-    const scW = this.bandW / (cols * APPLE_W * GAPX);
-    const scH = this.bandH / (rows * APPLE_H * GAPY);
-    let sc = Math.floor(Math.min(scW, scH));
-    sc = clampN(sc, 1, 4);
-
-    const pitchW = Math.round(APPLE_W * sc * GAPX);
-    const pitchH = Math.round(APPLE_H * sc * GAPY);
-    const gridW = cols * pitchW;
-    const gridH = rows * pitchH;
+    // Cells tile the WHOLE band (pitch = band / count) so the grid fills the
+    // stage; the sprite is then drawn as large as fits a cell (with margin).
+    const pitchW = this.bandW / cols;
+    const pitchH = this.bandH / rows;
+    const FILL = 0.82;
+    let sc = Math.floor(Math.min(pitchW * FILL / APPLE_W, pitchH * FILL / APPLE_H));
+    sc = clampN(sc, 1, 7);
 
     this.cols = cols;
     this.rows = rows;
     this.total = total;
     this.appleCount = total - 1;
     this.sc = sc;
-    this.pitchW = pitchW;
-    this.pitchH = pitchH;
+    this.pitchW = Math.round(pitchW);
+    this.pitchH = Math.round(pitchH);
+    const gridW = this.cols * this.pitchW;
+    const gridH = this.rows * this.pitchH;
     this.gridX = Math.round(this.bandX0 + (this.bandW - gridW) / 2);
     this.gridY = Math.round(this.bandY0 + (this.bandH - gridH) / 2);
   }
@@ -237,11 +257,18 @@ export class MouseScene extends Scene {
     const ctx = this.ctx, W = this.W, H = this.H, sh = this.assets, sc = this.sc;
     ctx.imageSmoothingEnabled = false;
 
-    // Backdrop: warm tan flat fill (barely-there vertical depth).
+    // Backdrop: warm tan with a subtle vertical gradient + soft vignette.
     const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, C.bg0);
     g.addColorStop(1, C.bg1);
     ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+
+    const vr = Math.max(W, H) * 0.72;
+    const vg = ctx.createRadialGradient(W / 2, H / 2, vr * 0.34, W / 2, H / 2, vr);
+    vg.addColorStop(0, 'rgba(0,0,0,0)');
+    vg.addColorStop(1, 'rgba(38,22,8,0.30)');
+    ctx.fillStyle = vg;
     ctx.fillRect(0, 0, W, H);
 
     if (!sh) return;
