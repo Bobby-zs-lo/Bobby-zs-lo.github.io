@@ -356,6 +356,7 @@ frames['mouse_full'] = [90, 28, 30, 24]
 #  Placed on a fresh row at y=58 so they never overlap the detailed sprites.
 # ═════════════════════════════════════════════════════════════════════════════════
 def draw_apple_s(ox, oy):
+    # FLAT shading (no dither) so it stays clean when the scene up-scales it.
     cx, cy = ox + 6, oy + 7
     rx, ry = 5.3, 5.1
     for y in range(oy, oy + 13):
@@ -364,13 +365,16 @@ def draw_apple_s(ox, oy):
             r2 = nx * nx + ny * ny
             if r2 > 1.0:
                 continue
-            dark = 0.50 + 0.42 * nx + 0.42 * ny
-            if r2 > 0.70:
-                dark += 0.18
-            col = shade(RED, dark, x, y)
-            sx, sy = nx + 0.45, ny + 0.40
-            if sx * sx + sy * sy < 0.12:
-                col = R_SPEC
+            col = RED[1]                       # solid body
+            if nx + ny > 0.55:
+                col = RED[2]                    # shadow side (lower-right)
+            if nx + ny > 1.10:
+                col = RED[3]
+            if r2 > 0.86:
+                col = RED[3]                    # crisp silhouette rim
+            sx, sy = nx + 0.42, ny + 0.40
+            if sx * sx + sy * sy < 0.13:
+                col = R_SPEC                    # single highlight blob (upper-left)
             P(x, y, col)
     P(cx, oy + 2, RED[3])              # top dimple
     R(cx, oy + 1, 1, 3, STM_D)         # stem
@@ -384,14 +388,14 @@ def draw_core_s(ox, oy):
     for y in range(oy + 3, oy + 5):    # top red skin cap
         hw = 4 - (y - (oy + 3))
         for x in range(cx - hw, cx + hw + 1):
-            P(x, y, shade(RED, 0.50 + 0.30 * ((x - cx) / 4.0), x, y))
+            P(x, y, RED[2] if x > cx else RED[1])
     for y in range(oy + 4, oy + 10):   # cream hourglass waist
         t = (y - (oy + 4)) / 6.0
         hw = 4 - int(2.0 * math.sin(t * math.pi))
         if hw < 1:
             hw = 1
         for x in range(cx - hw, cx + hw + 1):
-            P(x, y, shade(FLESH, 0.32 + 0.40 * abs((x - cx) / max(1, hw)), x, y))
+            P(x, y, FLESH[3] if abs(x - cx) >= hw - 1 else FLESH[1])
     P(cx - 1, oy + 6, SEED)            # seeds
     P(cx + 1, oy + 7, SEED)
     for y in range(oy + 9, oy + 12):   # bottom red skin cap
@@ -399,7 +403,7 @@ def draw_core_s(ox, oy):
         if hw > 4:
             hw = 4
         for x in range(cx - hw, cx + hw + 1):
-            P(x, y, shade(RED, 0.50 + 0.30 * ((x - cx) / 4.0), x, y))
+            P(x, y, RED[2] if x > cx else RED[1])
 
 def draw_cheese_s(ox, oy):
     tipx, tipy = ox + 1, oy + 7
