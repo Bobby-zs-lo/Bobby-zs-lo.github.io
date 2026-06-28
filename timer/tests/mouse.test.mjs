@@ -1,15 +1,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  appleCountForDuration, eatState, cellForApple, gridDims, chooseGrid, clampN,
+  appleCountForDuration, eatState, cellForApple, mouseGrid, clampN,
 } from '../js/themes/mouse.js';
 
-test('appleCountForDuration: ~1 apple per 10s, clamped 5..48', () => {
-  assert.equal(appleCountForDuration(60_000), 6);     // 1 min -> 6
-  assert.equal(appleCountForDuration(10_000), 5);     // below min -> 5
-  assert.equal(appleCountForDuration(0), 5);          // floor at 5
-  assert.equal(appleCountForDuration(300_000), 30);   // 5 min -> 30
-  assert.equal(appleCountForDuration(3_600_000), 48); // cap at 48
+// ── appleCount: ~1 per 10s, min 1, NO maximum cap ────────────────────────────
+test('appleCountForDuration: ~1 apple per 10s, min 1, uncapped', () => {
+  assert.equal(appleCountForDuration(60_000), 6);       // 1 min  -> 6
+  assert.equal(appleCountForDuration(600_000), 60);     // 10 min -> 60
+  assert.equal(appleCountForDuration(1_800_000), 180);  // 30 min -> 180
+  assert.equal(appleCountForDuration(3_600_000), 360);  // 60 min -> 360 (NO cap)
+  assert.equal(appleCountForDuration(10_000), 1);       // 10 s   -> 1
+  assert.equal(appleCountForDuration(0), 1);            // floor at 1
 });
 
 test('eatState: apples deplete with progress; active = -1 when done', () => {
@@ -20,41 +22,87 @@ test('eatState: apples deplete with progress; active = -1 when done', () => {
   assert.deepEqual(eatState(1, A), { eaten: 6, active: -1 });
 });
 
-test('cellForApple: reverse eat order — last apple first, cell 1 last', () => {
+test('cellForApple: reverse eat order — farthest apple first, cell 1 last', () => {
   const A = 6;
-  assert.equal(cellForApple(0, A), 6);   // first eaten = highest cell
+  assert.equal(cellForApple(0, A), 6);   // first eaten = highest cell (farthest)
   assert.equal(cellForApple(5, A), 1);   // last eaten = cell next to cheese
-  // cheese is cell 0 and is never an apple cell
   assert.ok(cellForApple(A - 1, A) >= 1);
 });
 
-test('gridDims: single row for small totals, balanced wrap when large', () => {
-  assert.deepEqual(gridDims(6, 6, 8), { cols: 6, rows: 1 });
-  assert.deepEqual(gridDims(7, 6, 8), { cols: 4, rows: 2 });   // balanced 4x2
-  assert.deepEqual(gridDims(12, 6, 8), { cols: 6, rows: 2 });
-  const g = gridDims(40, 6, 8);
-  assert.ok(g.cols <= 6 && g.rows <= 8 && g.cols * g.rows >= 40);
+// ── Grid sizing: portrait phone band (390x844 -> stage 240x519) ──────────────
+// Stage shorter side = 240; longer = round(240 * clamp(844/390,1.25,2.2)) = 519.
+// Band = 0.04..0.96 W, 0.085..0.965 H  ->  bandW=220, bandH=457. maxCols(portrait)=6.
+const BW = 220, BH = 457, MAXCOLS = 6;
+const DETAIL_MIN_PROBE = 26;   // mirrors the scene's small/detailed tier threshold
+
+function gridFor(durMin) {
+  const total = appleCountForDuration(durMin * 60_000) + 1;
+  const g = mouseGrid(total, BW, BH, MAXCOLS);
+  return { total, ...g };
+}
+
+test('mouseGrid: 1 min -> a few BIG apples in one band, fits one screen', () => {
+  const g = gridFor(1);
+  assert.equal(g.total, 7);                       // 6 apples + cheese
+  assert.equal(g.cols, 6);
+  assert.equal(g.rows, 2);
+  assert.ok(g.cell > 30);                         // big apples (~36px cell)
+  assert.ok(g.rows * g.cell <= BH);               // fits the band height
+  assert.ok(g.cols * g.rows >= g.total);          // every cell has a slot
 });
 
-test('gridDims respects the row cap (within capacity)', () => {
-  // Scene caps total to colCap*rowCap before calling gridDims.
-  const g = gridDims(27, 9, 3);   // landscape-ish caps, exactly at capacity
-  assert.ok(g.rows <= 3 && g.cols <= 9 && g.cols * g.rows >= 27);
+test('mouseGrid: 10 min -> ~6 cols of big apples, fits one screen', () => {
+  const g = gridFor(10);
+  assert.equal(g.total, 61);
+  assert.equal(g.cols, 6);
+  assert.equal(g.rows, 11);
+  assert.ok(g.cell > 30);                         // still big apples
+  assert.ok(g.rows * g.cell <= BH);
+  assert.ok(g.cols * g.rows >= g.total);
 });
 
-test('chooseGrid: matches band aspect so the grid fills the stage', () => {
-  // Portrait (tall) band, sparse timer -> fewer cols, more rows.
-  assert.deepEqual(chooseGrid(7, 216, 370, 6, 13), { cols: 2, rows: 4 });
-  // Landscape (wide) band, sparse timer -> single wide row.
-  assert.deepEqual(chooseGrid(7, 475, 154, 9, 5), { cols: 5, rows: 2 });
-  // Full timer fills a portrait grid within caps.
-  const g = chooseGrid(49, 216, 370, 6, 13);
-  assert.ok(g.cols <= 6 && g.rows <= 13 && g.cols * g.rows >= 49);
+test('mouseGrid: 30 min -> apples shrink, more rows, fits one screen', () => {
+  const g = gridFor(30);
+  assert.equal(g.total, 181);
+  assert.equal(g.cols, 10);
+  assert.equal(g.rows, 19);
+  assert.ok(g.cell < DETAIL_MIN_PROBE);           // small/medium apples
+  assert.ok(g.rows * g.cell <= BH);
+  assert.ok(g.cols * g.rows >= g.total);
 });
 
-test('chooseGrid: falls back to column cap when rows overflow', () => {
-  const g = chooseGrid(27, 9, 3, 9, 3);   // capacity-limited landscape
-  assert.ok(g.rows <= 3 && g.cols <= 9 && g.cols * g.rows >= 27);
+test('mouseGrid: 60 min -> 360 apples, all on ONE screen (no cap, no scroll)', () => {
+  const g = gridFor(60);
+  assert.equal(g.total, 361);
+  assert.equal(g.cols, 14);
+  assert.equal(g.rows, 26);
+  assert.ok(g.cell >= 14 && g.cell < 18);         // small crisp apples (~16px)
+  assert.ok(g.rows * g.cell <= BH);               // fits one screen
+  assert.ok(g.cols * g.rows >= g.total);          // holds all 361 cells
+});
+
+test('mouseGrid: cells are capped at the big maximum for short timers', () => {
+  const maxCell = BW / MAXCOLS;
+  const g = gridFor(1);
+  assert.ok(g.cell <= maxCell + 1e-9);            // never larger than the cap
+  assert.ok(Math.abs(g.cell - maxCell) < 1e-9);   // short timer uses the cap
+});
+
+test('mouseGrid: extreme duration still fits the band (truly uncapped)', () => {
+  // 3 hours -> 1080 apples + cheese = 1081 cells, must still fit one screen.
+  const total = appleCountForDuration(3 * 3600_000) + 1;
+  assert.equal(total, 1081);
+  const g = mouseGrid(total, BW, BH, MAXCOLS);
+  assert.ok(g.rows * g.cell <= BH);
+  assert.ok(g.cols * g.rows >= total);
+});
+
+test('mouseGrid: landscape allows more columns (wider grid)', () => {
+  // Wide band, sparse timer -> a single wide-ish row of big apples.
+  const g = mouseGrid(7, 460, 200, 9);
+  assert.equal(g.rows, 1);
+  assert.ok(g.cols >= 7);
+  assert.ok(g.rows * g.cell <= 200);
 });
 
 test('clampN basic', () => {

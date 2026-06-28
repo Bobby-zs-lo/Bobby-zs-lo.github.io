@@ -17,6 +17,14 @@ mouse_eat0   mouse eating, jaw up   (chew frame 0)
 mouse_eat1   mouse eating, jaw down (chew frame 1)
 mouse_cheese mouse nibbling the cheese (finale beat)
 mouse_full   content mouse with big round belly (finale end)
+
+Small (simplified) tier — used by the scene when cells get tiny (e.g. 60-min
+grids) so apples/cores/cheese/mouse still read cleanly instead of muddy
+downscales of the detailed sprites:
+apple_s      12x13 simplified apple
+core_s       12x13 simplified core
+cheese_s     14x11 simplified cheese wedge
+mouse_s      14x12 simplified mouse (facing left)
 """
 import sys, os, math
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -25,7 +33,7 @@ from common import save
 from PIL import Image, ImageDraw
 
 # ── Sheet ───────────────────────────────────────────────────────────────────────
-SW, SH = 140, 56
+SW, SH = 140, 80
 img = Image.new('RGBA', (SW, SH), (0, 0, 0, 0))
 d   = ImageDraw.Draw(img)
 frames = {}
@@ -342,6 +350,113 @@ frames['mouse_cheese'] = [56, 28, 30, 26]
 # mouse_full (content, big belly, happy)
 mouse_body(90, 28, belly=2, jaw=0, happy=True, hold=None)
 frames['mouse_full'] = [90, 28, 30, 24]
+
+# ═════════════════════════════════════════════════════════════════════════════════
+#  SMALL (simplified) TIER — clean tiny sprites for dense grids (e.g. 60 min)
+#  Placed on a fresh row at y=58 so they never overlap the detailed sprites.
+# ═════════════════════════════════════════════════════════════════════════════════
+def draw_apple_s(ox, oy):
+    cx, cy = ox + 6, oy + 7
+    rx, ry = 5.3, 5.1
+    for y in range(oy, oy + 13):
+        for x in range(ox, ox + 12):
+            nx = (x - cx) / rx; ny = (y - cy) / ry
+            r2 = nx * nx + ny * ny
+            if r2 > 1.0:
+                continue
+            dark = 0.50 + 0.42 * nx + 0.42 * ny
+            if r2 > 0.70:
+                dark += 0.18
+            col = shade(RED, dark, x, y)
+            sx, sy = nx + 0.45, ny + 0.40
+            if sx * sx + sy * sy < 0.12:
+                col = R_SPEC
+            P(x, y, col)
+    P(cx, oy + 2, RED[3])              # top dimple
+    R(cx, oy + 1, 1, 3, STM_D)         # stem
+    P(cx, oy + 1, STM_L)
+    R(cx + 1, oy + 2, 2, 1, LF_M)      # leaf
+    P(cx + 2, oy + 1, LF_L)
+
+def draw_core_s(ox, oy):
+    cx = ox + 6
+    R(cx, oy + 1, 1, 2, STM_D)         # stem
+    for y in range(oy + 3, oy + 5):    # top red skin cap
+        hw = 4 - (y - (oy + 3))
+        for x in range(cx - hw, cx + hw + 1):
+            P(x, y, shade(RED, 0.50 + 0.30 * ((x - cx) / 4.0), x, y))
+    for y in range(oy + 4, oy + 10):   # cream hourglass waist
+        t = (y - (oy + 4)) / 6.0
+        hw = 4 - int(2.0 * math.sin(t * math.pi))
+        if hw < 1:
+            hw = 1
+        for x in range(cx - hw, cx + hw + 1):
+            P(x, y, shade(FLESH, 0.32 + 0.40 * abs((x - cx) / max(1, hw)), x, y))
+    P(cx - 1, oy + 6, SEED)            # seeds
+    P(cx + 1, oy + 7, SEED)
+    for y in range(oy + 9, oy + 12):   # bottom red skin cap
+        hw = (y - (oy + 8))
+        if hw > 4:
+            hw = 4
+        for x in range(cx - hw, cx + hw + 1):
+            P(x, y, shade(RED, 0.50 + 0.30 * ((x - cx) / 4.0), x, y))
+
+def draw_cheese_s(ox, oy):
+    tipx, tipy = ox + 1, oy + 7
+    topx, topy = ox + 12, oy + 2
+    boty = oy + 9
+    for x in range(ox + 1, ox + 13):
+        tt = (x - tipx) / float(topx - tipx)
+        topedge = int(round(tipy + (topy - tipy) * tt))
+        for y in range(topedge, boty + 1):
+            dark = 0.30 + 0.40 * ((x - tipx) / float(topx - tipx)) + 0.22 * ((y - topedge) / max(1, boty - topedge))
+            P(x, y, shade(CH, dark, x, y))
+        P(x, topedge, CH_RIND)
+    R(ox + 1, boty, 12, 1, CH[3])      # bottom lip
+    for hx, hy in [(ox + 6, oy + 6), (ox + 9, oy + 5)]:   # holes
+        P(hx, hy, CH_HOLE); P(hx + 1, hy, CH_HOLE)
+        P(hx, hy + 1, CH_HOLE_S)
+
+def draw_mouse_s(ox, oy):
+    # facing LEFT (snout left), mirrors the detailed mouse
+    for i in range(5):                 # tail curling back-right
+        P(ox + 11 + (i % 2), oy + 9 - i, TAIL[1])
+    bcx, bcy = ox + 8, oy + 7          # body blob (right)
+    for y in range(oy + 2, oy + 12):
+        for x in range(ox + 3, ox + 13):
+            nx = (x - bcx) / 4.5; ny = (y - bcy) / 4.2
+            if nx * nx + ny * ny > 1.0:
+                continue
+            P(x, y, shade(GREY, 0.45 + 0.40 * nx + 0.40 * ny, x, y))
+    for y in range(oy + 7, oy + 11):   # belly highlight
+        for x in range(ox + 5, ox + 10):
+            nx = (x - (bcx - 1)) / 3.0; ny = (y - (bcy + 2)) / 2.6
+            if nx * nx + ny * ny <= 1.0:
+                P(x, y, M_BELLY)
+    hcx, hcy = ox + 4, oy + 7          # head (left), tapered snout
+    for y in range(oy + 4, oy + 12):
+        for x in range(ox, ox + 8):
+            nx = (x - hcx) / 3.4; ny = (y - hcy) / 3.2
+            if nx * nx + ny * ny > 1.0:
+                continue
+            P(x, y, shade(GREY, 0.45 + 0.42 * nx + 0.36 * ny, x, y))
+    P(ox, oy + 8, NOSE)                # nose tip
+    ecx, ecy, er = ox + 6, oy + 3, 2   # ear
+    for y in range(ecy - er, ecy + er + 1):
+        for x in range(ecx - er, ecx + er + 1):
+            dd = (x - ecx) ** 2 + (y - ecy) ** 2
+            if dd <= er * er:
+                P(x, y, EAR_IN if dd <= 1 else GREY[2])
+    P(ox + 3, oy + 7, EYE)             # eye
+
+draw_apple_s(0, 58)
+frames['apple_s'] = [0, 58, 12, 13]
+draw_core_s(14, 58)
+frames['core_s'] = [14, 58, 12, 13]
+draw_cheese_s(28, 58)
+frames['cheese_s'] = [28, 58, 14, 11]
+draw_mouse_s(44, 58)
+frames['mouse_s'] = [44, 58, 14, 12]
 
 # ── Save ───────────────────────────────────────────────────────────────────────
 save(img, frames, 'mouse')

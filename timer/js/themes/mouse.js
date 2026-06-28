@@ -1,18 +1,30 @@
 /**
  * MouseScene – Mouse-Timer style grid-depletion countdown.
  *
- * A cheese wedge marks the goal (cell 0, top-left). The remaining cells are
- * apples laid out in reading order; for short timers a single row, for long
- * timers a wrapped grid. The mouse eats apples in REVERSE reading order
- * (rightmost/last apple first, ending at the apple next to the cheese), turning
- * each into a persistent core. When the countdown completes the mouse reaches
- * the cheese, nibbles it, then sits content with a big round belly (finale).
+ * A cheese wedge marks the goal (cell 0, top-left corner). The remaining cells
+ * are apples = remaining time (~1 apple per 10s, UNCAPPED). The mouse eats
+ * apples one-by-one in REVERSE reading order (the farthest / bottom apple first,
+ * ending at the apple next to the cheese), turning each into a persistent core,
+ * so cores fill from the bottom up toward the cheese. When the countdown
+ * completes the mouse reaches the cheese, nibbles it, then sits content with a
+ * big round belly (finale).
  *
- * Resolution-relative: grid + sprite scale recomputed in layout(W,H).
- * Backdrop: warm tan/brown flat fill (per design).
+ * Grid scaling (the point of this revision):
+ *   - appleCount = max(1, round(durationSec/10)); total = appleCount + 1.
+ *   - NO CAP: a 60-min timer = 360 apples and they ALL fit on ONE screen.
+ *   - Cells are SQUARE and their size is capped at a large max (~bandW/maxCols)
+ *     so short timers show BIG apples in a few rows, vertically centered with
+ *     empty margins. Columns grow (apples shrink) only when the grid would
+ *     overflow the band height — guaranteeing a one-screen fit at any duration.
+ *   - Below a size threshold a simplified small apple/core/cheese/mouse sprite
+ *     tier is used so tiny apples still read cleanly (no muddy downscales).
+ *
+ * Resolution-relative: band + grid recomputed in layout(W,H); aspect-aware
+ * (more columns allowed in landscape). Backdrop: warm tan gradient + vignette.
  *
  * Sprite sheet: assets/mouse.png + mouse.json
  * Frames: apple, apple_bite, core, cheese, crumb,
+ *         apple_s, core_s, cheese_s, mouse_s,
  *         mouse_eat0, mouse_eat1, mouse_cheese, mouse_full
  */
 import { Scene, blit } from '../scene.js';
@@ -26,19 +38,29 @@ const C = {
 };
 
 // ── Sprite base dimensions (1:1 with sheet) ──────────────────────────────────
+// Detailed (large-cell) tier
 const APPLE_W = 22, APPLE_H = 26;
 const CHEESE_W = 26, CHEESE_H = 20;
 const MOUSE_W = 26, MOUSE_H = 24;     // eat frames
 const MOUSEC_W = 30, MOUSEC_H = 26;   // mouse_cheese
 const MOUSEF_W = 30, MOUSEF_H = 24;   // mouse_full
+// Simplified (small-cell) tier
+const APPLE_SW = 12, APPLE_SH = 13;
+const CHEESE_SW = 14, CHEESE_SH = 11;
+const MOUSE_SW = 14, MOUSE_SH = 12;
+
+// Cells whose square size (px) is below this use the simplified small tier.
+const DETAIL_MIN = 26;
+// How much of a cell a sprite fills (small consistent gaps, like the reference).
+const FILL = 0.92;
 
 // ── Pure logic (exported for unit tests) ─────────────────────────────────────
 export function clampN(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
 
-/** Apples scale with duration: ~1 per 10s, min 5, hard-capped at 48. */
+/** Apples scale with duration: ~1 per 10s, minimum 1, NO maximum (no cap). */
 export function appleCountForDuration(durationMs) {
   const secs = durationMs / 1000;
-  return clampN(Math.round(secs / 10), 5, 48);
+  return Math.max(1, Math.round(secs / 10));
 }
 
 /** Eaten/active apple state from progress. active = -1 when all apples eaten. */
@@ -51,39 +73,35 @@ export function eatState(progress, appleCount) {
 /**
  * Cell index (reading order) for an apple's eat-order index.
  * Cell 0 is the cheese; apples occupy cells 1..appleCount.
- * Eat order is reversed so the LAST apple (highest cell) is eaten first and
- * the apple next to the cheese (cell 1) is eaten last.
+ * Eat order is reversed so the LAST apple (highest cell = farthest, bottom) is
+ * eaten first and the apple next to the cheese (cell 1) is eaten last.
  */
 export function cellForApple(appleEatIndex, appleCount) {
   return appleCount - appleEatIndex;
 }
 
-/** Balanced grid (cols,rows) for `total` cells within column/row caps. */
-export function gridDims(total, colCap, rowCap) {
-  let rows = Math.max(1, Math.ceil(total / colCap));
-  if (rows > rowCap) rows = rowCap;
-  let cols = Math.max(1, Math.ceil(total / rows));
-  if (cols > colCap) cols = colCap;
-  rows = Math.max(1, Math.ceil(total / cols));   // ensure all cells fit
-  return { cols, rows };
-}
-
 /**
- * Choose cols/rows so the grid's aspect roughly matches the band's aspect —
- * this fills the available stage (wide grid in landscape, taller grid in
- * portrait) instead of leaving a small centred block. Clamped to caps; if the
- * row count would overflow, fall back to the column cap.
+ * Uncapped, one-screen grid sizing.
+ *
+ * Cells are SQUARE with pitch `cell` (logical px). Cells start as big as the cap
+ * allows (cell = bandW / maxCols) and the grid fills the width (up to maxCols).
+ * Columns are added — shrinking the cell — ONLY when the grid would overflow the
+ * band height, so the result always fits inside bandW × bandH no matter how many
+ * cells there are. Returns { cols, rows, cell }.
  */
-export function chooseGrid(total, bandW, bandH, colCap, rowCap) {
-  const aspect = bandW / bandH;
-  let cols = clampN(Math.round(Math.sqrt(total * aspect)), 1, colCap);
-  let rows = Math.ceil(total / cols);
-  if (rows > rowCap) {
-    rows = rowCap;
-    cols = clampN(Math.ceil(total / rows), 1, colCap);
+export function mouseGrid(total, bandW, bandH, maxCols) {
+  total = Math.max(1, Math.round(total));
+  maxCols = Math.max(1, Math.round(maxCols));
+  const maxCell = bandW / maxCols;
+  let cols = clampN(Math.min(total, maxCols), 1, total);
+  let cell, rows;
+  for (;;) {
+    cell = Math.min(maxCell, bandW / cols);
     rows = Math.ceil(total / cols);
+    if (rows * cell <= bandH || cols >= total) break;
+    cols++;                                  // apples shrink, grid gets shorter
   }
-  return { cols, rows };
+  return { cols, rows, cell };
 }
 
 // ── MouseScene ───────────────────────────────────────────────────────────────
@@ -94,14 +112,13 @@ export class MouseScene extends Scene {
     this.H = H;
     this._layoutDone = true;
 
-    // Large content band that fills most of the stage while leaving safe
-    // margins for the top-left clock and the bottom controls. Landscape keeps
-    // a slightly taller top margin (the clock font scales with width).
-    const landscape = W > H;
-    this.bandX0 = Math.round(W * 0.05);
-    this.bandX1 = Math.round(W * 0.95);
-    this.bandY0 = Math.round(H * (landscape ? 0.17 : 0.13));
-    this.bandY1 = Math.round(H * (landscape ? 0.85 : 0.87));
+    // Large content band filling most of the stage. Top margin clears the
+    // on-canvas HUD clock; the grid is centred inside the band so short timers
+    // sit with generous empty margins above/below (NOT stretched to fill).
+    this.bandX0 = Math.round(W * 0.04);
+    this.bandX1 = Math.round(W * 0.96);
+    this.bandY0 = Math.round(H * 0.085);
+    this.bandY1 = Math.round(H * 0.965);
     this.bandW = this.bandX1 - this.bandX0;
     this.bandH = this.bandY1 - this.bandY0;
 
@@ -110,48 +127,34 @@ export class MouseScene extends Scene {
 
   _computeGrid() {
     const landscape = this.W > this.H;
-    const colCapHard = landscape ? 9 : 6;
+    const maxCols = landscape ? 9 : 6;       // aspect-aware big-cell column cap
 
-    // Caps keep cells big enough for a readable sprite (>= ~scale 1).
-    const MINW = APPLE_W * 1.05, MINH = APPLE_H * 1.05;
-    const colCap = clampN(Math.floor(this.bandW / MINW), 1, colCapHard);
-    const rowCap = Math.max(1, Math.floor(this.bandH / MINH));
-    const capacity = colCap * rowCap;
-
-    const total = Math.min(appleCountForDuration(this._durMs) + 1, capacity);
-    const { cols, rows } = chooseGrid(total, this.bandW, this.bandH, colCap, rowCap);
-
-    // Cells tile the WHOLE band (pitch = band / count) so the grid fills the
-    // stage; the sprite is then drawn as large as fits a cell (with margin).
-    const pitchW = this.bandW / cols;
-    const pitchH = this.bandH / rows;
-    const FILL = 0.82;
-    let sc = Math.floor(Math.min(pitchW * FILL / APPLE_W, pitchH * FILL / APPLE_H));
-    sc = clampN(sc, 1, 7);
+    const total = appleCountForDuration(this._durMs) + 1;
+    const { cols, rows, cell } = mouseGrid(total, this.bandW, this.bandH, maxCols);
 
     this.cols = cols;
     this.rows = rows;
     this.total = total;
     this.appleCount = total - 1;
-    this.sc = sc;
-    this.pitchW = Math.round(pitchW);
-    this.pitchH = Math.round(pitchH);
-    const gridW = this.cols * this.pitchW;
-    const gridH = this.rows * this.pitchH;
-    this.gridX = Math.round(this.bandX0 + (this.bandW - gridW) / 2);
-    this.gridY = Math.round(this.bandY0 + (this.bandH - gridH) / 2);
+    this.cell = cell;
+
+    const gridW = cols * cell;
+    const gridH = rows * cell;
+    this.gridX = this.bandX0 + (this.bandW - gridW) / 2;
+    this.gridY = this.bandY0 + (this.bandH - gridH) / 2;
   }
 
   /** Centre (cx,cy) of a reading-order cell; partial last row is centred. */
   _cellCenter(c) {
+    const cell = this.cell;
     const row = Math.floor(c / this.cols);
     const col = c % this.cols;
     const cellsInRow = (row < this.rows - 1)
       ? this.cols
       : (this.total - this.cols * row);
-    const rowOffset = Math.round((this.cols - cellsInRow) * this.pitchW / 2);
-    const cx = this.gridX + rowOffset + col * this.pitchW + this.pitchW / 2;
-    const cy = this.gridY + row * this.pitchH + this.pitchH / 2;
+    const rowOffset = (this.cols - cellsInRow) * cell / 2;
+    const cx = this.gridX + rowOffset + col * cell + cell / 2;
+    const cy = this.gridY + row * cell + cell / 2;
     return { cx, cy };
   }
 
@@ -170,7 +173,6 @@ export class MouseScene extends Scene {
     this._hopT = 0;
     this._crumbs = [];
     this._finCrumbT = 0;
-    this._milestoneFr = 0;
   }
 
   _spawnCrumbs(cx, cy, n) {
@@ -201,7 +203,7 @@ export class MouseScene extends Scene {
         this._hopT = 150;
         const cell = active >= 0 ? cellForApple(active, this.appleCount) : 0;
         const { cx, cy } = this._cellCenter(cell);
-        this._spawnCrumbs(cx - 4 * this.sc, cy - 2 * this.sc, 4);
+        this._spawnCrumbs(cx - 0.2 * this.cell, cy - 0.1 * this.cell, 4);
       }
     }
 
@@ -218,7 +220,7 @@ export class MouseScene extends Scene {
       if (this._finCrumbT >= 110) {
         this._finCrumbT = 0;
         const { cx, cy } = this._cellCenter(0);
-        this._spawnCrumbs(cx - 3 * this.sc, cy - 2 * this.sc, 3);
+        this._spawnCrumbs(cx - 0.15 * this.cell, cy - 0.1 * this.cell, 3);
       }
     }
 
@@ -237,7 +239,6 @@ export class MouseScene extends Scene {
 
   onMilestone(i, total) {
     // Light accent on each fifth; the per-apple "coin" sfx carries the main beat.
-    this._milestoneFr = 1;
     audio.sfx('click');
   }
 
@@ -254,7 +255,7 @@ export class MouseScene extends Scene {
 
   // ── Rendering ────────────────────────────────────────────────────────────────
   render() {
-    const ctx = this.ctx, W = this.W, H = this.H, sh = this.assets, sc = this.sc;
+    const ctx = this.ctx, W = this.W, H = this.H, sh = this.assets;
     ctx.imageSmoothingEnabled = false;
 
     // Backdrop: warm tan with a subtle vertical gradient + soft vignette.
@@ -273,6 +274,7 @@ export class MouseScene extends Scene {
 
     if (!sh) return;
 
+    const cell = this.cell;
     const { eaten, active } = eatState(this.progress, this.appleCount);
     const inFinale = this.finale > 0;
     // During finale all apples are cores and the cheese is the active cell.
@@ -284,71 +286,98 @@ export class MouseScene extends Scene {
     // ── Draw cells (cheese + apples/cores) ─────────────────────────────────────
     for (let c = 0; c < this.total; c++) {
       const { cx, cy } = this._cellCenter(c);
-      this._drawShadow(ctx, cx, cy);
+      this._shadow(ctx, cx, cy);
 
       if (c === 0) {
         // Cheese goal — vanishes as it is nibbled in the finale.
-        if (!(inFinale && this.finale > 650)) {
-          this._sprite(ctx, sh, 'cheese', CHEESE_W, CHEESE_H, cx, cy);
-        }
+        if (!(inFinale && this.finale > 650)) this._blitCell(ctx, sh, 'cheese', cx, cy);
         continue;
       }
       const k = this.appleCount - c;          // eat-order index of this apple
-      let name;
-      if (k < eatenEff) name = 'core';
-      else if (k === eatenEff && !inFinale) name = 'apple_bite';
-      else name = 'apple';
-      this._sprite(ctx, sh, name,
-        name === 'core' ? APPLE_W : APPLE_W, APPLE_H, cx, cy);
+      let kind;
+      if (k < eatenEff) kind = 'core';
+      else if (k === eatenEff && !inFinale) kind = 'apple_bite';
+      else kind = 'apple';
+      this._blitCell(ctx, sh, kind, cx, cy);
     }
 
     // ── Mouse at the active cell ───────────────────────────────────────────────
     {
       const { cx, cy } = this._cellCenter(activeCell);
       const hop = (this._hopT > 0 && !this.reducedMotion)
-        ? -Math.round(Math.sin((this._hopT / 150) * Math.PI) * 3 * sc) : 0;
-      const chewBob = (!this.reducedMotion && this._chewFr) ? sc : 0;
+        ? -Math.sin((this._hopT / 150) * Math.PI) * cell * 0.12 : 0;
+      const chewBob = (!this.reducedMotion && this._chewFr) ? cell * 0.04 : 0;
 
-      let name, bw, bh;
-      if (inFinale && this.finale >= 850) { name = 'mouse_full'; bw = MOUSEF_W; bh = MOUSEF_H; }
-      else if (inFinale) { name = 'mouse_cheese'; bw = MOUSEC_W; bh = MOUSEC_H; }
-      else {
-        name = this._chewFr ? 'mouse_eat1' : 'mouse_eat0';
-        bw = MOUSE_W; bh = MOUSE_H;
+      if (inFinale) {
+        // Finale mouse is kept at a comfortable, clearly-visible size regardless
+        // of cell size (the climax should read even when apples are tiny).
+        const name = this.finale >= 850 ? 'mouse_full' : 'mouse_cheese';
+        const nw = this.finale >= 850 ? MOUSEF_W : MOUSEC_W;
+        const nh = this.finale >= 850 ? MOUSEF_H : MOUSEC_H;
+        const target = Math.max(cell * 1.25, 30);
+        const scale = target / Math.max(MOUSEC_W, MOUSEC_H);
+        const dw = nw * scale, dh = nh * scale;
+        blit(ctx, sh, name, Math.round(cx - dw / 2), Math.round(cy - dh / 2 + chewBob), scale);
+      } else {
+        const big = cell >= DETAIL_MIN;
+        const name = big ? (this._chewFr ? 'mouse_eat1' : 'mouse_eat0') : 'mouse_s';
+        const nw = big ? MOUSE_W : MOUSE_SW;
+        const nh = big ? MOUSE_H : MOUSE_SH;
+        // Mouse a touch bigger than an apple; sits slightly over its cell.
+        const scale = cell * 1.0 / Math.max(nw, nh);
+        const dw = nw * scale, dh = nh * scale;
+        const dy = hop + chewBob + cell * 0.08;
+        blit(ctx, sh, name, Math.round(cx - dw / 2), Math.round(cy - dh / 2 + dy), scale);
       }
-      // Mouse sits a little in front of/over its cell (feet near cell bottom).
-      const dy = hop + chewBob + Math.round(2 * sc);
-      this._sprite(ctx, sh, name, bw, bh, cx, cy, dy);
     }
 
     // ── Crumb particles ────────────────────────────────────────────────────────
     if (!this.reducedMotion) {
+      const cs = Math.max(1, cell / 14);
       for (const cr of this._crumbs) {
         const a = 1 - cr.age / cr.max;
         if (a <= 0) continue;
         ctx.globalAlpha = a < 1 ? a : 1;
-        blit(ctx, sh, 'crumb', Math.round(cr.x), Math.round(cr.y), Math.max(1, sc));
+        blit(ctx, sh, 'crumb', Math.round(cr.x), Math.round(cr.y), cs);
       }
       ctx.globalAlpha = 1;
     }
   }
 
-  _drawShadow(ctx, cx, cy) {
-    const rw = Math.round(APPLE_W * this.sc * 0.42);
-    const rh = Math.max(2, Math.round(this.sc * 2.4));
-    const y = cy + Math.round(APPLE_H * this.sc * 0.42);
+  /** Soft contact shadow under a cell, sized to the cell. */
+  _shadow(ctx, cx, cy) {
+    const cell = this.cell;
+    const rw = cell * 0.34;
+    const rh = Math.max(1.5, cell * 0.07);
+    const y = cy + cell * 0.36;
     ctx.fillStyle = C.shadow;
     ctx.beginPath();
     ctx.ellipse(cx, y, rw, rh, 0, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  /** Blit a frame centred on (cx,cy), bottom-aligned to the cell with optional dy. */
-  _sprite(ctx, sh, name, baseW, baseH, cx, cy, dy = 0) {
-    const sc = this.sc;
-    const dx = Math.round(cx - (baseW * sc) / 2);
-    const dyy = Math.round(cy - (baseH * sc) / 2 + dy);
-    blit(ctx, sh, name, dx, dyy, sc);
+  /**
+   * Blit an apple/core/cheese frame, picking the detailed or simplified sprite
+   * tier from the cell size, scaled (fractional, nearest-neighbor) to fill the
+   * square cell and centred on (cx,cy).
+   */
+  _blitCell(ctx, sh, kind, cx, cy) {
+    const cell = this.cell;
+    const big = cell >= DETAIL_MIN;
+    let name, nw, nh;
+    if (kind === 'cheese') {
+      if (big) { name = 'cheese'; nw = CHEESE_W; nh = CHEESE_H; }
+      else     { name = 'cheese_s'; nw = CHEESE_SW; nh = CHEESE_SH; }
+    } else if (kind === 'core') {
+      if (big) { name = 'core'; nw = APPLE_W; nh = APPLE_H; }
+      else     { name = 'core_s'; nw = APPLE_SW; nh = APPLE_SH; }
+    } else { // apple or apple_bite
+      if (big) { name = kind; nw = APPLE_W; nh = APPLE_H; }
+      else     { name = 'apple_s'; nw = APPLE_SW; nh = APPLE_SH; }
+    }
+    const scale = cell * FILL / Math.max(nw, nh);   // fit the square cell
+    const dw = nw * scale, dh = nh * scale;
+    blit(ctx, sh, name, Math.round(cx - dw / 2), Math.round(cy - dh / 2), scale);
   }
 
   dispose() {}
