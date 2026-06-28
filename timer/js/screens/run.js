@@ -26,6 +26,18 @@ const MONSTER_LOOP = [
   { note: 'G', oct: 3, dur: 0.5 },
 ];
 
+// Bouncy, playful triangle-wave loop for the Mouse Timer (nibble vibe)
+const MOUSE_LOOP = [
+  { note: 'C', oct: 4, dur: 0.5, type: 'tri' },
+  { note: 'E', oct: 4, dur: 0.5, type: 'tri' },
+  { note: 'G', oct: 4, dur: 0.5, type: 'tri' },
+  { note: 'E', oct: 4, dur: 0.5, type: 'tri' },
+  { note: 'F', oct: 4, dur: 0.5, type: 'tri' },
+  { note: 'A', oct: 4, dur: 0.5, type: 'tri' },
+  { note: 'G', oct: 4, dur: 0.5, type: 'tri' },
+  { note: 'E', oct: 4, dur: 0.5, type: 'tri' },
+];
+
 /**
  * Compute logical stage dimensions from the current viewport.
  * Shorter side = 240 logical px; longer side = round(240 * ratio),
@@ -93,8 +105,12 @@ export async function renderRun(ctx, { themeId, durationMs }) {
   let doneFired = false;
 
   // Choose loop by themeId
-  const loop = themeId === 'monsterhp' ? MONSTER_LOOP : CASTLE_LOOP;
-  const bpm  = themeId === 'monsterhp' ? 132 : 110;
+  const loop = themeId === 'monsterhp' ? MONSTER_LOOP
+             : themeId === 'mouse'     ? MOUSE_LOOP
+             : CASTLE_LOOP;
+  const bpm  = themeId === 'monsterhp' ? 132
+             : themeId === 'mouse'     ? 120
+             : 110;
 
   const engine = new TimerEngine(durationMs, {
     milestones: 5,

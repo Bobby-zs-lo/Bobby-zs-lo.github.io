@@ -382,6 +382,81 @@ for cx, cy in [(10,94),(8,88),(12,98),(62,92)]:
 save_png(img.convert('RGBA'), 'thumb_feeding.png')
 
 # ════════════════════════════════════════════════════════════════════════════════
+#  MOUSE TIMER thumb — warm tan card: cheese goal, apples, mouse, a core
+# ════════════════════════════════════════════════════════════════════════════════
+img, d = new_sheet(TW, TH)
+TAN0 = h2c('#bb9166')
+TAN1 = h2c('#a87f53')
+for y in range(TH):                       # subtle vertical depth
+    d.rectangle([0, y, TW - 1, y], fill=lerp_color(TAN0, TAN1, y / (TH - 1)))
+
+APL  = h2c('#c81e1e'); APL_H = h2c('#ff6056'); APL_D = h2c('#8e1216')
+STM  = h2c('#5c3a1c'); LEAF = h2c('#46aa46')
+CHE  = h2c('#ffcd3c'); CHE_H = h2c('#ffe98c'); CHE_D = h2c('#cd8412'); HOLE = h2c('#c47c0e')
+COR  = h2c('#f6e7b6'); COR_D = h2c('#d6b56c')
+GRY  = h2c('#c6cad3'); GRY_D = h2c('#7c818c'); BEL = h2c('#ecedf1')
+EARP = h2c('#f2aabc'); CRB = h2c('#ffd650')
+
+def soft_shadow(cx, cy, rw):
+    for ddx in range(-rw, rw + 1):
+        hh = int(3 * (1 - (ddx / rw) ** 2) ** 0.5)
+        for ddy in range(-hh, hh + 1):
+            px = img.load()
+            x, y = cx + ddx, cy + ddy
+            if 0 <= x < TW and 0 <= y < TH:
+                base = img.getpixel((x, y))
+                px[x, y] = lerp_color(base, (60, 40, 24, 255), 0.22)
+
+def mini_apple(x, y, eaten=False):
+    soft_shadow(x + 8, y + 19, 8)
+    if eaten:
+        # core: red caps + cream waist
+        rect(d, x + 5, y + 2, 6, 3, APL)
+        for yy in range(5, 13):
+            w = 6 - int(3 * math.sin((yy - 5) / 8 * math.pi))
+            rect(d, x + 8 - w // 2, y + yy, w, 1, COR if (yy % 2) else COR_D)
+        rect(d, x + 3, y + 13, 10, 4, APL); rect(d, x + 3, y + 16, 10, 1, APL_D)
+        rect(d, x + 6, y + 7, 1, 2, (66, 42, 22, 255))
+        return
+    rect(d, x + 7, y + 1, 2, 4, STM)
+    rect(d, x + 9, y + 2, 3, 3, LEAF)
+    draw_circle_fill(d, x + 8, y + 11, 7, APL)
+    draw_circle_fill(d, x + 5, y + 8, 3, APL_H)
+    rect(d, x + 12, y + 9, 3, 6, APL_D)
+
+# cheese goal (far left)
+soft_shadow(12, 62, 11)
+d.polygon([(4, 58), (22, 50), (22, 60), (4, 60)], fill=CHE)
+d.polygon([(4, 58), (22, 50), (22, 52), (5, 59)], fill=CHE_H)
+rect(d, 4, 60, 19, 2, CHE_D)
+for hx, hy in [(11, 56), (17, 53)]:
+    draw_circle_fill(d, hx, hy, 2, HOLE)
+
+# row of apples / cores
+mini_apple(26, 46, eaten=False)
+mini_apple(44, 46, eaten=False)
+mini_apple(62, 46, eaten=True)
+mini_apple(80, 46, eaten=True)
+
+# mouse (eating, centre-left of the row, facing left)
+MXc, MYc = 36, 60
+soft_shadow(MXc, 66, 10)
+draw_circle_fill(d, MXc + 3, MYc, 8, GRY)       # body
+draw_circle_fill(d, MXc + 5, MYc + 3, 5, BEL)   # belly
+draw_circle_fill(d, MXc - 4, MYc - 1, 5, GRY)   # head
+draw_circle_fill(d, MXc - 1, MYc - 7, 4, GRY)   # ear
+draw_circle_fill(d, MXc - 1, MYc - 7, 2, EARP)
+rect(d, MXc - 9, MYc, 2, 2, h2c('#f07a8e'))     # nose
+rect(d, MXc - 6, MYc - 2, 2, 2, h2c('#262022')) # eye
+rect(d, MXc + 9, MYc + 2, 5, 2, GRY_D)          # tail
+rect(d, MXc - 9, MYc - 1, 3, 3, APL)            # held apple bit
+# crumbs
+for cx2, cy2 in [(MXc - 11, MYc - 6), (MXc - 8, MYc - 9), (MXc - 13, MYc - 3)]:
+    rect(d, cx2, cy2, 2, 2, CRB)
+
+save_png(img.convert('RGBA'), 'thumb_mouse.png')
+
+# ════════════════════════════════════════════════════════════════════════════════
 #  LOCK badge [24x24]
 # ════════════════════════════════════════════════════════════════════════════════
 img, d = new_sheet(24, 24)
