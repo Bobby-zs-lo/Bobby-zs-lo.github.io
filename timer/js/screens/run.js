@@ -26,6 +26,18 @@ const MONSTER_LOOP = [
   { note: 'G', oct: 3, dur: 0.5 },
 ];
 
+// Slow, brooding minor loop for the Dragon Sleep theme (sleeping-giant vibe)
+const DRAGON_LOOP = [
+  { note: 'D', oct: 3, dur: 1, type: 'tri' },
+  { note: 'F', oct: 3, dur: 1, type: 'tri' },
+  { note: 'A', oct: 3, dur: 1, type: 'tri' },
+  { note: 'F', oct: 3, dur: 1, type: 'tri' },
+  { note: 'C', oct: 3, dur: 1, type: 'tri' },
+  { note: 'E', oct: 3, dur: 1, type: 'tri' },
+  { note: 'G', oct: 3, dur: 1, type: 'tri' },
+  { note: 'A', oct: 3, dur: 1, type: 'tri' },
+];
+
 // Bouncy, playful triangle-wave loop for the Mouse Timer (nibble vibe)
 const MOUSE_LOOP = [
   { note: 'C', oct: 4, dur: 0.5, type: 'tri' },
@@ -107,9 +119,11 @@ export async function renderRun(ctx, { themeId, durationMs }) {
   // Choose loop by themeId
   const loop = themeId === 'monsterhp' ? MONSTER_LOOP
              : themeId === 'mouse'     ? MOUSE_LOOP
+             : themeId === 'dragon'    ? DRAGON_LOOP
              : CASTLE_LOOP;
   const bpm  = themeId === 'monsterhp' ? 132
              : themeId === 'mouse'     ? 120
+             : themeId === 'dragon'    ? 84
              : 110;
 
   const engine = new TimerEngine(durationMs, {
