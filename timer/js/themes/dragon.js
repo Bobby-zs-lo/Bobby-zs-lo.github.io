@@ -477,8 +477,11 @@ export class DragonScene extends Scene {
       this._drawMound(ctx, sh);
       this._drawChest(ctx, sh);
       this._drawDragon(ctx, sh);
-      this._drawThieves(ctx, sh);
       this._drawFire(ctx, sh);
+      // Thieves are drawn OVER the fire so the panic-run flail and the char husks read
+      // as being engulfed INSIDE the flames (not hidden behind an opaque plume). During
+      // the countdown there's no fire, so this ordering is visually identical there.
+      this._drawThieves(ctx, sh);
       this._drawParticles(ctx, sh);
     }
 
