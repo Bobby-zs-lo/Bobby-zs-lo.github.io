@@ -2,15 +2,19 @@
  * MouseScene – Mouse-Timer style grid-depletion countdown.
  *
  * A cheese wedge marks the goal (cell 0, top-left corner). The remaining cells
- * are apples = remaining time (~1 apple per 10s, UNCAPPED). The mouse eats
- * apples one-by-one in REVERSE reading order (the farthest / bottom apple first,
- * ending at the apple next to the cheese), turning each into a persistent core,
- * so cores fill from the bottom up toward the cheese. When the countdown
- * completes the mouse reaches the cheese, nibbles it, then sits content with a
- * big round belly (finale).
+ * are apples (~1 apple per 10s, UNCAPPED). The mouse eats apples one-by-one in
+ * REVERSE reading order (the farthest / bottom apple first, ending at the apple
+ * next to the cheese), turning each into a persistent core, so cores fill from
+ * the bottom up toward the cheese. The cheese is the FINAL 10-SECOND SEGMENT of
+ * the countdown: the mouse eats every apple across the first (duration − 10s),
+ * reaches the cheese with ~10s left, and nibbles it down so its belly is big and
+ * round ("full") exactly at 0:00. The post-0:00 finale is just a short happy
+ * celebration hold before isFinaleDone() returns true.
  *
  * Grid scaling (the point of this revision):
- *   - appleCount = max(1, round(durationSec/10)); total = appleCount + 1.
+ *   - appleCount = max(1, round(durationSec/10) − 1); total = appleCount + 1
+ *     (the +1 cheese is the final timed cell, eaten in the last 10s — so there is
+ *     one fewer apple than a naive round(sec/10), matching the reference art).
  *   - NO CAP: a 60-min timer = 360 apples and they ALL fit on ONE screen.
  *   - Cells are SQUARE and their size is capped at a large max (~bandW/maxCols)
  *     so short timers show BIG apples in a few rows, vertically centered with
@@ -58,6 +62,12 @@ const TWEEN_MS = 300;    // hop travel time between apples
 const MOUSE_FILL = 1.3;  // mouse ~1.3x a cell while eating
 const MOUSE_MIN = 30;    // never smaller than this (readable at tiny 60-min cells)
 
+// The cheese is the final timed segment: the mouse spends the LAST 10s eating it,
+// reaching the big-belly "full" state exactly at 0:00 (NOT after the countdown).
+const CHEESE_MS = 10000;
+// cheeseProgress at/after which the belly is "full" and the cheese is gone.
+const CHEESE_FULL = 0.9;
+
 // Cells whose square size (px) is below this use the simplified small pixel tier
 // (mouse always uses the smooth HD frames, scaled, regardless of cell size).
 const DETAIL_MIN = 26;
@@ -67,10 +77,14 @@ const FILL = 0.92;
 // ── Pure logic (exported for unit tests) ─────────────────────────────────────
 export function clampN(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
 
-/** Apples scale with duration: ~1 per 10s, minimum 1, NO maximum (no cap). */
+/**
+ * Apples scale with duration: ~1 per 10s, minimum 1, NO maximum (no cap), MINUS
+ * one — because the final 10s is spent eating the cheese, not an apple. So a
+ * 1-min timer is 5 apples + cheese, 10-min is 59 + cheese, 60-min is 359 + cheese.
+ */
 export function appleCountForDuration(durationMs) {
   const secs = durationMs / 1000;
-  return Math.max(1, Math.round(secs / 10));
+  return Math.max(1, Math.round(secs / 10) - 1);
 }
 
 /** Eaten/active apple state from progress. active = -1 when all apples eaten. */
@@ -154,6 +168,25 @@ export class MouseScene extends Scene {
     this.gridY = this.bandY0 + (this.bandH - gridH) / 2;
   }
 
+  /**
+   * Fraction (0..1) of the APPLE-eating phase elapsed. Apples are eaten across
+   * the first (durationMs − CHEESE_MS); reaching 1 lines up with ~10s remaining,
+   * at which point all apples are cores and the mouse moves onto the cheese.
+   * Driven off the engine's remainingMs so the schedule stays wall-clock accurate.
+   */
+  _appleProgress(remainingMs) {
+    const applePhase = Math.max(1, this._durMs - CHEESE_MS);
+    return clampN((this._durMs - remainingMs) / applePhase, 0, 1);
+  }
+
+  /**
+   * Fraction (0..1) of the CHEESE eaten over the final CHEESE_MS: 0 until ~10s
+   * remain, 1 at 0:00 (big-belly "full"). Driven off remainingMs.
+   */
+  _cheeseProgress(remainingMs) {
+    return clampN((CHEESE_MS - remainingMs) / CHEESE_MS, 0, 1);
+  }
+
   /** Centre (cx,cy) of a reading-order cell; partial last row is centred. */
   _cellCenter(c) {
     const cell = this.cell;
@@ -175,6 +208,7 @@ export class MouseScene extends Scene {
 
     this.t = 0;
     this.progress = 0;
+    this.remainingMs = durationMs;
     this.finale = 0;
 
     this._lastEaten = 0;
@@ -199,17 +233,21 @@ export class MouseScene extends Scene {
     }
   }
 
-  update(progress, dtMs) {
+  update(progress, dtMs, remainingMs) {
     this.t += dtMs;
     this.progress = progress;
+    if (remainingMs != null) this.remainingMs = remainingMs;
 
     // Advance finale timer BEFORE any reduced-motion early-return (run-screen gate).
     if (this.finale > 0) this.finale += dtMs;
 
     // Detect an apple being finished → "nom" sfx + crumb burst + start a hop
-    // that tweens the mouse from the finished apple to the next one.
+    // that tweens the mouse from the finished apple to the next one. Apple eating
+    // is driven off the apple-phase fraction (first duration − 10s), so the last
+    // apple is finished with ~10s remaining and the final hop lands on the cheese.
     if (this.finale === 0) {
-      const { eaten, active } = eatState(progress, this.appleCount);
+      const appleProg = this._appleProgress(this.remainingMs);
+      const { eaten, active } = eatState(appleProg, this.appleCount);
       if (eaten > this._lastEaten) {
         const fromCell = cellForApple(this._lastEaten, this.appleCount); // just-finished apple
         const toCell = active >= 0 ? cellForApple(active, this.appleCount) : 0; // next apple (or cheese)
@@ -230,8 +268,10 @@ export class MouseScene extends Scene {
     if (this._chewT >= CHEW_MS) { this._chewT -= CHEW_MS; this._chewFr = (this._chewFr + 1) % EAT_FRAMES.length; }
     if (this._tweenT < TWEEN_MS) { this._tweenT += dtMs; if (this._tweenT > TWEEN_MS) this._tweenT = TWEEN_MS; }
 
-    // Finale: crumbs as the cheese is nibbled
-    if (this.finale > 0 && this.finale < 850) {
+    // Crumbs while the cheese is being nibbled (the final ~10s of the countdown),
+    // up until the belly turns full. The post-0:00 finale is just a happy hold.
+    const cheeseProg = this._cheeseProgress(this.remainingMs);
+    if (this.finale === 0 && this.remainingMs <= CHEESE_MS && cheeseProg < CHEESE_FULL) {
       this._finCrumbT += dtMs;
       if (this._finCrumbT >= 110) {
         this._finCrumbT = 0;
@@ -259,14 +299,19 @@ export class MouseScene extends Scene {
   }
 
   onComplete() {
+    // The cheese has already been eaten during the final 10s — the mouse is
+    // full-bellied at 0:00. The finale is just a short happy celebration hold.
     this.finale = 1;
+    this.remainingMs = 0;
     this._lastEaten = this.appleCount;
     this._crumbs.length = 0;
     audio.sfx('win');
+    const { cx, cy } = this._cellCenter(0);       // a little "burp" puff
+    this._spawnCrumbs(cx - 0.15 * this.cell, cy - 0.2 * this.cell, 3);
   }
 
   isFinaleDone() {
-    return this.finale > 2600;
+    return this.finale > 1800;
   }
 
   // ── Rendering ────────────────────────────────────────────────────────────────
@@ -291,11 +336,16 @@ export class MouseScene extends Scene {
     if (!sh) return;
 
     const cell = this.cell;
-    const { eaten, active } = eatState(this.progress, this.appleCount);
     const inFinale = this.finale > 0;
-    // During finale all apples are cores and the cheese is the active cell.
-    const eatenEff = inFinale ? this.appleCount : eaten;
-    const activeCell = inFinale
+    const { eaten, active } = eatState(this._appleProgress(this.remainingMs), this.appleCount);
+    const cheeseProg = this._cheeseProgress(this.remainingMs);
+    // The cheese is the final timed cell: once ~10s remain (apples all eaten) the
+    // mouse sits on the cheese and nibbles it through to a full belly at 0:00.
+    const onCheese = inFinale || this.remainingMs <= CHEESE_MS;
+    const isFull = inFinale || cheeseProg >= CHEESE_FULL;
+    // On the cheese, every apple is a core and the cheese is the active cell.
+    const eatenEff = onCheese ? this.appleCount : eaten;
+    const activeCell = onCheese
       ? 0
       : (active >= 0 ? cellForApple(active, this.appleCount) : 0);
 
@@ -305,8 +355,8 @@ export class MouseScene extends Scene {
       this._shadow(ctx, cx, cy);
 
       if (c === 0) {
-        // Cheese goal — vanishes as it is nibbled in the finale.
-        if (!(inFinale && this.finale > 650)) this._blitCell(ctx, sh, 'cheese', cx, cy);
+        // Cheese goal — vanishes as it is nibbled away over the final 10s.
+        if (!(onCheese && cheeseProg >= CHEESE_FULL)) this._blitCell(ctx, sh, 'cheese', cx, cy);
         continue;
       }
       const k = this.appleCount - c;          // eat-order index of this apple
@@ -323,13 +373,9 @@ export class MouseScene extends Scene {
     {
       let mx, my, jumpY = 0, frame, target;
 
-      if (inFinale) {
-        const c = this._cellCenter(0);                 // at the cheese (goal)
-        mx = c.cx; my = c.cy;
-        frame = this.finale >= 850 ? 'mouse_full' : 'mouse_cheese';
-        target = Math.max(cell * 1.45, 36);            // keep the climax clearly visible
-      } else if (!this.reducedMotion && this._tweenT < TWEEN_MS) {
-        // Hop: tween across the gap to the next apple with a jump arc.
+      if (!this.reducedMotion && this._tweenT < TWEEN_MS) {
+        // Hop: tween across the gap to the next apple (or the final hop onto the
+        // cheese) with a jump arc.
         const tp = this._tweenT / TWEEN_MS;
         const a = this._cellCenter(this._tweenFromCell);
         const b = this._cellCenter(this._tweenToCell);
@@ -338,6 +384,11 @@ export class MouseScene extends Scene {
         jumpY = -Math.sin(tp * Math.PI) * cell * 0.55;
         frame = tp < 0.34 ? 'mouse_hop0' : tp < 0.7 ? 'mouse_hop1' : 'mouse_hop2';
         target = Math.max(cell * MOUSE_FILL, MOUSE_MIN);
+      } else if (onCheese) {
+        const c = this._cellCenter(0);                 // at the cheese (goal)
+        mx = c.cx; my = c.cy;
+        frame = isFull ? 'mouse_full' : 'mouse_cheese';
+        target = Math.max(cell * 1.45, 36);            // keep the climax clearly visible
       } else {
         const c = this._cellCenter(activeCell);        // eating at the active apple
         mx = c.cx; my = c.cy;

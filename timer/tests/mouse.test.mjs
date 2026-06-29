@@ -4,13 +4,15 @@ import {
   appleCountForDuration, eatState, cellForApple, mouseGrid, clampN,
 } from '../js/themes/mouse.js';
 
-// ── appleCount: ~1 per 10s, min 1, NO maximum cap ────────────────────────────
-test('appleCountForDuration: ~1 apple per 10s, min 1, uncapped', () => {
-  assert.equal(appleCountForDuration(60_000), 6);       // 1 min  -> 6
-  assert.equal(appleCountForDuration(600_000), 60);     // 10 min -> 60
-  assert.equal(appleCountForDuration(1_800_000), 180);  // 30 min -> 180
-  assert.equal(appleCountForDuration(3_600_000), 360);  // 60 min -> 360 (NO cap)
-  assert.equal(appleCountForDuration(10_000), 1);       // 10 s   -> 1
+// ── appleCount: ~1 per 10s minus one (final 10s is the cheese), min 1, no cap ──
+// One fewer apple than round(sec/10): the last 10-second segment is the cheese,
+// not an apple. Total cells = appleCount + 1 (the cheese).
+test('appleCountForDuration: round(sec/10) - 1, min 1, uncapped', () => {
+  assert.equal(appleCountForDuration(60_000), 5);       // 1 min  -> 5 apples (+cheese = 6)
+  assert.equal(appleCountForDuration(600_000), 59);     // 10 min -> 59 apples (+cheese = 60)
+  assert.equal(appleCountForDuration(1_800_000), 179);  // 30 min -> 179 apples
+  assert.equal(appleCountForDuration(3_600_000), 359);  // 60 min -> 359 apples (NO cap)
+  assert.equal(appleCountForDuration(10_000), 1);       // 10 s   -> floor at 1
   assert.equal(appleCountForDuration(0), 1);            // floor at 1
 });
 
@@ -41,44 +43,49 @@ function gridFor(durMin) {
   return { total, ...g };
 }
 
-test('mouseGrid: 1 min -> a few BIG apples in one band, fits one screen', () => {
+test('mouseGrid: 1 min -> 5 apples + cheese, BIG, fits one screen', () => {
   const g = gridFor(1);
-  assert.equal(g.total, 7);                       // 6 apples + cheese
+  assert.equal(appleCountForDuration(60_000), 5);
+  assert.equal(g.total, 6);                        // 5 apples + cheese
+  assert.equal(g.total, appleCountForDuration(60_000) + 1);  // total = appleCount + 1
   assert.equal(g.cols, 6);
-  assert.equal(g.rows, 2);
-  assert.ok(g.cell > 30);                         // big apples (~36px cell)
-  assert.ok(g.rows * g.cell <= BH);               // fits the band height
-  assert.ok(g.cols * g.rows >= g.total);          // every cell has a slot
+  assert.equal(g.rows, 1);
+  assert.ok(g.cell > 30);                          // big apples (~36px cell)
+  assert.ok(g.rows * g.cell <= BH);                // fits the band height
+  assert.ok(g.cols * g.rows >= g.total);           // every cell has a slot
 });
 
-test('mouseGrid: 10 min -> ~6 cols of big apples, fits one screen', () => {
+test('mouseGrid: 10 min -> 59 apples + cheese in a 6x10, fits one screen', () => {
   const g = gridFor(10);
-  assert.equal(g.total, 61);
+  assert.equal(g.total, 60);                       // 59 apples + cheese
+  assert.equal(g.total, appleCountForDuration(600_000) + 1);
   assert.equal(g.cols, 6);
-  assert.equal(g.rows, 11);
-  assert.ok(g.cell > 30);                         // still big apples
+  assert.equal(g.rows, 10);
+  assert.ok(g.cell > 30);                          // still big apples
   assert.ok(g.rows * g.cell <= BH);
   assert.ok(g.cols * g.rows >= g.total);
 });
 
 test('mouseGrid: 30 min -> apples shrink, more rows, fits one screen', () => {
   const g = gridFor(30);
-  assert.equal(g.total, 181);
+  assert.equal(g.total, 180);                      // 179 apples + cheese
+  assert.equal(g.total, appleCountForDuration(1_800_000) + 1);
   assert.equal(g.cols, 10);
-  assert.equal(g.rows, 19);
-  assert.ok(g.cell < DETAIL_MIN_PROBE);           // small/medium apples
+  assert.equal(g.rows, 18);
+  assert.ok(g.cell < DETAIL_MIN_PROBE);            // small/medium apples
   assert.ok(g.rows * g.cell <= BH);
   assert.ok(g.cols * g.rows >= g.total);
 });
 
-test('mouseGrid: 60 min -> 360 apples, all on ONE screen (no cap, no scroll)', () => {
+test('mouseGrid: 60 min -> 359 apples + cheese, all on ONE screen (no cap)', () => {
   const g = gridFor(60);
-  assert.equal(g.total, 361);
+  assert.equal(g.total, 360);                      // 359 apples + cheese
+  assert.equal(g.total, appleCountForDuration(3_600_000) + 1);
   assert.equal(g.cols, 14);
   assert.equal(g.rows, 26);
-  assert.ok(g.cell >= 14 && g.cell < 18);         // small crisp apples (~16px)
-  assert.ok(g.rows * g.cell <= BH);               // fits one screen
-  assert.ok(g.cols * g.rows >= g.total);          // holds all 361 cells
+  assert.ok(g.cell >= 14 && g.cell < 18);          // small crisp apples (~16px)
+  assert.ok(g.rows * g.cell <= BH);                // fits one screen
+  assert.ok(g.cols * g.rows >= g.total);           // holds all 360 cells
 });
 
 test('mouseGrid: cells are capped at the big maximum for short timers', () => {
@@ -89,9 +96,9 @@ test('mouseGrid: cells are capped at the big maximum for short timers', () => {
 });
 
 test('mouseGrid: extreme duration still fits the band (truly uncapped)', () => {
-  // 3 hours -> 1080 apples + cheese = 1081 cells, must still fit one screen.
+  // 3 hours -> 1079 apples + cheese = 1080 cells, must still fit one screen.
   const total = appleCountForDuration(3 * 3600_000) + 1;
-  assert.equal(total, 1081);
+  assert.equal(total, 1080);
   const g = mouseGrid(total, BW, BH, MAXCOLS);
   assert.ok(g.rows * g.cell <= BH);
   assert.ok(g.cols * g.rows >= total);
