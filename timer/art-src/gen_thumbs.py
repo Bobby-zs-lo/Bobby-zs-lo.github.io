@@ -271,33 +271,75 @@ rect(d, BX+20, BY_FEET-8, 8, 8, BEAST_DK)
 save_png(img.convert('RGBA'), 'thumb_monsterhp.png')
 
 # ════════════════════════════════════════════════════════════════════════════════
-#  DRAGON thumb (silhouette – coming soon)
+#  DRAGON thumb  — 16-bit sleeping dragon on a gold hoard (matches dragon.js)
 # ════════════════════════════════════════════════════════════════════════════════
 img, d = new_sheet(TW, TH)
-SKY0D = h2c('#0a0520')
-SKY1D = h2c('#1a0840')
-GND_D = h2c('#060310')
+SKY0D = h2c('#1a0833')   # scene C.sky0
+SKY1D = h2c('#c23a86')   # scene C.sky1
+SUN0D = h2c('#ffd166')   # scene C.sun_top
+SUN1D = h2c('#ff2e88')   # scene C.sun_bot
+GND_D = h2c('#160626')   # scene C.ground
+GRIDD = (90, 30, 110, 170)
 HORZ_D = 72
 fill_sky(d, SKY0D, SKY1D, HORZ_D)
 fill_ground(d, GND_D, HORZ_D)
-# Moon
-draw_circle_fill(d, 70, 20, 12, (220, 220, 180, 255))
-draw_circle_fill(d, 74, 16, 10, SKY0D)  # crescent
-# Dragon silhouette
-DRG = (30, 10, 50, 255)
-# Body
-rect(d, 20, 58, 56, 30, DRG)
-# Neck + head
-rect(d, 56, 38, 14, 24, DRG)
-rect(d, 58, 28, 18, 14, DRG)   # head
-rect(d, 72, 26, 8, 4, DRG)     # snout
-# Wing (left)
-rect(d, 4,  36, 26, 20, DRG)
-rect(d, 2,  32, 10,  8, DRG)
-rect(d, 10, 28,  8,  6, DRG)
-# Tail
-rect(d, 4,  72, 20, 10, DRG)
-rect(d, 2,  78, 10, 6, DRG)
+draw_sun(d, 30, 34, 16, SUN0D, SUN1D, slit_step=3)
+draw_grid(d, 48, HORZ_D, col=GRIDD)
+
+DG0 = h2c('#ff6048'); DG1 = h2c('#d6282a'); DG2 = h2c('#961824'); DG3 = h2c('#5c0e1c')
+BLG = h2c('#f4c68c')
+GLD = h2c('#ffd24a'); GLDH = h2c('#ffe9a0'); GLDD = h2c('#b07d20'); GLDS = h2c('#6e4a12')
+CYN = h2c('#d8c47e'); BONE = h2c('#ece4be'); WING = h2c('#76161e')
+
+# Gold hoard dome (cx=54), surface coins
+MCX, MTOP, MBASE = 54, 78, 105
+for yy in range(MTOP, MBASE):
+    t = (yy - MTOP) / (MBASE - MTOP)
+    hw = int(30 * (t ** 0.6))
+    rect(d, MCX - hw, yy, hw * 2, 1, lerp_color(GLDH, GLDD, t * 0.9))
+rect(d, MCX - 30, MBASE - 1, 60, 2, GLDS)
+for cx, cy in [(40, 96), (54, 100), (68, 97), (60, 92), (46, 90)]:
+    draw_circle_fill(d, cx, cy, 2, GLD)
+    rect(d, cx - 1, cy - 1, 1, 1, GLDH)
+
+# Treasure chest (far left) with a little gold
+rect(d, 6, 92, 18, 13, h2c('#784c28'))
+rect(d, 6, 92, 18, 2, h2c('#a26c3c'))
+rect(d, 6, 92, 3, 13, h2c('#d8b45a')); rect(d, 21, 92, 3, 13, h2c('#d8b45a'))
+rect(d, 9, 94, 12, 5, GLD); rect(d, 9, 94, 12, 1, GLDH)
+
+# Sleeping dragon curled on the hoard (faces left)
+# Tail coil (right)
+draw_circle_fill(d, 78, 88, 8, DG1); draw_circle_fill(d, 84, 80, 6, DG1)
+d.polygon([(86, 78), (92, 70), (88, 80)], fill=DG2)
+# Back / shoulder
+draw_circle_fill(d, 60, 84, 16, DG1)
+draw_circle_fill(d, 46, 88, 11, DG1)
+draw_circle_fill(d, 60, 90, 15, DG2)        # lower shadow
+draw_circle_fill(d, 60, 80, 12, DG0)        # upper highlight
+# Belly
+d.ellipse([44, 90, 70, 104], fill=BLG)
+# Folded wing (magenta) + cyan ribs
+d.polygon([(50, 78), (72, 72), (74, 86), (54, 88)], fill=WING)
+for fx, fy in [(74, 86), (68, 88), (60, 87)]:
+    d.line([(72, 72), (fx, fy)], fill=CYN, width=1)
+# Cyan spinal spikes
+for sx, sy, hh in [(52, 74, 7), (60, 72, 8), (68, 74, 7), (76, 78, 5)]:
+    d.polygon([(sx - 3, sy), (sx, sy - hh), (sx + 3, sy)], fill=CYN)
+# Neck + head resting low-left
+draw_circle_fill(d, 40, 92, 8, DG1)
+draw_circle_fill(d, 28, 95, 8, DG1)
+d.polygon([(16, 96), (28, 90), (28, 100)], fill=DG1)   # snout
+d.polygon([(17, 96), (27, 92), (27, 99)], fill=DG2)
+rect(d, 18, 95, 2, 1, DG3)                              # nostril
+d.line([(24, 92), (30, 92)], fill=DG3, width=1)         # closed eye
+# Horns
+d.polygon([(30, 89), (38, 80), (33, 90)], fill=BONE)
+d.polygon([(26, 90), (31, 81), (29, 90)], fill=BONE)
+# Sleep "z"s
+for zx, zy, zs in [(34, 70, 4), (40, 62, 5)]:
+    rect(d, zx, zy, zs, 1, BLG); rect(d, zx, zy + zs - 1, zs, 1, BLG)
+    d.line([(zx + zs - 1, zy), (zx, zy + zs - 1)], fill=BLG, width=1)
 save_png(img.convert('RGBA'), 'thumb_dragon.png')
 
 # ════════════════════════════════════════════════════════════════════════════════
