@@ -286,10 +286,10 @@ fill_ground(d, GND_D, HORZ_D)
 draw_sun(d, 30, 34, 16, SUN0D, SUN1D, slit_step=3)
 draw_grid(d, 48, HORZ_D, col=GRIDD)
 
-DG0 = h2c('#cea0ff'); DG1 = h2c('#9656de'); DG2 = h2c('#602e9c'); DG3 = h2c('#3a1864')
-BLG = h2c('#e0c8ff')
+DG0 = h2c('#ff6048'); DG1 = h2c('#d6282a'); DG2 = h2c('#961824'); DG3 = h2c('#5c0e1c')
+BLG = h2c('#f4c68c')
 GLD = h2c('#ffd24a'); GLDH = h2c('#ffe9a0'); GLDD = h2c('#b07d20'); GLDS = h2c('#6e4a12')
-CYN = h2c('#00e5ff'); BONE = h2c('#ece4cc'); WING = h2c('#c44aaa')
+CYN = h2c('#d8c47e'); BONE = h2c('#ece4be'); WING = h2c('#76161e')
 
 # Gold hoard dome (cx=54), surface coins
 MCX, MTOP, MBASE = 54, 78, 105

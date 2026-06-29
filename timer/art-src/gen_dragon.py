@@ -2,64 +2,68 @@
 Run from timer/art-src/:  python gen_dragon.py
 Outputs:  timer/assets/dragon.png + dragon.json
 
-Theme: a majestic violet dragon asleep on a glittering gold hoard. Sneaky thieves
-steal gold into a chest; at 0:00 the dragon wakes, rears, roars and breathes fire.
+Theme: a fierce RED dragon asleep on a glittering gold hoard. Sneaky thieves
+steal gold into a chest; at 0:00 the dragon wakes, rears, roars and breathes a
+huge fire plume that roasts the fleeing thieves. Drawn in a chunky 16-bit pixel
+style (blocky shaded masses, hard edges) — NOT smooth ellipses.
 
 Frames (HARD contract with js/themes/dragon.js)
 ----------------------------------------------------------------------------------
 dragon_sleep [  0,  0,152,112]  curled, eyes closed, head resting low-left
 dragon_wake  [156,  0,152,112]  eye snapped open, head lifted
 dragon_roar  [312,  0,152,112]  reared up, jaws wide, neck frill flared
-fire0        [  0,116, 48, 30]  fire plume small  (mouth = RIGHT edge, blasts LEFT)
-fire1        [ 52,116, 72, 42]  fire plume medium
-fire2        [128,116, 96, 52]  fire plume large
-chest        [232,116, 48, 34]  open treasure chest (empty; gold fill drawn in scene)
-thief_walk0  [  0,170, 18, 24]  hooded thief, empty, step 0 (faces LEFT)
-thief_walk1  [ 20,170, 18, 24]  hooded thief, empty, step 1
-thief_loot0  [ 40,170, 18, 24]  hooded thief, bulging sack, step 0
-thief_loot1  [ 60,170, 18, 24]  hooded thief, bulging sack, step 1
-thief_flee   [ 80,170, 18, 24]  thief panicking, arms up (finale)
-coin         [102,170, 12, 10]  single gold coin
-gem          [116,170, 10, 12]  magenta gem
-sparkle0     [128,170,  9,  9]  glitter twinkle small
-sparkle1     [140,170,  9,  9]  glitter twinkle large
-sparkle2     [152,170,  9,  9]  glitter twinkle medium
-puff         [164,170, 18, 14]  smoke / dust puff
+fire0        [  0,120, 64, 40]  fire plume ignite    (mouth = RIGHT edge, blasts LEFT)
+fire1        [ 70,120,100, 58]  fire plume medium
+fire2        [176,120,140, 78]  fire plume large
+fire3        [322,120,176, 96]  fire plume HUGE (climax)
+chest        [  0,224, 48, 34]  open treasure chest (empty; gold fill drawn in scene)
+thief_walk0  [ 54,224, 18, 24]  hooded thief, empty, step 0 (faces LEFT)
+thief_walk1  [ 74,224, 18, 24]  hooded thief, empty, step 1
+thief_loot0  [ 94,224, 18, 24]  hooded thief, bulging sack, step 0
+thief_loot1  [114,224, 18, 24]  hooded thief, bulging sack, step 1
+thief_flee   [134,224, 18, 24]  thief panicking, arms up (finale)
+thief_char   [154,224, 18, 24]  thief charred/roasted by the fire (finale)
+coin         [176,226, 12, 10]  single gold coin
+gem          [192,224, 10, 12]  magenta gem
+sparkle0     [206,224,  9,  9]  glitter twinkle small
+sparkle1     [218,224,  9,  9]  glitter twinkle large
+sparkle2     [230,224,  9,  9]  glitter twinkle medium
+puff         [244,224, 18, 14]  smoke / dust puff
 """
 import sys, os, math
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import new_sheet, save
 
-SW, SH = 480, 200
+SW, SH = 512, 264
 img, d = new_sheet(SW, SH)
 
 # ── Palette ──────────────────────────────────────────────────────────────────────
-# Dragon body (violet 4-tone)
-DG0 = (206, 160, 255, 255)   # light
-DG1 = (150,  86, 222, 255)   # mid (body base)
-DG2 = ( 96,  46, 156, 255)   # dark
-DG3 = ( 58,  24, 100, 255)   # darkest
-BL  = (228, 200, 255, 255)   # belly light
-BLs = (176, 142, 224, 255)   # belly shade
-# Wing membrane (magenta) + cyan ribs
-WM  = (196,  74, 170, 255)
-WMs = (132,  40, 118, 255)
-# Frill / spikes (cyan)
-CY  = (  0, 229, 255, 255)
-CYd = (  0, 150, 190, 255)
-CYh = (170, 250, 255, 255)
-# Horns / teeth (bone)
-BON = (236, 228, 204, 255)
-BONd= (170, 158, 130, 255)
+# Dragon body (RED, 4-tone)
+RD0 = (255,  96,  72, 255)   # light scarlet highlight
+RD1 = (214,  40,  42, 255)   # mid scarlet (body base)
+RD2 = (150,  24,  36, 255)   # dark crimson
+RD3 = ( 92,  14,  28, 255)   # darkest crimson
+# Belly (warm cream)
+BLY = (244, 198, 140, 255)
+BLYs= (206, 150,  96, 255)
+# Cream / pale-gold horns, spines, frills, teeth, claws
+CRM = (244, 232, 190, 255)
+CRMs= (206, 184, 124, 255)   # pale gold shade
+CRMd= (150, 126,  78, 255)
+# Wing membrane (dark red) + bone struts (lighter red)
+WMB = (118,  22,  32, 255)   # membrane dark
+WMBh= (170,  40,  46, 255)   # membrane lighter (toward edge)
+WBN = (208,  64,  54, 255)   # wing bone / strut
+WBNd= ( 84,  16,  26, 255)
 # Eye / mouth
-EYG = (255, 221,  64, 255)
-EYR = (235,  40,  44, 255)
-LID = ( 74,  32, 116, 255)
-MTH = (120,  10,  24, 255)   # mouth interior
-TNG = (224,  72, 102, 255)   # tongue
-BLK = ( 12,   6,  24, 255)
+EYG = (255, 214,  80, 255)   # eye yellow
+EYO = (255, 150,  30, 255)   # eye blaze orange
+PUP = ( 18,   8,  16, 255)   # slit pupil
+MTH = ( 96,  12,  22, 255)   # mouth interior
+TNG = (224,  80,  92, 255)   # tongue
+BLK = ( 14,   7,  20, 255)
 WHT = (255, 255, 255, 255)
-# Gold
+# Gold (matches scene C.gold*)
 GD  = (255, 210,  80, 255); GDH = (255, 240, 170, 255)
 GDD = (176, 128,  32, 255); GDS = (120,  84,  18, 255)
 MG  = (255,  45, 180, 255)
@@ -69,13 +73,14 @@ FO  = (255, 140,  30, 255); FR = (232,  46,  30, 255)
 # Chest wood + metal
 WD  = (120,  76,  40, 255); WDh = (162, 108,  60, 255); WDd = ( 74,  44,  20, 255)
 MTL = (216, 180,  90, 255); MTLd= (150, 116,  40, 255)
-CHI = ( 26,  16,  32, 255)   # chest interior dark
+CHI = ( 26,  16,  32, 255)
 # Thief
 TC  = ( 48,  44,  78, 255); TCh = ( 84,  78, 124, 255); TCd = ( 26,  22,  46, 255)
-FACE= ( 40,  26,  40, 255)
+FACE= ( 40,  26,  40, 255); CYE = (  0, 229, 255, 255)
 SACK= (150, 112,  60, 255); SACKh=(192, 150,  92, 255); SACKd=( 96,  68,  32, 255)
-# Smoke
+# Smoke / char
 SMK = (158, 148, 178, 255); SMKd= ( 98,  92, 124, 255)
+CHAR= ( 40,  28,  32, 255); CHARh=( 70,  44,  36, 255)
 
 
 def lc(a, b, t):
@@ -102,145 +107,165 @@ def poly(pts, c):
 def line(x0, y0, x1, y1, c, w=1):
     d.line([(int(x0), int(y0)), (int(x1), int(y1))], fill=c, width=w)
 
-def blob(cx, cy, rx, ry, base, hi, sh):
-    """Shaded organic blob: mid base, lower shadow, upper highlight."""
-    E(cx, cy, rx, ry, base)
-    E(cx, cy + ry * 0.30, rx * 0.82, ry * 0.66, sh)
-    E(cx, cy - ry * 0.42, rx * 0.64, ry * 0.50, hi)
-
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#  DRAGON   (152 x 112 box, baseline = oy+104, faces LEFT)
+#  DRAGON   (152 x 112 box, baseline = oy+104, faces LEFT, curled over the hoard)
+#  Chunky shaded masses: dark base poly, mid poly inset from bottom, top highlight.
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def d_eye(ex, ey, blaze=False):
-    E(ex, ey, 4, 4, (255, 170, 36, 255) if blaze else (210, 150, 40, 255))
-    E(ex, ey, 3, 3, EYG)
-    R(ex - 1, ey - 3, 2, 6, EYR if blaze else BLK)   # vertical slit pupil
-    P(ex - 2, ey - 2, WHT)
+# Curled body silhouette (back arches center-right, haunch right, chest/neck left).
+BODY    = [(46,73),(49,61),(58,52),(76,46),(96,44),(113,47),(127,55),
+           (137,67),(142,81),(140,93),(131,102),(110,106),(84,107),(62,106),
+           (49,103),(43,92),(42,80)]
+BODY_MID= [(46,72),(49,60),(58,51),(76,45),(96,43),(113,46),(127,54),
+           (137,66),(141,80),(138,90),(129,98),(110,100),(84,101),(62,100),
+           (49,98),(44,90),(43,79)]
+BODY_HI = [(50,60),(58,52),(76,46),(96,44),(113,47),(127,55),(132,62),
+           (118,57),(100,51),(80,52),(62,57),(53,64)]
+BELLY   = [(48,90),(60,84),(82,87),(102,90),(98,101),(70,103),(52,99)]
 
-def d_horns(hx, hy):
-    poly([(hx + 6, hy - 6), (hx + 19, hy - 19), (hx + 11, hy - 3)], BON)
-    poly([(hx + 9, hy - 7), (hx + 20, hy - 16), (hx + 13, hy - 4)], BONd)
-    poly([(hx + 1, hy - 8), (hx + 8, hy - 21), (hx + 6, hy - 6)], BON)
-    poly([(hx + 3, hy - 8), (hx + 9, hy - 19), (hx + 7, hy - 6)], BONd)
+# Folded bat wing over the back.
+WING_MB  = [(60,61),(78,49),(98,42),(112,44),(120,52),
+            (116,63),(104,68),(92,71),(78,71),(66,67)]
+WING_MBh = [(66,61),(82,53),(98,49),(110,51),(115,58),
+            (108,63),(96,66),(82,67),(70,65)]
+WING_TIPS= [(118,61),(106,67),(92,71),(78,71)]      # finger ends (claws)
 
-def dragon_body(ox, oy):
-    BB = oy + 104
+# Cream spine row along the back ridge.
+SPINES   = [(58,54),(70,48),(84,45),(98,45),(112,49),(124,57)]
 
-    # Tail coil (right), curling up-inward
-    for (cx, cy, r) in [(ox + 130, oy + 86, 15), (ox + 142, oy + 70, 12),
-                        (ox + 138, oy + 52, 9), (ox + 126, oy + 44, 7)]:
-        blob(cx, cy, r, r, DG1, DG0, DG2)
-    poly([(ox + 120, oy + 46), (ox + 108, oy + 30), (ox + 124, oy + 40)], DG2)
-    poly([(ox + 120, oy + 46), (ox + 113, oy + 34), (ox + 122, oy + 41)], DG1)
+# Tail coil (right), curling up-inward.
+TAIL     = [(134,88),(146,82),(151,68),(148,54),(139,45),(129,46),
+            (133,55),(141,66),(139,77),(131,82)]
 
-    # Main back / haunch + shoulder mass
-    blob(ox + 92, oy + 72, 46, 30, DG1, DG0, DG2)
-    blob(ox + 58, oy + 78, 26, 24, DG1, DG0, DG2)
-
-    # Belly (light) along bottom front
-    E(ox + 68, oy + 92, 28, 14, BLs)
-    E(ox + 68, oy + 93, 24, 12, BL)
-    for by in range(oy + 86, BB - 2, 5):
-        R(ox + 50, by, 36, 1, BLs)
-
-    # Hind leg + clawed foot
-    blob(ox + 108, oy + 90, 15, 13, DG2, DG1, DG3)
-    R(ox + 102, oy + 96, 16, 10, DG2)
-    R(ox + 102, oy + 96, 16, 2, DG1)
-    R(ox + 98, BB - 4, 24, 5, DG3)
-    for ci in range(4):
-        poly([(ox + 100 + ci * 6, BB - 1), (ox + 103 + ci * 6, BB + 4), (ox + 106 + ci * 6, BB - 1)], BON)
-
-    # Foreleg + clawed foot
-    blob(ox + 58, oy + 92, 11, 12, DG2, DG1, DG3)
-    R(ox + 52, oy + 96, 13, 10, DG2)
-    R(ox + 48, BB - 3, 22, 4, DG3)
-    for ci in range(4):
-        poly([(ox + 50 + ci * 5, BB), (ox + 52 + ci * 5, BB + 4), (ox + 54 + ci * 5, BB)], BON)
-
-    # Folded wing over the back
-    line(ox + 64, oy + 60, ox + 104, oy + 46, DG3, 4)
-    poly([(ox + 64, oy + 60), (ox + 104, oy + 46), (ox + 110, oy + 66),
-          (ox + 92, oy + 73), (ox + 78, oy + 71), (ox + 66, oy + 66)], WM)
-    poly([(ox + 68, oy + 61), (ox + 102, oy + 49), (ox + 105, oy + 63),
-          (ox + 90, oy + 68), (ox + 78, oy + 67), (ox + 69, oy + 64)], WMs)
-    for fx, fy in [(110, 66), (98, 72), (86, 71), (74, 68)]:
-        line(ox + 104, oy + 46, ox + fx, oy + fy, CYd, 1)
-    poly([(ox + 104, oy + 44), (ox + 111, oy + 37), (ox + 106, oy + 47)], BON)
-
-    # Spinal frill (cyan spikes along back ridge)
-    for (sx, sy, hgt) in [(72, 46, 11), (84, 44, 13), (96, 45, 12), (108, 49, 10), (120, 56, 8)]:
-        poly([(ox + sx - 5, oy + sy), (ox + sx, oy + sy - hgt), (ox + sx + 5, oy + sy)], CYd)
-        poly([(ox + sx - 3, oy + sy), (ox + sx, oy + sy - hgt + 2), (ox + sx + 2, oy + sy)], CY)
-    return BB
-
-def dragon_head(ox, oy, pose):
-    sx, sy = ox + 54, oy + 66    # shoulder anchor
-
-    if pose == 'sleep':
-        hx, hy = ox + 24, oy + 86
-        for t in (0.0, 0.34, 0.68):
-            nx = sx + (hx - sx) * t; ny = sy + (hy - sy) * t
-            blob(nx, ny, 12 - 2 * t, 11 - 2 * t, DG1, DG0, DG2)
-        blob(hx, hy, 15, 12, DG1, DG0, DG2)
-        poly([(hx - 15, hy + 3), (hx - 2, hy - 5), (hx - 2, hy + 9)], DG1)
-        poly([(hx - 14, hy + 3), (hx - 3, hy - 2), (hx - 3, hy + 7)], DG2)
-        R(hx - 12, hy + 1, 2, 2, DG3)                 # nostril
-        line(hx - 13, hy + 6, hx - 2, hy + 6, DG3, 1)  # closed mouth
-        d.arc([hx - 4, hy - 6, hx + 8, hy + 2], 200, 340, fill=LID, width=2)  # closed lid
-        line(hx + 1, hy - 3, hx + 6, hy - 3, LID, 1)
-        d_horns(hx, hy)
-        poly([(hx + 7, hy - 1), (hx + 16, hy - 3), (hx + 8, hy + 4)], CYd)   # ear frill
-
-    elif pose == 'wake':
-        hx, hy = ox + 30, oy + 42
-        for t in (0.0, 0.3, 0.6, 0.85):
-            nx = sx + (hx - sx) * t; ny = sy + (hy - sy) * t
-            blob(nx, ny, 12 - 4 * t, 12 - 3 * t, DG1, DG0, DG2)
-        blob(hx, hy, 15, 12, DG1, DG0, DG2)
-        poly([(hx - 16, hy), (hx - 1, hy - 7), (hx - 1, hy + 7)], DG1)
-        poly([(hx - 15, hy), (hx - 2, hy - 4), (hx - 2, hy + 5)], DG2)
-        R(hx - 13, hy - 2, 2, 2, DG3)
-        line(hx - 15, hy + 4, hx - 2, hy + 4, DG3, 1)
-        d_eye(hx + 2, hy - 3)
-        d_horns(hx, hy)
-        poly([(hx + 7, hy + 1), (hx + 16, hy - 1), (hx + 8, hy + 6)], CYd)
-
-    else:  # roar
-        hx, hy = ox + 34, oy + 22
-        for t in (0.0, 0.26, 0.5, 0.72, 0.9):
-            nx = sx + (hx - sx) * t; ny = sy + (hy - sy) * t
-            blob(nx, ny, 13 - 5 * t, 12 - 3 * t, DG1, DG0, DG2)
-        # neck frill spikes
-        for t in (0.32, 0.56, 0.8):
-            nx = sx + (hx - sx) * t; ny = sy + (hy - sy) * t
-            poly([(nx + 6, ny - 1), (nx + 16, ny - 8), (nx + 7, ny + 5)], CY)
-            poly([(nx + 6, ny - 1), (nx + 13, ny - 6), (nx + 7, ny + 4)], CYh)
-        blob(hx, hy, 15, 12, DG1, DG0, DG2)
-        # open mouth interior (red)
-        poly([(hx - 17, hy - 4), (hx - 2, hy - 2), (hx - 2, hy + 11), (hx - 12, hy + 12)], MTH)
-        # upper jaw / snout
-        poly([(hx - 17, hy - 6), (hx - 2, hy - 9), (hx - 2, hy - 1)], DG1)
-        poly([(hx - 16, hy - 6), (hx - 3, hy - 7), (hx - 3, hy - 2)], DG2)
-        # lower jaw dropped
-        poly([(hx - 14, hy + 11), (hx - 2, hy + 9), (hx - 1, hy + 15), (hx - 12, hy + 16)], DG2)
-        poly([(hx - 13, hy + 11), (hx - 3, hy + 10), (hx - 2, hy + 14), (hx - 11, hy + 15)], DG1)
-        # tongue
-        R(hx - 11, hy + 5, 6, 2, TNG)
-        R(hx - 13, hy + 4, 3, 3, TNG)
-        # teeth
-        for ti in range(4):
-            poly([(hx - 15 + ti * 4, hy - 2), (hx - 13 + ti * 4, hy + 2), (hx - 11 + ti * 4, hy - 2)], BON)
-            poly([(hx - 13 + ti * 4, hy + 12), (hx - 11 + ti * 4, hy + 8), (hx - 9 + ti * 4, hy + 12)], BON)
-        R(hx - 13, hy - 6, 3, 2, DG3)    # nostril flare
-        d_eye(hx + 3, hy - 4, blaze=True)
-        d_horns(hx, hy)
 
 def draw_dragon(ox, oy, pose):
-    dragon_body(ox, oy)
-    dragon_head(ox, oy, pose)
+    def Po(pts, c): poly([(ox + x, oy + y) for x, y in pts], c)
+    def Re(x, y, w, h, c): R(ox + x, oy + y, w, h, c)
+    def Pi(x, y, c): P(ox + x, oy + y, c)
+    def El(cx, cy, rx, ry, c): E(ox + cx, oy + cy, rx, ry, c)
+    def Li(x0, y0, x1, y1, c, w=1): line(ox + x0, oy + y0, ox + x1, oy + y1, c, w)
+
+    # ── Tail (behind body) ────────────────────────────────────────────────────
+    Po(TAIL, RD1)
+    Po([(134,88),(146,82),(150,70),(140,74),(133,82)], RD2)        # lower shade
+    Po([(129,46),(120,33),(127,49)], CRMs)                          # spade tip back
+    Po([(130,47),(122,36),(127,48)], CRM)
+    for (tx, ty) in [(150,60),(146,50)]:                            # tail edge spines
+        Po([(tx,ty),(tx+7,ty-7),(tx+2,ty+2)], CRMs)
+
+    # ── Body mass (chunky shaded) ─────────────────────────────────────────────
+    Po(BODY, RD2)                                                   # shadow base
+    Po(BODY_MID, RD1)                                               # mid body
+    Po(BODY_HI, RD0)                                                # top highlight
+    # Belly
+    Po(BELLY, BLY)
+    for yy in range(88, 101, 4):
+        Re(54, yy, 42, 1, BLYs)
+
+    # ── Legs + claws ──────────────────────────────────────────────────────────
+    # Hind leg (right)
+    Re(104, 86, 18, 18, RD2); Re(104, 86, 18, 3, RD1)
+    Re(100, 100, 26, 5, RD3)
+    for ci in range(4):
+        Po([(100+ci*6,104),(103+ci*6,109),(106+ci*6,104)], CRM)
+    # Foreleg (front, left)
+    Re(54, 90, 12, 15, RD2); Re(54, 90, 12, 2, RD1)
+    Re(50, 101, 20, 4, RD3)
+    for ci in range(4):
+        Po([(50+ci*5,104),(52+ci*5,109),(54+ci*5,104)], CRM)
+
+    # ── Folded wing over the back ─────────────────────────────────────────────
+    Li(60, 61, 112, 44, WBNd, 4)                                   # arm bone shadow
+    Po(WING_MB, WMB)
+    Po(WING_MBh, WMBh)
+    Li(60, 61, 112, 44, WBN, 2)                                    # arm bone
+    for (fx, fy) in WING_TIPS:
+        Li(112, 44, fx, fy, WBN, 1)
+        Po([(fx-1,fy-1),(fx+2,fy-3),(fx+1,fy+2)], CRMs)           # finger claw
+
+    # ── Cream spine row (over the wing) ───────────────────────────────────────
+    for (sx, sy) in SPINES:
+        Po([(sx-4,sy),(sx,sy-9),(sx+4,sy)], CRMs)
+        Po([(sx-2,sy),(sx,sy-6),(sx+2,sy)], CRM)
+
+    # ── Horns (cream, swept up-and-back), shared helper ───────────────────────
+    def horns(hx, hy):
+        Po([(hx+2,hy-1),(hx+19,hy-19),(hx+24,hy-14),(hx+8,hy+2)], CRMs)
+        Po([(hx+3,hy-2),(hx+17,hy-17),(hx+21,hy-13),(hx+8,hy)], CRM)
+        Po([(hx-4,hy-2),(hx+8,hy-22),(hx+13,hy-18),(hx+2,hy+1)], CRMs)
+        Po([(hx-3,hy-3),(hx+7,hy-20),(hx+11,hy-17),(hx+2,hy)], CRM)
+
+    def eye(ex, ey, blaze=False):
+        El(ex, ey, 5, 4, RD3)
+        Re(ex-3, ey-3, 7, 6, EYO if blaze else EYG)
+        Re(ex-3, ey-3, 7, 1, (255,242,170,255))
+        Re(ex, ey-3, 2, 6, PUP)                                   # vertical slit
+        Pi(ex-2, ey-2, WHT)                                       # white glint
+
+    # ══════════════════════════════════════════════════════════════════════════
+    if pose == 'sleep':
+        # Neck sweeping down-left, head resting low.
+        Po([(54,57),(62,69),(44,86),(28,91),(20,87),(36,72),(50,59)], RD1)
+        Po([(40,86),(28,91),(22,88),(34,80)], RD2)               # under-neck shade
+        # Head (chunky, snout to the left)
+        Re(14, 78, 26, 19, RD1)
+        Re(14, 78, 26, 3, RD0)
+        Re(14, 93, 26, 4, RD2)
+        Po([(14,82),(3,90),(14,97)], RD1)                         # snout
+        Po([(14,85),(7,90),(14,95)], RD2)
+        Re(6, 88, 2, 2, RD3)                                      # nostril
+        Li(5, 92, 30, 92, RD3, 1)                                 # closed mouth
+        Li(19, 85, 31, 85, CRMd, 1)                               # closed eye lid
+        Li(20, 84, 28, 84, RD3, 1)
+        Po([(34,86),(45,82),(36,93)], CRMs)                       # cheek frill
+        horns(30, 80)
+
+    elif pose == 'wake':
+        # Neck more upright, head lifted, eye snapped open.
+        Po([(52,57),(63,66),(46,46),(32,44),(26,50),(44,64),(54,61)], RD1)
+        Po([(46,46),(32,44),(28,49),(40,55)], RD2)
+        Re(18, 40, 26, 20, RD1)
+        Re(18, 40, 26, 3, RD0)
+        Re(18, 55, 26, 4, RD2)
+        Po([(18,44),(7,52),(18,59)], RD1)                         # snout
+        Po([(18,47),(11,52),(18,57)], RD2)
+        Re(9, 50, 2, 2, RD3)                                      # nostril
+        Li(8, 55, 34, 55, RD3, 1)                                 # mouth line
+        Po([(34,48),(45,44),(36,55)], CRMs)                       # cheek frill
+        eye(31, 48)
+        horns(34, 42)
+
+    else:  # roar
+        # Tall neck reared up; flared cream frill; jaws WIDE open to the LEFT.
+        Po([(52,58),(64,66),(48,30),(36,24),(28,30),(44,60),(54,61)], RD1)
+        Po([(48,30),(36,24),(30,29),(42,40)], RD2)
+        # Flared neck frill (cream spikes pointing back)
+        for t in (0.30, 0.50, 0.70):
+            nx = 56 + (38 - 56) * t; ny = 62 + (20 - 62) * t
+            Po([(nx+5,ny+1),(nx+16,ny-7),(nx+6,ny+6)], CRMs)
+            Po([(nx+5,ny),(nx+13,ny-5),(nx+6,ny+5)], CRM)
+        # Head block
+        Re(20, 12, 24, 16, RD1)
+        Re(20, 12, 24, 3, RD0)
+        # Open mouth interior (dark red)
+        Po([(15,24),(40,21),(41,33),(18,35)], MTH)
+        # Upper jaw / snout
+        Po([(16,18),(41,14),(44,23),(19,26)], RD1)
+        Po([(16,19),(40,16),(42,22),(19,25)], RD2)
+        # Lower jaw dropped
+        Po([(18,31),(42,30),(44,38),(20,40)], RD2)
+        Po([(19,32),(41,31),(43,37),(21,39)], RD1)
+        # Tongue
+        Re(20, 29, 9, 3, TNG); Re(17, 28, 4, 3, TNG)
+        # Teeth (cream)
+        for ti in range(4):
+            Po([(20+ti*5,26),(22+ti*5,30),(24+ti*5,26)], CRM)     # upper
+            Po([(22+ti*5,31),(24+ti*5,27),(26+ti*5,31)], CRM)     # lower
+        Re(17, 19, 2, 2, RD3)                                     # nostril flare
+        eye(34, 18, blaze=True)
+        horns(38, 14)
+
 
 draw_dragon(0,   0, 'sleep'); frames = {'dragon_sleep': [0,   0, 152, 112]}
 draw_dragon(156, 0, 'wake');  frames['dragon_wake'] = [156, 0, 152, 112]
@@ -248,50 +273,60 @@ draw_dragon(312, 0, 'roar');  frames['dragon_roar'] = [312, 0, 152, 112]
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-#  FIRE   (mouth = RIGHT edge, plume blasts LEFT)
+#  FIRE   (mouth = RIGHT edge, plume blasts LEFT) — big, flame-like, jagged tongues
 # ═══════════════════════════════════════════════════════════════════════════════
 def fire(ox, oy, w, h):
     cy = oy + h // 2
-    mx = ox + w - 1                      # mouth (right)
-    # outer red flame body widening then tapering to flickering tip on the left
-    poly([(mx, cy - 3), (ox + int(w * 0.55), cy - h // 2), (ox + 2, cy - h // 5),
-          (ox, cy), (ox + 2, cy + h // 5), (ox + int(w * 0.55), cy + h // 2), (mx, cy + 3)], FR)
-    poly([(mx, cy - 2), (ox + int(w * 0.58), cy - h // 3), (ox + int(w * 0.14), cy),
-          (ox + int(w * 0.58), cy + h // 3), (mx, cy + 2)], FO)
-    poly([(mx, cy - 1), (ox + int(w * 0.62), cy - h // 6), (ox + int(w * 0.30), cy),
-          (ox + int(w * 0.62), cy + h // 6), (mx, cy + 1)], FY)
-    E(mx - 6, cy, 6, max(3, h // 8), FW)   # white-hot core at mouth
+    mx = ox + w - 1                                  # mouth (right)
+    # Outer red flame body with jagged tongues tapering to flicker tips on the left
+    poly([(mx, cy-4), (ox+int(w*0.62), cy-h//2), (ox+int(w*0.40), cy-h//3),
+          (ox+int(w*0.26), cy-h//2), (ox+int(w*0.14), cy-h//5), (ox+4, cy-3),
+          (ox, cy), (ox+4, cy+3), (ox+int(w*0.14), cy+h//5),
+          (ox+int(w*0.26), cy+h//2), (ox+int(w*0.40), cy+h//3),
+          (ox+int(w*0.62), cy+h//2), (mx, cy+4)], FR)
+    # Mid orange
+    poly([(mx, cy-3), (ox+int(w*0.64), cy-h//3), (ox+int(w*0.40), cy-h//5),
+          (ox+int(w*0.22), cy-h//4), (ox+int(w*0.12), cy),
+          (ox+int(w*0.22), cy+h//4), (ox+int(w*0.40), cy+h//5),
+          (ox+int(w*0.64), cy+h//3), (mx, cy+3)], FO)
+    # Inner yellow
+    poly([(mx, cy-2), (ox+int(w*0.68), cy-h//6), (ox+int(w*0.34), cy),
+          (ox+int(w*0.68), cy+h//6), (mx, cy+2)], FY)
+    # White-hot core at the mouth
+    E(mx-int(w*0.13), cy, max(4, int(w*0.11)), max(3, h//7), FW)
+    # Ember flecks riding the plume
+    n = max(4, w // 12)
+    for i in range(n):
+        ex = ox + int(w * 0.08) + i * (w // (n + 1))
+        ey = cy + ((i * 53) % h) - h // 2
+        P(ex, ey, FY); P(ex+1, ey, FW)
     return [ox, oy, w, h]
 
-frames['fire0'] = fire(0,   116, 48, 30)
-frames['fire1'] = fire(52,  116, 72, 42)
-frames['fire2'] = fire(128, 116, 96, 52)
+frames['fire0'] = fire(0,   120,  64, 40)
+frames['fire1'] = fire(70,  120, 100, 58)
+frames['fire2'] = fire(176, 120, 140, 78)
+frames['fire3'] = fire(322, 120, 176, 96)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  CHEST  (open, empty; scene draws the rising gold fill)
 # ═══════════════════════════════════════════════════════════════════════════════
 def chest(ox, oy):
-    # Open lid (tilted back, behind body)
-    poly([(ox + 4, oy + 11), (ox + 9, oy), (ox + 39, oy), (ox + 44, oy + 11)], WDd)
-    R(ox + 8, oy + 1, 30, 4, WDh)
-    R(ox + 6, oy + 9, 36, 2, MTLd)
-    # Body box
-    R(ox + 2, oy + 13, 44, 20, WD)
-    R(ox + 2, oy + 13, 44, 2, WDh)
-    R(ox + 2, oy + 31, 44, 2, WDd)
-    # Interior
-    R(ox + 5, oy + 15, 38, 16, CHI)
-    # Vertical metal bands
-    for bx in (ox + 2, ox + 22, ox + 43):
-        R(bx, oy + 13, 3, 20, MTL)
-        R(bx, oy + 13, 3, 1, GDH)
-    # Lock
-    R(ox + 20, oy + 22, 5, 6, MTLd)
-    R(ox + 21, oy + 23, 3, 2, GDH)
+    poly([(ox+4, oy+11), (ox+9, oy), (ox+39, oy), (ox+44, oy+11)], WDd)
+    R(ox+8, oy+1, 30, 4, WDh)
+    R(ox+6, oy+9, 36, 2, MTLd)
+    R(ox+2, oy+13, 44, 20, WD)
+    R(ox+2, oy+13, 44, 2, WDh)
+    R(ox+2, oy+31, 44, 2, WDd)
+    R(ox+5, oy+15, 38, 16, CHI)
+    for bx in (ox+2, ox+22, ox+43):
+        R(bx, oy+13, 3, 20, MTL)
+        R(bx, oy+13, 3, 1, GDH)
+    R(ox+20, oy+22, 5, 6, MTLd)
+    R(ox+21, oy+23, 3, 2, GDH)
     return [ox, oy, 48, 34]
 
-frames['chest'] = chest(232, 116)
+frames['chest'] = chest(0, 224)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -299,62 +334,78 @@ frames['chest'] = chest(232, 116)
 # ═══════════════════════════════════════════════════════════════════════════════
 def thief(ox, oy, step=0, sack=False, flee=False):
     by = oy + 23
-    # Cloak body (hooded, hunched)
-    poly([(ox + 4, oy + 6), (ox + 14, oy + 6), (ox + 16, by - 4), (ox + 2, by - 4)], TC)
-    R(ox + 3, oy + 7, 12, 12, TC)
-    R(ox + 3, oy + 7, 2, 12, TCh)         # left edge highlight
-    R(ox + 13, oy + 7, 2, 12, TCd)        # right shadow
-    # Hood
-    poly([(ox + 3, oy + 7), (ox + 6, oy + 1), (ox + 12, oy + 1), (ox + 15, oy + 7)], TC)
-    poly([(ox + 4, oy + 6), (ox + 7, oy + 2), (ox + 11, oy + 2), (ox + 12, oy + 5)], TCh)
-    R(ox + 4, oy + 5, 7, 4, FACE)         # shadowed face opening (faces left)
-    P(ox + 5, oy + 6, CY)                  # glinting eye
+    poly([(ox+4, oy+6), (ox+14, oy+6), (ox+16, by-4), (ox+2, by-4)], TC)
+    R(ox+3, oy+7, 12, 12, TC)
+    R(ox+3, oy+7, 2, 12, TCh)
+    R(ox+13, oy+7, 2, 12, TCd)
+    poly([(ox+3, oy+7), (ox+6, oy+1), (ox+12, oy+1), (ox+15, oy+7)], TC)
+    poly([(ox+4, oy+6), (ox+7, oy+2), (ox+11, oy+2), (ox+12, oy+5)], TCh)
+    R(ox+4, oy+5, 7, 4, FACE)
+    P(ox+5, oy+6, CYE)
     if flee:
-        # Arms thrown up
-        R(ox + 1, oy + 1, 2, 6, TC)
-        R(ox + 14, oy + 1, 2, 6, TC)
-        R(ox, oy, 3, 2, FACE); R(ox + 15, oy, 3, 2, FACE)
+        R(ox+1, oy+1, 2, 6, TC)
+        R(ox+14, oy+1, 2, 6, TC)
+        R(ox, oy, 3, 2, FACE); R(ox+15, oy, 3, 2, FACE)
     elif sack:
-        # Bulging sack over the shoulder
-        E(ox + 13, oy + 9, 6, 6, SACK)
-        E(ox + 12, oy + 8, 4, 4, SACKh)
-        R(ox + 12, oy + 3, 4, 3, SACKd)   # tied neck
-        R(ox + 11, oy + 11, 3, 4, TC)     # arm holding it
+        E(ox+13, oy+9, 6, 6, SACK)
+        E(ox+12, oy+8, 4, 4, SACKh)
+        R(ox+12, oy+3, 4, 3, SACKd)
+        R(ox+11, oy+11, 3, 4, TC)
     else:
-        R(ox + 12, oy + 10, 3, 6, TC)     # arm at side
-    # Legs (walk cycle)
+        R(ox+12, oy+10, 3, 6, TC)
     if step == 0:
-        R(ox + 4, by - 5, 4, 6, TCd); R(ox + 10, by - 4, 4, 5, TCd)
-        R(ox + 3, by - 1, 5, 2, BLK);  R(ox + 10, by, 5, 2, BLK)
+        R(ox+4, by-5, 4, 6, TCd); R(ox+10, by-4, 4, 5, TCd)
+        R(ox+3, by-1, 5, 2, BLK);  R(ox+10, by, 5, 2, BLK)
     else:
-        R(ox + 5, by - 4, 4, 5, TCd); R(ox + 9, by - 5, 4, 6, TCd)
-        R(ox + 4, by, 5, 2, BLK);     R(ox + 9, by - 1, 5, 2, BLK)
+        R(ox+5, by-4, 4, 5, TCd); R(ox+9, by-5, 4, 6, TCd)
+        R(ox+4, by, 5, 2, BLK);     R(ox+9, by-1, 5, 2, BLK)
     return [ox, oy, 18, 24]
 
-frames['thief_walk0'] = thief(0,  170, step=0)
-frames['thief_walk1'] = thief(20, 170, step=1)
-frames['thief_loot0'] = thief(40, 170, step=0, sack=True)
-frames['thief_loot1'] = thief(60, 170, step=1, sack=True)
-frames['thief_flee']  = thief(80, 170, step=1, flee=True)
+frames['thief_walk0'] = thief(54, 224, step=0)
+frames['thief_walk1'] = thief(74, 224, step=1)
+frames['thief_loot0'] = thief(94, 224, step=0, sack=True)
+frames['thief_loot1'] = thief(114, 224, step=1, sack=True)
+frames['thief_flee']  = thief(134, 224, step=1, flee=True)
+
+
+def thief_char(ox, oy):
+    """Charred, crumpling thief with ember glints + smoke wisp (roasted finale)."""
+    by = oy + 23
+    poly([(ox+4, oy+8), (ox+14, oy+8), (ox+15, by-3), (ox+3, by-3)], BLK)
+    R(ox+4, oy+9, 10, 11, CHAR)
+    R(ox+4, oy+9, 10, 2, CHARh)
+    R(ox+5, oy+4, 8, 6, BLK)               # slumped head
+    R(ox+5, oy+4, 8, 2, CHARh)
+    # ember glints
+    P(ox+6, oy+12, FO); P(ox+10, oy+15, FY); P(ox+8, oy+18, FO)
+    P(ox+12, oy+11, FY); P(ox+8, oy+6, FO)
+    # legs buckling
+    R(ox+4, by-4, 4, 5, CHAR); R(ox+10, by-3, 4, 4, CHAR)
+    R(ox+3, by, 6, 2, BLK); R(ox+10, by, 5, 2, BLK)
+    # smoke wisp
+    E(ox+9, oy+3, 3, 2, SMK); E(ox+12, oy+1, 2, 2, SMKd)
+    return [ox, oy, 18, 24]
+
+frames['thief_char'] = thief_char(154, 224)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 #  TREASURE BITS
 # ═══════════════════════════════════════════════════════════════════════════════
 def coin(ox, oy):
-    E(ox + 5, oy + 5, 6, 5, GDD)
-    E(ox + 5, oy + 4, 5, 4, GD)
-    E(ox + 4, oy + 3, 2, 2, GDH)
-    R(ox + 4, oy + 3, 3, 3, GDD)
+    E(ox+5, oy+5, 6, 5, GDD)
+    E(ox+5, oy+4, 5, 4, GD)
+    E(ox+4, oy+3, 2, 2, GDH)
+    R(ox+4, oy+3, 3, 3, GDD)
     return [ox, oy, 12, 10]
-frames['coin'] = coin(102, 170)
+frames['coin'] = coin(176, 226)
 
 def gem(ox, oy):
-    poly([(ox + 5, oy), (ox + 9, oy + 5), (ox + 5, oy + 11), (ox + 1, oy + 5)], MG)
-    poly([(ox + 5, oy + 1), (ox + 7, oy + 5), (ox + 5, oy + 8), (ox + 3, oy + 5)], (255, 150, 220, 255))
-    P(ox + 4, oy + 2, WHT)
+    poly([(ox+5, oy), (ox+9, oy+5), (ox+5, oy+11), (ox+1, oy+5)], MG)
+    poly([(ox+5, oy+1), (ox+7, oy+5), (ox+5, oy+8), (ox+3, oy+5)], (255, 150, 220, 255))
+    P(ox+4, oy+2, WHT)
     return [ox, oy, 10, 12]
-frames['gem'] = gem(116, 170)
+frames['gem'] = gem(192, 224)
 
 def sparkle(ox, oy, r):
     cx, cy = ox + 4, oy + 4
@@ -365,9 +416,9 @@ def sparkle(ox, oy, r):
         P(cx + 1, cy - 1, FY); P(cx - 1, cy + 1, FY)
     P(cx, cy, FW)
     return [ox, oy, 9, 9]
-frames['sparkle0'] = sparkle(128, 170, 1)
-frames['sparkle1'] = sparkle(140, 170, 4)
-frames['sparkle2'] = sparkle(152, 170, 2)
+frames['sparkle0'] = sparkle(206, 224, 1)
+frames['sparkle1'] = sparkle(218, 224, 4)
+frames['sparkle2'] = sparkle(230, 224, 2)
 
 def puff(ox, oy):
     for (cx, cy, r) in [(ox + 6, oy + 9, 5), (ox + 11, oy + 7, 5), (ox + 14, oy + 10, 4)]:
@@ -375,7 +426,7 @@ def puff(ox, oy):
     for (cx, cy, r) in [(ox + 6, oy + 8, 4), (ox + 11, oy + 6, 4), (ox + 13, oy + 9, 3)]:
         E(cx, cy, r, r, SMK)
     return [ox, oy, 18, 14]
-frames['puff'] = puff(164, 170)
+frames['puff'] = puff(244, 224)
 
 
 # ── Save ───────────────────────────────────────────────────────────────────────

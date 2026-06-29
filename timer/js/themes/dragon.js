@@ -1,13 +1,15 @@
 /**
  * DragonScene – Dragon Sleep Timer.
  *
- * A majestic violet dragon sleeps atop a glittering gold hoard. Sneaky thieves
+ * A fierce RED dragon sleeps atop a glittering gold hoard. Sneaky thieves
  * shuttle gold from the hoard into a treasure chest. Time remaining == size of
  * the gold pile: it starts large and SHRINKS as the countdown elapses (driven by
- * engine progress 0→1). The dragon rests ON the pile, so it sinks lower as the
- * gold disappears (always grounded — never floating). The chest fills in five
- * discrete ticks (one per milestone). At 0:00 the dragon WAKES (eye snaps open),
- * rears up, ROARS and breathes a fire plume that scatters the fleeing thieves.
+ * engine progress 0→1) until it reaches ZERO — the hoard is fully drained and the
+ * dragon ends up curled over bare ground. The dragon rests ON the pile, so it
+ * sinks lower as the gold disappears (always grounded — never floating). The chest
+ * fills in five discrete ticks (one per milestone). At 0:00 the dragon WAKES (eye
+ * snaps open), rears up, ROARS and breathes a huge fire plume that ROASTS the
+ * panicking thieves (they char and puff away) — a longer, screen-shaking finale.
  *
  * Milestones (5): a thief dashes off with a bulging sack, the chest ticks up,
  * the dragon stirs/grumbles, a coin-sparkle burst fires + audio.sfx('coin').
@@ -46,16 +48,18 @@ const C = {
 const DRG_W = 152, DRG_H = 112;
 const CHEST_W = 48, CHEST_H = 34;
 const THIEF_W = 18, THIEF_H = 24;
-const FIRE = { fire0: [48, 30], fire1: [72, 42], fire2: [96, 52] };
+const FIRE = { fire0: [64, 40], fire1: [100, 58], fire2: [140, 78], fire3: [176, 96] };
 
 // Dragon mouth position in the roar frame, as a fraction of the sprite box
 // (fire originates here and blasts LEFT).
-const MOUTH_FX = 18 / DRG_W, MOUTH_FY = 18 / DRG_H;
+const MOUTH_FX = 16 / DRG_W, MOUTH_FY = 28 / DRG_H;
 
 // ── Finale timeline (ms into this.finale) ────────────────────────────────────
-export const DRAGON_WAKE_MS = 480;   // sleep → wake (eye snaps open) → roar
-export const DRAGON_FIRE_MS = 950;   // roar → fire breath begins
-const FINALE_DONE_MS = 3000;
+// Longer, punchier wake → rear-up → roar → fire sequence. The fire breath holds
+// for several seconds so the burn fully plays out before the Done screen.
+export const DRAGON_WAKE_MS = 650;    // sleep → wake (eye snaps open) → rear/roar
+export const DRAGON_FIRE_MS = 1500;   // reared-roar buildup → fire breath begins
+const FINALE_DONE_MS = 5200;          // finale length (isFinaleDone threshold)
 
 // ── Pure logic (exported for unit tests) ─────────────────────────────────────
 export function clampN(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
@@ -119,9 +123,9 @@ export class DragonScene extends Scene {
     // Gold hoard mound (centered under the dragon)
     this.moundCX = Math.round(W * 0.60);
     this.moundFullW = Math.round(W * (landscape ? 0.46 : 0.54));
-    this.moundMinW = Math.round(W * 0.30);
+    this.moundMinW = 0;           // hoard fully drained (NONE) at 0:00
     this.moundFullH = Math.round(H * (landscape ? 0.20 : 0.22));
-    this.moundMinH = Math.round(H * 0.05);
+    this.moundMinH = 0;           // bare ground under the dragon at the finale
 
     // Dragon scale + center
     this.dScale = Math.min((W * 0.56) / DRG_W, (H * 0.46) / DRG_H);
@@ -169,6 +173,10 @@ export class DragonScene extends Scene {
     this._chestFill = 0;          // eased toward chestFill(fired,5)
     this._flashA = 0;            // milestone flash
     this._finFlashA = 0;         // finale (fire ignite) flash
+    this._whiteFlashA = 0;       // bright ignite pop
+    this._shake = 0;             // screen-shake magnitude (finale)
+    this._ignited = false;       // fire-ignite one-shot
+    this._rmCleared = false;     // reduced-motion finale thieves cleared once
     this._stirT = 0;            // dragon grumble timer
 
     this._walkT = 0;
@@ -218,9 +226,18 @@ export class DragonScene extends Scene {
     // Flash fades (cheap; keep under reduced motion too)
     if (this._flashA > 0) { this._flashA -= dtMs / 320; if (this._flashA < 0) this._flashA = 0; }
     if (this._finFlashA > 0) { this._finFlashA -= dtMs / 300; if (this._finFlashA < 0) this._finFlashA = 0; }
+    if (this._whiteFlashA > 0) { this._whiteFlashA -= dtMs / 220; if (this._whiteFlashA < 0) this._whiteFlashA = 0; }
     if (this._stirT > 0) this._stirT -= dtMs;
 
-    if (this.reducedMotion) { this._parts.length = 0; return; }
+    if (this.reducedMotion) {
+      this._parts.length = 0;
+      // Reduced finale: no shake/flash/particles, but clear the thieves once so the
+      // scene still reads (dragon rears + roars + static fire over an empty hoard).
+      if (this.finale > 0 && !this._rmCleared) {
+        this._rmCleared = true; this._thieves.length = 0; this._dashers.length = 0;
+      }
+      return;
+    }
 
     // ── Idle walk-cycle timer ───────────────────────────────────────────────
     this._walkT += dtMs;
@@ -265,49 +282,103 @@ export class DragonScene extends Scene {
     this._dashers = this._dashers.filter(d => d.x > -THIEF_W * this.thiefScale);
   }
 
+  /** Mouth (fire origin) x in canvas px. */
+  _mouthX() {
+    return this.dragonCX - DRG_W * this.dScale / 2 + MOUTH_FX * DRG_W * this.dScale;
+  }
+
+  /** Current fire frame name — plume grows fire0→fire3 then flickers big. */
+  _curFireName() {
+    if (this.reducedMotion) return 'fire3';
+    const ft = this.finale - DRAGON_FIRE_MS;
+    if (ft < 120) return 'fire0';
+    if (ft < 260) return 'fire1';
+    if (ft < 430) return 'fire2';
+    return (Math.floor(ft / 110) % 2) ? 'fire2' : 'fire3';
+  }
+
+  /** Left-most reach of the current fire plume in canvas px (roast detection). */
+  _fireFrontX() {
+    return this._mouthX() - FIRE[this._curFireName()][0] * this.dScale * 1.2;
+  }
+
   _tickFinale(dtMs) {
+    const W = this.W;
+    const fireOn = fireActive(this.finale);
+
+    // One-time: thieves PANIC — scurry a little toward the chest then cower in the
+    // dragon's fire path so the burn is clearly visible. Merge dashers in.
     if (!this._fleeing) {
       this._fleeing = true;
-      for (const th of this._thieves) th.state = 'flee';
-    }
-    const fleeSp = this.thiefSpeed * 2.2 * (dtMs / 1000);
-    const fireOn = fireActive(this.finale);
-    const fireFront = this._fireFrontX();
-    const all = this._thieves.concat(this._dashers);
-    for (const th of all) {
-      th.x -= fleeSp;
-      // Roasted when the fire front sweeps past a fleeing thief
-      if (fireOn && !th.roast && th.x > fireFront && th.x < fireFront + this.W * 0.18) {
-        th.roast = true;
-        this._spawnPuff(th.x, this.GY - THIEF_H * this.thiefScale * 0.5);
+      this._thieves = this._thieves.concat(this._dashers);
+      this._dashers = [];
+      for (const th of this._thieves) {
+        th.state = 'panic';
+        th.roast = false; th.charT = 0; th._poofed = false;
+        th.cowerX = clampN(th.x - W * 0.07, W * 0.18, W * 0.36);
       }
+      audio.sfx('build');   // low rumble buildup
     }
-    this._thieves = this._thieves.filter(th => th.x > -THIEF_W * this.thiefScale && !th.roast);
-    this._dashers = this._dashers.filter(th => th.x > -THIEF_W * this.thiefScale && !th.roast);
 
-    // Fire ignite flash + ember spray
+    // Screen shake: rumble grows through the roar buildup, spikes hard at ignite.
     if (fireOn) {
-      if (this._finFlashA <= 0 && this.finale < DRAGON_FIRE_MS + dtMs + 1) {
-        this._finFlashA = 0.5;
+      const ft = this.finale - DRAGON_FIRE_MS;
+      this._shake = 1.8 + Math.max(0, 6 - ft / 45);
+    } else {
+      const k = clampN((this.finale - DRAGON_WAKE_MS) / (DRAGON_FIRE_MS - DRAGON_WAKE_MS), 0, 1);
+      this._shake = 0.5 + k * 1.9;
+    }
+
+    // Thieves scurry to their cower spot, then panic in place.
+    const sp = this.thiefSpeed * 2.4 * (dtMs / 1000);
+    for (const th of this._thieves) {
+      if (th.roast) { th.charT -= dtMs; continue; }
+      if (th.x > th.cowerX + 1) th.x -= sp; else th.cowering = true;
+    }
+
+    if (fireOn) {
+      // Ignite: bright pop + hard shake + whoosh (one-shot).
+      if (!this._ignited) {
+        this._ignited = true;
+        this._finFlashA = 0.6;
+        this._whiteFlashA = 0.85;
         audio.sfx('magic');
       }
+      // Roast: char any thief caught under the sweeping plume.
+      const mouthX = this._mouthX();
+      const reach = this._fireFrontX();
+      const footY = this.GY - THIEF_H * this.thiefScale * 0.5;
+      for (const th of this._thieves) {
+        if (!th.roast && th.x <= mouthX && th.x >= reach) {
+          th.roast = true; th.charT = 340;
+          this._spawnPuff(th.x, footY);
+          this._spawnSparkBurst(th.x, footY - 6, 6);
+          audio.sfx('hit');
+        }
+      }
+      // Ember spray riding the plume front.
       this._emberT = (this._emberT || 0) + dtMs;
-      if (this._emberT >= 70) {
+      if (this._emberT >= 60) {
         this._emberT = 0;
         const fx = this._fireFrontX();
         this._parts.push({
-          kind: 'spark', x: fx + Math.random() * this.W * 0.1,
-          y: this.GY - this.moundH - Math.random() * 10,
-          vx: -60 - Math.random() * 80, vy: -20 - Math.random() * 50, age: 0, max: 600,
+          kind: 'spark', x: fx + Math.random() * W * 0.12,
+          y: this.GY - this.moundH - Math.random() * 14,
+          vx: -70 - Math.random() * 90, vy: -25 - Math.random() * 55, age: 0, max: 650,
         });
       }
     }
-  }
 
-  /** Left-most reach of the fire plume in canvas px (for roast detection). */
-  _fireFrontX() {
-    const mouthX = this.dragonCX - DRG_W * this.dScale / 2 + MOUTH_FX * DRG_W * this.dScale;
-    return mouthX - FIRE.fire2[0] * this.dScale * 1.15;
+    // Charred thieves poof out after their char hold (final smoke puff).
+    for (const th of this._thieves) {
+      if (th.roast && th.charT <= 0 && !th._poofed) {
+        th._poofed = true;
+        this._spawnPuff(th.x, this.GY - THIEF_H * this.thiefScale * 0.6);
+      }
+    }
+    this._thieves = this._thieves.filter(
+      th => !(th.roast && th.charT <= 0) && th.x > -THIEF_W * this.thiefScale
+    );
   }
 
   onMilestone(i, total) {
@@ -338,41 +409,63 @@ export class DragonScene extends Scene {
     const ctx = this.ctx, W = this.W, H = this.H, GY = this.GY, sh = this.assets;
     ctx.imageSmoothingEnabled = false;
 
-    // Sky
+    // Screen shake (finale). The whole scene is drawn inside a translated context
+    // with overscan so no background gap shows at the edges.
+    let shx = 0, shy = 0;
+    if (!this.reducedMotion && this._shake > 0.2) {
+      shx = Math.round((Math.random() * 2 - 1) * this._shake);
+      shy = Math.round((Math.random() * 2 - 1) * this._shake);
+    }
+    const OV = 10;
+    ctx.save();
+    ctx.translate(shx, shy);
+
+    // Sky (overscanned)
     const sky = ctx.createLinearGradient(0, 0, 0, GY);
     sky.addColorStop(0, C.sky0); sky.addColorStop(1, C.sky1);
-    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, GY);
+    ctx.fillStyle = sky; ctx.fillRect(-OV, -OV, W + OV * 2, GY + OV);
 
     // Ground
-    ctx.fillStyle = C.ground; ctx.fillRect(0, GY, W, H - GY);
+    ctx.fillStyle = C.ground; ctx.fillRect(-OV, GY, W + OV * 2, H - GY + OV);
 
     // Sun + perspective grid
     drawSun(ctx, this.sunX, this.sunY, this.sunR, C.sun_top, C.sun_bot);
     const scrollT = this.reducedMotion ? 0 : (this.t / 3200) % 1;
     drawGrid(ctx, W, H, GY, C.grid, scrollT);
 
-    if (!sh) return;
+    if (sh) {
+      // Current hoard size (the heart of the timer: shrinks with progress to ZERO)
+      const rem = goldRemaining(this.progress);
+      this.moundW = Math.round(lerp(this.moundMinW, this.moundFullW, rem));
+      this.moundH = Math.round(lerp(this.moundMinH, this.moundFullH, rem));
+      this.moundTopY = GY - this.moundH;
 
-    // Current hoard size (the heart of the timer: shrinks with progress)
-    const rem = goldRemaining(this.progress);
-    this.moundW = Math.round(lerp(this.moundMinW, this.moundFullW, rem));
-    this.moundH = Math.round(lerp(this.moundMinH, this.moundFullH, rem));
-    this.moundTopY = GY - this.moundH;
+      this._drawMound(ctx, sh);
+      this._drawChest(ctx, sh);
+      this._drawDragon(ctx, sh);
+      this._drawThieves(ctx, sh);
+      this._drawFire(ctx, sh);
+      this._drawParticles(ctx, sh);
+    }
 
-    this._drawMound(ctx, sh);
-    this._drawChest(ctx, sh);
-    this._drawDragon(ctx, sh);
-    this._drawThieves(ctx, sh);
-    this._drawFire(ctx, sh);
-    this._drawParticles(ctx, sh);
+    ctx.restore();
 
-    // Milestone + finale flashes
+    // Sustained fire glow + flashes (full-screen, unshaken).
+    if (!this.reducedMotion && fireActive(this.finale)) {
+      const g = 0.10 + 0.05 * Math.abs(Math.sin(this.t / 70));
+      ctx.fillStyle = `rgba(255,110,40,${g.toFixed(2)})`;
+      ctx.fillRect(0, 0, W, H);
+    }
     if (this._flashA > 0) {
       ctx.fillStyle = `rgba(255,210,74,${this._flashA.toFixed(2)})`;
       ctx.fillRect(0, 0, W, H);
     }
     if (this._finFlashA > 0) {
       ctx.fillStyle = `rgba(255,120,30,${this._finFlashA.toFixed(2)})`;
+      ctx.fillRect(0, 0, W, H);
+    }
+    if (this._whiteFlashA > 0) {
+      ctx.fillStyle = `rgba(255,250,230,${this._whiteFlashA.toFixed(2)})`;
       ctx.fillRect(0, 0, W, H);
     }
   }
@@ -391,18 +484,22 @@ export class DragonScene extends Scene {
     ctx.fillStyle = C.gold_sh;
     ctx.fillRect(Math.round(cx - this.moundW / 2), this.GY - 2, this.moundW, 2);
 
-    // Scattered coins (static texture) hugging the dome surface
-    for (const a of this._coins) {
-      const t = a.v, hw = this.domeHalfW(t);
-      const x = cx + a.u * hw * 0.92;
-      const y = top + t * this.moundH;
-      blit(ctx, sh, 'coin', Math.round(x - 6), Math.round(y - 5), 1);
+    // Scattered coins (static texture) hugging the dome surface. Skip once the
+    // hoard has shrunk away so the gold visibly reaches NONE at the finale.
+    if (this.moundH > 7) {
+      for (const a of this._coins) {
+        const t = a.v, hw = this.domeHalfW(t);
+        if (hw < 4) continue;
+        const x = cx + a.u * hw * 0.92;
+        const y = top + t * this.moundH;
+        blit(ctx, sh, 'coin', Math.round(x - 6), Math.round(y - 5), 1);
+      }
     }
     // Twinkling glitter
     const twinkle = ['sparkle0', 'sparkle1', 'sparkle2'];
     for (const a of this._sparks) {
       const t = a.v, hw = this.domeHalfW(t);
-      if (hw < 2) continue;
+      if (hw < 3 || this.moundH <= 7) continue;
       const x = cx + a.u * hw * 0.9;
       const y = top + t * this.moundH;
       const phase = this.reducedMotion ? 1 : Math.floor((this.t + a.ph) / 200) % 4;
@@ -476,7 +573,9 @@ export class DragonScene extends Scene {
     const topY = this.GY - Math.round(THIEF_H * s);
     const draw = (th) => {
       let frame, flip = false;
-      if (th.state === 'flee') {
+      if (th.roast) {
+        frame = 'thief_char';
+      } else if (th.state === 'flee' || th.state === 'panic') {
         frame = 'thief_flee';
       } else if (th.state === 'toChest' || th.state === 'drop') {
         frame = this._walkFr ? 'thief_loot1' : 'thief_loot0';
@@ -484,7 +583,12 @@ export class DragonScene extends Scene {
         frame = this._walkFr ? 'thief_walk1' : 'thief_walk0';
         flip = true;   // walking right (back to the hoard) → face right
       }
-      blit(ctx, sh, frame, Math.round(th.x - THIEF_W * s / 2), topY, s, flip);
+      // Panic jitter while cowering in place
+      let jx = 0;
+      if (th.cowering && !th.roast && !this.reducedMotion) {
+        jx = Math.round(Math.sin(this.t / 45 + th.x) * 1.3);
+      }
+      blit(ctx, sh, frame, Math.round(th.x - THIEF_W * s / 2) + jx, topY, s, flip);
     };
     for (const th of this._dashers) draw(th);
     for (const th of this._thieves) draw(th);
@@ -492,14 +596,10 @@ export class DragonScene extends Scene {
 
   _drawFire(ctx, sh) {
     if (!fireActive(this.finale)) return;
-    const sc = this.dScale * 1.15;
-    const ft = this.finale - DRAGON_FIRE_MS;
-    let name;
-    if (this.reducedMotion) name = 'fire2';
-    else if (ft < 130) name = 'fire0';
-    else name = (Math.floor(ft / 120) % 2) ? 'fire1' : 'fire2';
+    const sc = this.dScale * 1.2;
+    const name = this._curFireName();
     const [fw, fh] = FIRE[name];
-    const mouthX = this.dragonCX - DRG_W * this.dScale / 2 + MOUTH_FX * DRG_W * this.dScale;
+    const mouthX = this._mouthX();
     const mouthY = (this._dragonOY ?? 0) + MOUTH_FY * DRG_H * this.dScale;
     blit(ctx, sh, name, Math.round(mouthX - fw * sc), Math.round(mouthY - fh * sc / 2), sc);
   }
