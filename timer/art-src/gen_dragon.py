@@ -21,8 +21,10 @@ thief_walk0  [ 54,224, 18, 24]  hooded thief, empty, step 0 (faces LEFT)
 thief_walk1  [ 74,224, 18, 24]  hooded thief, empty, step 1
 thief_loot0  [ 94,224, 18, 24]  hooded thief, bulging sack, step 0
 thief_loot1  [114,224, 18, 24]  hooded thief, bulging sack, step 1
-thief_flee   [134,224, 18, 24]  thief panicking, arms up (finale)
+thief_flee   [134,224, 18, 24]  thief braced, arms up (finale, pre-fire)
 thief_char   [154,224, 18, 24]  thief charred/roasted by the fire (finale)
+thief_panic0 [264,224, 18, 24]  thief flailing in panic, arms up L, run step 0 (finale)
+thief_panic1 [284,224, 18, 24]  thief flailing in panic, arms up R, run step 1 (finale)
 coin         [176,226, 12, 10]  single gold coin
 gem          [192,224, 10, 12]  magenta gem
 sparkle0     [206,224,  9,  9]  glitter twinkle small
@@ -387,6 +389,41 @@ def thief_char(ox, oy):
     return [ox, oy, 18, 24]
 
 frames['thief_char'] = thief_char(154, 224)
+
+
+def thief_panic(ox, oy, step=0):
+    """Thief flailing in PANIC — arms thrown up, frantic wide running stride.
+    Two alternating poses read as 'running around in fear' when played fast."""
+    by = oy + 23
+    # Robe body + hood (same base silhouette as the walking thief)
+    poly([(ox+4, oy+6), (ox+14, oy+6), (ox+16, by-4), (ox+2, by-4)], TC)
+    R(ox+3, oy+7, 12, 12, TC)
+    R(ox+3, oy+7, 2, 12, TCh)
+    R(ox+13, oy+7, 2, 12, TCd)
+    poly([(ox+3, oy+7), (ox+6, oy+1), (ox+12, oy+1), (ox+15, oy+7)], TC)
+    poly([(ox+4, oy+6), (ox+7, oy+2), (ox+11, oy+2), (ox+12, oy+5)], TCh)
+    R(ox+4, oy+5, 7, 4, FACE)
+    P(ox+5, oy+6, CYE)
+    # Flailing arms — one thrown high, the other flung out (alternates per step)
+    if step == 0:
+        poly([(ox+4, oy+8), (ox+1, oy+1), (ox+3, oy),   (ox+6, oy+7)], TC)   # left arm UP
+        poly([(ox+13, oy+8),(ox+16, oy+9),(ox+16, oy+12),(ox+13, oy+12)], TC) # right arm out-down
+        P(ox+2, oy, TCh); P(ox+16, oy+10, TCh)                                # hands
+    else:
+        poly([(ox+13, oy+8),(ox+16, oy+1),(ox+14, oy),  (ox+11, oy+7)], TC)  # right arm UP
+        poly([(ox+4, oy+8), (ox+1, oy+9), (ox+1, oy+12), (ox+4, oy+12)], TC)  # left arm out-down
+        P(ox+15, oy, TCh); P(ox+1, oy+10, TCh)                                # hands
+    # Wide running legs (mid-stride, spread for a frantic dash)
+    if step == 0:
+        R(ox+2, by-5, 4, 6, TCd); R(ox+12, by-4, 4, 5, TCd)
+        R(ox+1, by-1, 5, 2, BLK); R(ox+12, by, 5, 2, BLK)
+    else:
+        R(ox+5, by-4, 4, 5, TCd); R(ox+9, by-6, 4, 7, TCd)
+        R(ox+4, by, 5, 2, BLK);   R(ox+9, by-2, 5, 2, BLK)
+    return [ox, oy, 18, 24]
+
+frames['thief_panic0'] = thief_panic(264, 224, step=0)
+frames['thief_panic1'] = thief_panic(284, 224, step=1)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════

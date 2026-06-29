@@ -8,8 +8,11 @@
  * dragon ends up curled over bare ground. The dragon rests ON the pile, so it
  * sinks lower as the gold disappears (always grounded — never floating). The chest
  * fills in five discrete ticks (one per milestone). At 0:00 the dragon WAKES (eye
- * snaps open), rears up, ROARS and breathes a huge fire plume that ROASTS the
- * panicking thieves (they char and puff away) — a longer, screen-shaking finale.
+ * snaps open), rears up, ROARS and breathes a huge fire plume — a longer,
+ * screen-shaking finale. The thieves' burning then plays out as three legible
+ * beats: (1) the fire ERUPTS and they PANIC-RUN around in fear (frantic zig-zag
+ * flail), (2) the fire CATCHES them and they CHAR black (held a beat so it reads),
+ * (3) the charred husks PUFF away into smoke and vanish.
  *
  * Milestones (5): a thief dashes off with a bulging sack, the chest ticks up,
  * the dragon stirs/grumbles, a coin-sparkle burst fires + audio.sfx('coin').
@@ -17,12 +20,14 @@
  * reducedMotion: disables grid scroll, breathing bob, thief walking, particles
  * and screen-shake; keeps the essential gold-shrink, chest fill and a reduced
  * finale (dragon rears + roars + a static fire frame). The finale timer always
- * advances (before the reduced-motion early-return) so isFinaleDone() fires.
+ * advances (before the reduced-motion early-return) so isFinaleDone() fires; the
+ * thieves are simply cleared (no panic-run/char/puff animation).
  *
  * Sprite sheet: assets/dragon.png + dragon.json
  * Frames: dragon_sleep, dragon_wake, dragon_roar,
- *         fire0, fire1, fire2, chest,
- *         thief_walk0, thief_walk1, thief_loot0, thief_loot1, thief_flee,
+ *         fire0, fire1, fire2, fire3, chest,
+ *         thief_walk0, thief_walk1, thief_loot0, thief_loot1,
+ *         thief_flee, thief_panic0, thief_panic1, thief_char,
  *         coin, gem, sparkle0, sparkle1, sparkle2, puff
  */
 import { Scene, blit } from '../scene.js';
@@ -55,11 +60,16 @@ const FIRE = { fire0: [64, 40], fire1: [100, 58], fire2: [140, 78], fire3: [176,
 const MOUTH_FX = 16 / DRG_W, MOUTH_FY = 28 / DRG_H;
 
 // ── Finale timeline (ms into this.finale) ────────────────────────────────────
-// Longer, punchier wake → rear-up → roar → fire sequence. The fire breath holds
-// for several seconds so the burn fully plays out before the Done screen.
-export const DRAGON_WAKE_MS = 650;    // sleep → wake (eye snaps open) → rear/roar
-export const DRAGON_FIRE_MS = 1500;   // reared-roar buildup → fire breath begins
-const FINALE_DONE_MS = 5200;          // finale length (isFinaleDone threshold)
+// Punchy wake → rear-up → roar → fire ERUPTS, then the thieves' burning plays out
+// as three clearly-spaced beats (panic-run → char → puff) so it's legible, not
+// rushed. The fire breath holds through all three beats and a short tail.
+export const DRAGON_WAKE_MS  = 650;    // sleep → wake (eye snaps open) → rear/roar
+export const DRAGON_FIRE_MS  = 1500;   // reared-roar buildup → fire breath ERUPTS
+// Thieves' three burning beats (ms into this.finale), all AFTER the fire erupts:
+export const THIEF_PANIC_MS  = 1500;   // beat 1: fire erupts → thieves PANIC-RUN (== fire)
+export const THIEF_CHAR_MS   = 2500;   // beat 2: fire catches them → CHAR black (held ~850ms)
+export const THIEF_PUFF_MS   = 3350;   // beat 3: charred husks PUFF away and vanish
+const FINALE_DONE_MS = 4800;           // finale length (isFinaleDone threshold)
 
 // ── Pure logic (exported for unit tests) ─────────────────────────────────────
 export function clampN(v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; }
@@ -306,18 +316,23 @@ export class DragonScene extends Scene {
     const W = this.W;
     const fireOn = fireActive(this.finale);
 
-    // One-time: thieves PANIC — scurry a little toward the chest then cower in the
-    // dragon's fire path so the burn is clearly visible. Merge dashers in.
+    // One-time setup: gather every thief (incl. milestone dashers), arm them as
+    // alarmed 'flee', and herd them into the fire path so the coming burn reads.
     if (!this._fleeing) {
       this._fleeing = true;
       this._thieves = this._thieves.concat(this._dashers);
       this._dashers = [];
+      this._panicLo = W * 0.14;            // panic-run band (inside the fire path)
+      this._panicHi = W * 0.46;
+      let i = 0;
       for (const th of this._thieves) {
-        th.state = 'panic';
-        th.roast = false; th.charT = 0; th._poofed = false;
-        th.cowerX = clampN(th.x - W * 0.07, W * 0.18, W * 0.36);
+        th.state = 'flee';
+        th.roast = false; th._poofed = false;
+        th.panicDir = (i++ % 2) ? 1 : -1;
+        th.panicPhase = Math.random() * 1000;
+        th.huddleX = clampN(th.x - W * 0.05, this._panicLo + 8, this._panicHi - 8);
       }
-      audio.sfx('build');   // low rumble buildup
+      audio.sfx('build');   // low rumble buildup as the dragon rears
     }
 
     // Screen shake: rumble grows through the roar buildup, spikes hard at ignite.
@@ -329,56 +344,71 @@ export class DragonScene extends Scene {
       this._shake = 0.5 + k * 1.9;
     }
 
-    // Thieves scurry to their cower spot, then panic in place.
-    const sp = this.thiefSpeed * 2.4 * (dtMs / 1000);
-    for (const th of this._thieves) {
-      if (th.roast) { th.charT -= dtMs; continue; }
-      if (th.x > th.cowerX + 1) th.x -= sp; else th.cowering = true;
+    // Fire IGNITE one-shot: bright pop + hard shake + whoosh, and the thieves snap
+    // from braced 'flee' into full 'panic' (beat 1 begins).
+    if (fireOn && !this._ignited) {
+      this._ignited = true;
+      this._finFlashA = 0.6;
+      this._whiteFlashA = 0.85;
+      audio.sfx('magic');
+      for (const th of this._thieves) if (!th.roast) th.state = 'panic';
     }
 
-    if (fireOn) {
-      // Ignite: bright pop + hard shake + whoosh (one-shot).
-      if (!this._ignited) {
-        this._ignited = true;
-        this._finFlashA = 0.6;
-        this._whiteFlashA = 0.85;
-        audio.sfx('magic');
+    // ── Beat 1: PANIC-RUN — frantic zig-zag dash inside the fire path ──────────
+    if (this.finale >= THIEF_PANIC_MS && this.finale < THIEF_CHAR_MS) {
+      const sp = this.thiefSpeed * 3.0 * (dtMs / 1000);
+      for (const th of this._thieves) {
+        if (th.roast) continue;
+        th.x += th.panicDir * sp;
+        if (th.x <= this._panicLo) { th.x = this._panicLo; th.panicDir = 1; }
+        else if (th.x >= this._panicHi) { th.x = this._panicHi; th.panicDir = -1; }
       }
-      // Roast: char any thief caught under the sweeping plume.
-      const mouthX = this._mouthX();
-      const reach = this._fireFrontX();
+    } else if (!fireOn) {
+      // Pre-fire: scurry into the fire path and brace (anticipation).
+      const sp = this.thiefSpeed * 2.0 * (dtMs / 1000);
+      for (const th of this._thieves) {
+        if (th.x > th.huddleX + 1) th.x -= sp; else th.x = th.huddleX;
+      }
+    }
+
+    // ── Beat 2: CHAR — the fire sweep catches them; they blacken together (held) ─
+    if (this.finale >= THIEF_CHAR_MS) {
       const footY = this.GY - THIEF_H * this.thiefScale * 0.5;
       for (const th of this._thieves) {
-        if (!th.roast && th.x <= mouthX && th.x >= reach) {
-          th.roast = true; th.charT = 700;
+        if (!th.roast) {
+          th.roast = true;
           this._spawnPuff(th.x, footY);
-          this._spawnSparkBurst(th.x, footY - 6, 6);
+          this._spawnSparkBurst(th.x, footY - 6, 8);
           audio.sfx('hit');
         }
       }
-      // Ember spray riding the plume front.
+    }
+
+    // Ember spray riding the plume front (visual seasoning while the fire is on).
+    if (fireOn) {
       this._emberT = (this._emberT || 0) + dtMs;
       if (this._emberT >= 60) {
         this._emberT = 0;
         const fx = this._fireFrontX();
         this._parts.push({
           kind: 'spark', x: fx + Math.random() * W * 0.12,
-          y: this.GY - this.moundH - Math.random() * 14,
+          y: this.GY - (this.moundH || 0) - Math.random() * 14,
           vx: -70 - Math.random() * 90, vy: -25 - Math.random() * 55, age: 0, max: 650,
         });
       }
     }
 
-    // Charred thieves poof out after their char hold (final smoke puff).
-    for (const th of this._thieves) {
-      if (th.roast && th.charT <= 0 && !th._poofed) {
-        th._poofed = true;
-        this._spawnPuff(th.x, this.GY - THIEF_H * this.thiefScale * 0.6);
+    // ── Beat 3: PUFF — charred husks burst into smoke and vanish ───────────────
+    if (this.finale >= THIEF_PUFF_MS) {
+      for (const th of this._thieves) {
+        if (th.roast && !th._poofed) {
+          th._poofed = true;
+          this._spawnPuff(th.x, this.GY - THIEF_H * this.thiefScale * 0.6);
+          this._spawnPuff(th.x - 4, this.GY - THIEF_H * this.thiefScale * 0.95);
+        }
       }
+      this._thieves = this._thieves.filter(th => !th._poofed);
     }
-    this._thieves = this._thieves.filter(
-      th => !(th.roast && th.charT <= 0) && th.x > -THIEF_W * this.thiefScale
-    );
   }
 
   onMilestone(i, total) {
@@ -571,11 +601,15 @@ export class DragonScene extends Scene {
   _drawThieves(ctx, sh) {
     const s = this.thiefScale;
     const topY = this.GY - Math.round(THIEF_H * s);
+    const panicFr = Math.floor(this.t / 90) % 2;   // fast alternating flail
     const draw = (th) => {
       let frame, flip = false;
       if (th.roast) {
         frame = 'thief_char';
-      } else if (th.state === 'flee' || th.state === 'panic') {
+      } else if (th.state === 'panic') {
+        frame = panicFr ? 'thief_panic1' : 'thief_panic0';
+        flip = th.panicDir > 0;   // face the running direction
+      } else if (th.state === 'flee') {
         frame = 'thief_flee';
       } else if (th.state === 'toChest' || th.state === 'drop') {
         frame = this._walkFr ? 'thief_loot1' : 'thief_loot0';
@@ -583,12 +617,14 @@ export class DragonScene extends Scene {
         frame = this._walkFr ? 'thief_walk1' : 'thief_walk0';
         flip = true;   // walking right (back to the hoard) → face right
       }
-      // Panic jitter while cowering in place
-      let jx = 0;
-      if (th.cowering && !th.roast && !this.reducedMotion) {
-        jx = Math.round(Math.sin(this.t / 45 + th.x) * 1.3);
+      // Frantic hop + jitter while panicking (vertical bounce, side flail).
+      let hop = 0, jx = 0;
+      if (th.state === 'panic' && !th.roast && !this.reducedMotion) {
+        const ph = th.panicPhase || 0;
+        hop = -Math.round(Math.abs(Math.sin((this.t + ph) / 70)) * 4 * s);
+        jx  =  Math.round(Math.sin((this.t + ph) / 33) * 1.5);
       }
-      blit(ctx, sh, frame, Math.round(th.x - THIEF_W * s / 2) + jx, topY, s, flip);
+      blit(ctx, sh, frame, Math.round(th.x - THIEF_W * s / 2) + jx, topY + hop, s, flip);
     };
     for (const th of this._dashers) draw(th);
     for (const th of this._thieves) draw(th);
