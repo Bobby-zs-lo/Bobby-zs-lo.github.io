@@ -316,7 +316,7 @@ export class DragonScene extends Scene {
     this._stirT = 420;
     audio.sfx('coin');
     // A thief dashes off with a bulging sack
-    this._dashers.push({ x: this.grabX, state: 'toChest' });
+    if (!this.reducedMotion) this._dashers.push({ x: this.grabX, state: 'toChest' });
     // Coin-sparkle burst on the hoard's stolen-from edge
     const rem = goldRemaining(this.progress);
     const mW = lerp(this.moundMinW, this.moundFullW, rem);
