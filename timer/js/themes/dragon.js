@@ -140,7 +140,6 @@ export class DragonScene extends Scene {
     // Dragon scale + center
     this.dScale = Math.min((W * 0.56) / DRG_W, (H * 0.46) / DRG_H);
     this.dragonCX = this.moundCX;
-    this.rearLiftMax = Math.round(H * 0.06);
 
     // Treasure chest (far left, on the ground)
     this.chestScale = Math.max(1, (W * 0.18) / CHEST_W);
@@ -152,6 +151,15 @@ export class DragonScene extends Scene {
     this.grabX = Math.round(W * 0.46);
     this.chestDropX = this.chestX + Math.round(CHEST_W * this.chestScale * 0.55);
     this.thiefSpeed = W * 0.16;
+
+    // Finale fire-aim band: the thieves are herded into this ground strip — well in
+    // FRONT of (left of) and BELOW the dragon's mouth — so the downward fire cone
+    // clearly engulfs them. Derived in layout() (not _tickFinale) so the fire aim is
+    // valid even under reduced motion, where _tickFinale never runs.
+    this.fireBandLo = Math.round(W * 0.05);
+    this.fireBandHi = Math.round(W * 0.24);
+    this.fireAimX  = Math.round((this.fireBandLo + this.fireBandHi) / 2);
+    this.fireAimY  = this.GY - Math.round(THIEF_H * this.thiefScale * 0.40);
 
     // Retro sun (left, balancing the dragon on the right)
     this.sunX = Math.round(W * 0.30);
@@ -307,11 +315,6 @@ export class DragonScene extends Scene {
     return (Math.floor(ft / 110) % 2) ? 'fire2' : 'fire3';
   }
 
-  /** Left-most reach of the current fire plume in canvas px (roast detection). */
-  _fireFrontX() {
-    return this._mouthX() - FIRE[this._curFireName()][0] * this.dScale * 1.2;
-  }
-
   _tickFinale(dtMs) {
     const W = this.W;
     const fireOn = fireActive(this.finale);
@@ -322,8 +325,8 @@ export class DragonScene extends Scene {
       this._fleeing = true;
       this._thieves = this._thieves.concat(this._dashers);
       this._dashers = [];
-      this._panicLo = W * 0.14;            // panic-run band (inside the fire path)
-      this._panicHi = W * 0.46;
+      this._panicLo = this.fireBandLo;     // panic-run band == the fire-aim band
+      this._panicHi = this.fireBandHi;
       let i = 0;
       for (const th of this._thieves) {
         th.state = 'flee';
@@ -384,16 +387,17 @@ export class DragonScene extends Scene {
       }
     }
 
-    // Ember spray riding the plume front (visual seasoning while the fire is on).
+    // Ember spray bursting off the IMPACT zone where the fire meets the thieves
+    // (visual seasoning that reinforces the fire actually hitting them).
     if (fireOn) {
       this._emberT = (this._emberT || 0) + dtMs;
       if (this._emberT >= 60) {
         this._emberT = 0;
-        const fx = this._fireFrontX();
         this._parts.push({
-          kind: 'spark', x: fx + Math.random() * W * 0.12,
-          y: this.GY - (this.moundH || 0) - Math.random() * 14,
-          vx: -70 - Math.random() * 90, vy: -25 - Math.random() * 55, age: 0, max: 650,
+          kind: 'spark',
+          x: this.fireAimX + (Math.random() * 2 - 1) * W * 0.10,
+          y: this.fireAimY - Math.random() * 22,
+          vx: -40 - Math.random() * 80, vy: -40 - Math.random() * 60, age: 0, max: 650,
         });
       }
     }
@@ -544,11 +548,10 @@ export class DragonScene extends Scene {
     const frame = phase === 'sleep' ? 'dragon_sleep'
                 : phase === 'wake' ? 'dragon_wake' : 'dragon_roar';
 
-    // Rear-up lift during the roar (eased) — part of the essential finale.
-    let lift = 0;
-    if (phase === 'roar') {
-      lift = this.rearLiftMax * clampN((this.finale - DRAGON_WAKE_MS) / 420, 0, 1);
-    }
+    // The rear/roar raises only the HEAD/NECK — that motion is baked into the
+    // dragon_wake / dragon_roar sprite frames (body, legs and claws stay at the same
+    // box position across all poses). So we DON'T translate the whole body up: the
+    // dragon's feet stay planted on the same ground line the entire finale (no float).
     // Sleeping breathing bob + milestone stir jolt
     let bob = 0;
     if (!this.reducedMotion) {
@@ -558,7 +561,7 @@ export class DragonScene extends Scene {
 
     const baseY = this.moundTopY + Math.round(this.moundH * 0.18);  // feet sink into gold
     const ox = this.dragonCX - DRG_W * sc / 2;
-    const oy = baseY - DRG_H * sc - lift + bob;
+    const oy = baseY - DRG_H * sc + bob;
 
     // Soft shadow under the dragon on the hoard
     ctx.fillStyle = 'rgba(0,0,0,0.18)';
@@ -632,12 +635,21 @@ export class DragonScene extends Scene {
 
   _drawFire(ctx, sh) {
     if (!fireActive(this.finale)) return;
-    const sc = this.dScale * 1.2;
+    const sc = this.dScale * 1.35;          // finale plume (bigger so it floods the thieves)
     const name = this._curFireName();
     const [fw, fh] = FIRE[name];
     const mouthX = this._mouthX();
     const mouthY = (this._dragonOY ?? 0) + MOUTH_FY * DRG_H * this.dScale;
-    blit(ctx, sh, name, Math.round(mouthX - fw * sc), Math.round(mouthY - fh * sc / 2), sc);
+    // The sprite blasts horizontally LEFT (mouth = right edge). Re-aim it DOWN-FORWARD
+    // so the cone's centerline runs from the mouth straight onto the thieves' ground
+    // band — the dragon cranes its head down and breathes onto them. Rotating about the
+    // mouth keeps the white-hot core at the jaws; the wide mid-plume engulfs the band.
+    const ang = Math.atan2(-(this.fireAimY - mouthY), -(this.fireAimX - mouthX));
+    ctx.save();
+    ctx.translate(mouthX, mouthY);
+    ctx.rotate(ang);
+    blit(ctx, sh, name, Math.round(-fw * sc), Math.round(-fh * sc / 2), sc);
+    ctx.restore();
   }
 
   _drawParticles(ctx, sh) {
