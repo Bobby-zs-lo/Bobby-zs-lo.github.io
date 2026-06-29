@@ -350,7 +350,7 @@ export class DragonScene extends Scene {
       const footY = this.GY - THIEF_H * this.thiefScale * 0.5;
       for (const th of this._thieves) {
         if (!th.roast && th.x <= mouthX && th.x >= reach) {
-          th.roast = true; th.charT = 340;
+          th.roast = true; th.charT = 700;
           this._spawnPuff(th.x, footY);
           this._spawnSparkBurst(th.x, footY - 6, 6);
           audio.sfx('hit');
