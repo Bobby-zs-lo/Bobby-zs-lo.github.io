@@ -343,29 +343,98 @@ for zx, zy, zs in [(34, 70, 4), (40, 62, 5)]:
 save_png(img.convert('RGBA'), 'thumb_dragon.png')
 
 # ════════════════════════════════════════════════════════════════════════════════
-#  BRIDGE thumb (silhouette – coming soon)
+#  BRIDGE thumb  — 16-bit canyon + crane + half-built bridge (matches bridge.js)
 # ════════════════════════════════════════════════════════════════════════════════
 img, d = new_sheet(TW, TH)
-SKY0B = h2c('#0c1a2e')
-SKY1B = h2c('#1a3a5c')
-GND_B = h2c('#080c12')
-HORZ_B = 64
+SKY0B = h2c('#140a33')   # scene C.sky0
+SKY1B = h2c('#ff6a4a')   # scene C.sky1
+SUN0B = h2c('#ffd166')   # scene C.sun_top
+SUN1B = h2c('#ff2e88')   # scene C.sun_bot
+GND_B = h2c('#2a0d30')   # scene C.ground
+GRIDB = (160, 50, 118, 170)  # scene C.grid approximation
+HORZ_B = 66              # deck / cliff-top line
 fill_sky(d, SKY0B, SKY1B, HORZ_B)
-fill_ground(d, GND_B, HORZ_B)
-BRG = (20, 40, 70, 255)
-# Canyon walls
-rect(d,  0, 72, 22, 56, BRG)
-rect(d, 74, 72, 22, 56, BRG)
-# Bridge span
-rect(d, 18, 68, 60, 4, BRG)
-# Cables / tower
-rect(d, 46, 48, 4, 20, BRG)   # tower
-for ci in range(3):
-    d.line([(22, 68), (46, 48)], fill=(40,80,120,220), width=1)
-    d.line([(76, 68), (48, 48)], fill=(40,80,120,220), width=1)
 # Stars
-for sx, sy in [(10,10),(30,20),(60,8),(80,15),(45,30)]:
-    rect(d, sx, sy, 2, 2, (200,220,255,200))
+for sx, sy in [(10, 8), (30, 16), (62, 6), (84, 13), (48, 22), (20, 28)]:
+    rect(d, sx, sy, 1, 1, (233, 233, 255, 170))
+draw_sun(d, 48, 40, 15, SUN0B, SUN1B, slit_step=3)
+fill_ground(d, GND_B, HORZ_B)
+draw_grid(d, 48, HORZ_B, col=GRIDB)
+
+# Canyon pit carved through the ground (gap x=20..76, walls narrow to bottom)
+GX0, GX1 = 20, 76
+for yy in range(HORZ_B, TH):
+    t = (yy - HORZ_B) / (TH - HORZ_B)
+    inn = int(3 * t)
+    col = lerp_color(h2c('#240a2c'), h2c('#07030e'), t)
+    rect(d, GX0 + inn, yy, (GX1 - inn) - (GX0 + inn), 1, col)
+# Wall strata ledges
+for k in range(1, 5):
+    t = k / 5
+    yy = HORZ_B + int((TH - HORZ_B) * t)
+    col = lerp_color(h2c('#b04a86'), h2c('#2c0c26'), t)
+    rect(d, GX0 + int(3 * t), yy, 4, 1, col)
+    rect(d, GX1 - int(3 * t) - 4, yy, 4, 1, col)
+# Glowing river at the bottom
+rect(d, GX0 + 4, TH - 4, GX1 - GX0 - 8, 2, (0, 229, 255, 60))
+rect(d, GX0 + 6, TH - 3, GX1 - GX0 - 12, 1, h2c('#00e5ff'))
+
+# Bridge segments across the gap (7 slots, 4 solid + 3 ghost outlines)
+ST_M = h2c('#6a5aa8'); ST_D = h2c('#3c3270'); CYA = h2c('#00f5d4')
+MGB = h2c('#ff2db4'); GHO = (0, 229, 255, 130)
+SEGW = 8
+for i in range(7):
+    sx = GX0 + i * SEGW
+    if i < 4:   # solid
+        rect(d, sx, HORZ_B, SEGW, 1, CYA)
+        rect(d, sx, HORZ_B + 1, SEGW, 2, ST_M)
+        rect(d, sx, HORZ_B + 3, 1, 5, ST_M); rect(d, sx + SEGW - 1, HORZ_B + 3, 1, 5, ST_D)
+        rect(d, sx, HORZ_B + 7, SEGW, 1, ST_D)
+        d.line([(sx + 1, HORZ_B + 3), (sx + SEGW - 2, HORZ_B + 7)], fill=MGB, width=1)
+        d.line([(sx + 1, HORZ_B + 7), (sx + SEGW - 2, HORZ_B + 3)], fill=MGB, width=1)
+    else:       # ghost outline
+        rect(d, sx, HORZ_B, SEGW, 1, GHO)
+        rect(d, sx, HORZ_B, 1, 8, GHO); rect(d, sx + SEGW - 1, HORZ_B, 1, 8, GHO)
+        rect(d, sx, HORZ_B + 7, SEGW, 1, GHO)
+
+# Gold tower crane on the right cliff
+GDB = h2c('#ffd24a'); GDDB = h2c('#b0801f'); HAZB = h2c('#22142c')
+JIBY = 34
+rect(d, 85, JIBY, 1, HORZ_B - JIBY, GDDB)      # tower rails
+rect(d, 88, JIBY, 1, HORZ_B - JIBY, GDB)
+for zy in range(JIBY, HORZ_B - 4, 5):          # lattice
+    d.line([(85, zy), (88, zy + 5)], fill=GDDB, width=1)
+rect(d, 16, JIBY, 76, 1, GDB)                  # jib chords
+rect(d, 16, JIBY + 2, 76, 1, GDDB)
+rect(d, 86, JIBY - 6, 1, 6, GDB)               # apex
+d.line([(86, JIBY - 6), (17, JIBY)], fill=(255, 233, 160, 200), width=1)
+rect(d, 89, JIBY + 3, 4, 4, HAZB)              # counterweight
+rect(d, 80, HORZ_B - 6, 12, 6, GDB)            # cab
+rect(d, 80, HORZ_B - 6, 12, 1, h2c('#ffe9a0'))
+rect(d, 79, HORZ_B - 2, 14, 2, HAZB)           # tracks
+rect(d, 82, HORZ_B - 5, 3, 2, h2c('#00e5ff'))  # cab window
+# Trolley + cable + hanging segment over the 5th slot
+TRX = GX0 + 4 * SEGW + SEGW // 2
+rect(d, TRX - 2, JIBY + 3, 5, 2, GDB)
+d.line([(TRX, JIBY + 5), (TRX, 50)], fill=(255, 233, 160, 220), width=1)
+rect(d, TRX - 4, 50, 8, 1, CYA)
+rect(d, TRX - 4, 51, 8, 2, ST_M)
+rect(d, TRX - 4, 53, 1, 4, ST_M); rect(d, TRX + 3, 53, 1, 4, ST_D)
+
+# Hero on the left cliff (magenta cap, cyan shirt)
+HXB, HYB = 9, HORZ_B - 12
+rect(d, HXB + 1, HYB + 4, 6, 5, h2c('#00c8d8'))     # torso
+rect(d, HXB + 1, HYB + 1, 5, 3, h2c('#f4c68c'))     # face
+rect(d, HXB, HYB, 7, 2, h2c('#ff2db4'))             # cap
+rect(d, HXB + 1, HYB + 9, 2, 3, h2c('#3a3560'))     # legs
+rect(d, HXB + 4, HYB + 9, 2, 3, h2c('#24203e'))
+rect(d, HXB, HYB + 4, 2, 4, h2c('#c88a30'))          # backpack
+# Flag on the far cliff
+rect(d, 94, HORZ_B - 14, 1, 14, h2c('#ffe9a0'))
+d.polygon([(90, HORZ_B - 13), (94, HORZ_B - 11), (94, HORZ_B - 8)], fill=h2c('#00e5ff'))
+# Cactus décor (left edge)
+rect(d, 2, HORZ_B - 7, 2, 7, h2c('#1f8f7a'))
+rect(d, 0, HORZ_B - 5, 2, 2, h2c('#1f8f7a'))
 save_png(img.convert('RGBA'), 'thumb_bridge.png')
 
 # ════════════════════════════════════════════════════════════════════════════════
