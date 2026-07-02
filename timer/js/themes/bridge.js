@@ -485,8 +485,8 @@ export class BridgeScene extends Scene {
         // keep the ghost under the descending segment — it reads as the target
       }
       const w = this.segX[i + 1] - this.segX[i];
-      const a = this.reducedMotion ? 0.65 : 0.45 + 0.25 * Math.sin(this.t / 420 + i * 0.9);
-      ctx.globalAlpha = clampN(a, 0.2, 0.9);
+      const a = this.reducedMotion ? 0.75 : 0.6 + 0.25 * Math.sin(this.t / 420 + i * 0.9);
+      ctx.globalAlpha = clampN(a, 0.3, 0.95);
       blit(ctx, sh, 'seg_ghost', this.segX[i], GY, w / SEG_W);
       ctx.globalAlpha = 1;
     }
