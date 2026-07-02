@@ -50,6 +50,18 @@ const MOUSE_LOOP = [
   { note: 'E', oct: 4, dur: 0.5, type: 'tri' },
 ];
 
+// Steady, industrious minor loop for the Canyon Bridge theme (building vibe)
+const BRIDGE_LOOP = [
+  { note: 'E', oct: 3, dur: 0.5 },
+  { note: 'B', oct: 3, dur: 0.5 },
+  { note: 'G', oct: 3, dur: 0.5 },
+  { note: 'B', oct: 3, dur: 0.5 },
+  { note: 'A', oct: 3, dur: 0.5 },
+  { note: 'C', oct: 4, dur: 0.5 },
+  { note: 'B', oct: 3, dur: 0.5 },
+  { note: 'G', oct: 3, dur: 0.5 },
+];
+
 /**
  * Compute logical stage dimensions from the current viewport.
  * Shorter side = 240 logical px; longer side = round(240 * ratio),
@@ -120,10 +132,12 @@ export async function renderRun(ctx, { themeId, durationMs }) {
   const loop = themeId === 'monsterhp' ? MONSTER_LOOP
              : themeId === 'mouse'     ? MOUSE_LOOP
              : themeId === 'dragon'    ? DRAGON_LOOP
+             : themeId === 'bridge'    ? BRIDGE_LOOP
              : CASTLE_LOOP;
   const bpm  = themeId === 'monsterhp' ? 132
              : themeId === 'mouse'     ? 120
              : themeId === 'dragon'    ? 84
+             : themeId === 'bridge'    ? 118
              : 110;
 
   const engine = new TimerEngine(durationMs, {

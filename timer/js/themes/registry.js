@@ -15,8 +15,13 @@ registerScene(
   () => import('./dragon.js').then(m => m.DragonScene)
 );
 
+// Phase-2 live theme:
+registerScene(
+  { id: 'bridge',    name: 'Canyon Bridge', thumb: 'thumb_bridge', comingSoon: false },
+  () => import('./bridge.js').then(m => m.BridgeScene)
+);
+
 // Phase-2 placeholders (shown locked in the theme picker):
-registerScene({ id: 'bridge',  name: 'Canyon Bridge', thumb: 'thumb_bridge',  comingSoon: true }, null);
 registerScene({ id: 'volcano', name: 'Volcano Run',   thumb: 'thumb_volcano', comingSoon: true }, null);
 registerScene({ id: 'feeding', name: 'Monster Feast', thumb: 'thumb_feeding', comingSoon: true }, null);
 
