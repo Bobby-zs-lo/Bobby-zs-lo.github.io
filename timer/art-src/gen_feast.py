@@ -144,11 +144,9 @@ def blob(hd, cx, cy, rx, ry, outline=True):
     if outline:
         hd.ell(cx, cy, rx + 2, ry + 2, OUTL)
     hd.ell(cx, cy, rx, ry, BODY)
-    hd.ell(cx + rx * 0.18, cy + ry * 0.42, rx * 0.72, ry * 0.5, BODY_S)
-    hd.ell(cx - rx * 0.2, cy - ry * 0.42, rx * 0.62, ry * 0.42, BODY_H)
-    hd.ell(cx, cy, rx, ry, BODY)  # re-lay a faint base so shadow/hl stay subtle
-    hd.ell(cx + rx * 0.22, cy + ry * 0.5, rx * 0.62, ry * 0.4, BODY_S)
-    hd.ell(cx - rx * 0.22, cy - ry * 0.46, rx * 0.5, ry * 0.34, BODY_H)
+    # subtle shading only — the body must read as uniform #FFDE00 at a glance
+    hd.ell(cx + rx * 0.3, cy + ry * 0.6, rx * 0.45, ry * 0.28, BODY_S)
+    hd.ell(cx - rx * 0.32, cy - ry * 0.6, rx * 0.3, ry * 0.18, BODY_H)
 
 
 # ── Long ear (tapered), yellow with black top ~30% ────────────────────────────
@@ -240,12 +238,12 @@ def draw_pika_sit(hd, stage, pose):
     draw_ear(hd, (hxc + 12, hyc - 28), (hxc + 34, 4), 9.5)
     # head fill
     hd.cir(hxc, hyc, hr + 2, OUTL)
-    hd.cir(hxc, hyc, hr, BODY)
-    hd.ell(hxc + 8, hyc + 12, hr * 0.7, hr * 0.5, BODY_S)
-    hd.ell(hxc - 8, hyc - 12, hr * 0.62, hr * 0.5, BODY_H)
+    hd.cir(hxc, hyc, hr, BODY)                                   # uniform #FFDE00
+    hd.ell(hxc + 10, hyc + 18, hr * 0.5, hr * 0.26, BODY_S)      # small chin shadow
+    hd.ell(hxc - 8, hyc - 20, hr * 0.34, hr * 0.18, BODY_H)      # small forehead sheen
 
-    # cheeks (near cheek prominent, far cheek smaller)
-    draw_cheek(hd, hxc - 20, hyc + 15 + jaw * 0.4, 11 + (2.5 if bulgeL else 0))
+    # cheeks (near cheek prominent but set back on the face, clear of the muzzle)
+    draw_cheek(hd, hxc - 16, hyc + 14 + jaw * 0.4, 10 + (2.5 if bulgeL else 0))
     draw_cheek(hd, hxc + 22, hyc + 12, 8 + (2 if bulgeR else 0))
 
     # eyes
@@ -260,8 +258,12 @@ def draw_pika_sit(hd, stage, pose):
     # mouth
     my = hyc + 12 + jaw
     if chew or lean:
-        hd.ell(hxc - 22, my, 6.5, 4.5 + jaw * 0.5, MOUTH)
-        hd.ell(hxc - 22, my + 1.5, 3.6, 2.2, TONGUE)
+        # small dark chewing mouth, low on the muzzle; the alternating cheek
+        # bulge + jaw offset carry the chewing motion (not a big red blob)
+        mmx, mmy = hxc - 31, hyc + 16 + jaw * 0.8   # forward on the muzzle, clear of the cheek
+        mrx, mry = 3.2, 2.0 + jaw * 0.35
+        hd.ell(mmx, mmy, mrx + 1.0, mry + 1.0, (94, 58, 30, 255))  # thin dark rim
+        hd.ell(mmx, mmy, mrx, mry, MOUTH)
     else:  # classic w-shape
         hd.line(hd.arc_pts(hxc - 27, my, 4, 3, 20, 160), MOUTH, 1.8)
         hd.line(hd.arc_pts(hxc - 19, my, 4, 3, 20, 160), MOUTH, 1.8)
@@ -327,9 +329,9 @@ def draw_pika_stand(hd, pose):
     draw_ear(hd, (hxc - 15, hyc - 28), (hxc - 30, 6), 10)
     draw_ear(hd, (hxc + 15, hyc - 28), (hxc + 30, 4), 10)
     hd.cir(hxc, hyc, hr + 2, OUTL)
-    hd.cir(hxc, hyc, hr, BODY)
-    hd.ell(hxc, hyc + 14, hr * 0.7, hr * 0.5, BODY_S)
-    hd.ell(hxc - 10, hyc - 12, hr * 0.55, hr * 0.45, BODY_H)
+    hd.cir(hxc, hyc, hr, BODY)                                   # uniform #FFDE00
+    hd.ell(hxc, hyc + 20, hr * 0.5, hr * 0.24, BODY_S)           # small chin shadow
+    hd.ell(hxc - 9, hyc - 22, hr * 0.32, hr * 0.16, BODY_H)      # small forehead sheen
 
     # cheeks (both prominent)
     draw_cheek(hd, hxc - 26, hyc + 16, cheekR)
