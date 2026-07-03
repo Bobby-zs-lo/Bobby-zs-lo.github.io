@@ -56,19 +56,20 @@ export class FeastScene extends Scene {
     const short = Math.min(W, H);
 
     // Platter (big oval of food) — sits low-centre / low-left of the stage.
-    this.plateCX = landscape ? W * 0.42 : W * 0.5;
+    // In portrait the plate shifts left so its right end isn't behind Pikachu.
+    this.plateCX = landscape ? W * 0.42 : W * 0.46;
     this.plateCY = landscape ? H * 0.72 : H * 0.66;
     this.plateDrawW = landscape ? short * 0.95 : W * 0.88;
     this.plateScale = this.plateDrawW / PLATE_W;
     this.plateDrawH = PLATE_H * this.plateScale;
 
     // Pikachu — sits to the RIGHT of the platter, facing left, grounded at feet.
-    this.pikaX = landscape ? W * 0.74 : W * 0.68;
+    this.pikaX = landscape ? W * 0.74 : W * 0.72;
     this.pikaY = H * 0.82;                       // feet baseline (grounded)
     this.pikaScale = (short * 0.55) / PIKA_SIT_H; // target sitting draw height
 
-    // Food draw scale (~plateW/8.5 across).
-    this.foodScale = (this.plateDrawW / 8.5) / FOOD_W;
+    // Food draw scale (~plateW/6 across — big enough to read as a feast).
+    this.foodScale = (this.plateDrawW / 6) / FOOD_W;
 
     // Checker cloth region under the platter.
     this.clothX = Math.round(this.plateCX - this.plateDrawW * 0.62);
@@ -80,29 +81,32 @@ export class FeastScene extends Scene {
     this._computeSlots();
   }
 
-  // 14 food slots on the oval: a back arc of 6 (drawn first, slightly smaller)
-  // and a front arc of 8. Positions are fractions of the plate half-extents.
+  // 14 food slots piled ON the platter surface (not the rim): a back row of 6
+  // (drawn first, slightly smaller/higher) and a front row of 8. Deterministic
+  // per-slot jitter (index-hashed, NO Math.random — layout reruns on resize).
   _computeSlots() {
     const cx = this.plateCX, cy = this.plateCY;
-    const rx = this.plateDrawW * 0.5, ry = this.plateDrawH * 0.5;
+    const pw = this.plateDrawW, ph = this.plateDrawH;
+    const jit = (i, k) => {                       // deterministic -1..1 hash
+      const v = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453;
+      return (v - Math.floor(v)) * 2 - 1;
+    };
     const slots = [];
-    // back arc (indices 0..5): far edge of the oval, higher on screen, smaller.
+    // back row (indices 0..5): higher on the plate, slightly smaller.
     for (let i = 0; i < 6; i++) {
-      const u = (i + 0.5) / 6;                 // 0..1 across the back
-      const ang = Math.PI + u * Math.PI;       // π..2π → sin<0 → above centre
+      const u = (i / 5) * 2 - 1;                  // -1..1 across the row
       slots.push({
-        x: cx + Math.cos(ang) * rx * 0.78,
-        y: cy + Math.sin(ang) * ry * 0.62 - ry * 0.06,
+        x: cx + u * pw * 0.28 + jit(i, 1) * pw * 0.02,
+        y: cy - ph * 0.18 + jit(i, 2) * ph * 0.05,
         s: 0.82,
       });
     }
-    // front arc (indices 6..13, 13 = ketchup, nearest & eaten last): full size.
+    // front row (indices 6..13, 13 = ketchup, nearest & eaten last): full size.
     for (let i = 0; i < 8; i++) {
-      const u = (i + 0.5) / 8;                 // 0..1 across the front
-      const ang = u * Math.PI;                 // 0..π → sin>0 → below centre
+      const u = (i / 7) * 2 - 1;                  // -1..1 across the row
       slots.push({
-        x: cx + Math.cos(ang) * rx * 0.86,
-        y: cy + Math.sin(ang) * ry * 0.66 + ry * 0.04,
+        x: cx + u * pw * 0.30 + jit(i + 6, 1) * pw * 0.02,
+        y: cy + ph * 0.08 + jit(i + 6, 2) * ph * 0.05,
         s: 1.0,
       });
     }
@@ -360,7 +364,7 @@ export class FeastScene extends Scene {
   }
 
   _idleFrame(s) {
-    const blink = !this.reducedMotion && (this.t % 3000) < 150;
+    const blink = !this.reducedMotion && ((this.t + 2300) % 3000) < 150;
     return `pika_s${s}_${blink ? 'idle1' : 'idle0'}`;
   }
 
