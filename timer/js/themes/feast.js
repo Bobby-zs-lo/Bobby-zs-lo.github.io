@@ -150,8 +150,8 @@ export class FeastScene extends Scene {
     if (this.finale === 0) {
       const eaten = itemsEaten(progress);
       if (eaten > this._lastEaten) {
+        audio.sfx('coin');   // one ding per frame, even if a big dtMs eats several items
         for (let k = this._lastEaten; k < eaten; k++) {
-          audio.sfx('coin');
           if (!this.reducedMotion && this.slots) {
             const slot = this.slots[k];
             const n = 3 + Math.floor(Math.random() * 3);   // 3..5
@@ -411,6 +411,7 @@ export class FeastScene extends Scene {
       ctx.stroke();
     }
     ctx.globalAlpha = 1;
+    ctx.lineWidth = 1;
   }
 
   // Storm: central thunder column + procedural branching bolts.
