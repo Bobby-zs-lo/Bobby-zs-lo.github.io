@@ -466,30 +466,91 @@ for bx, by in [(20, 52), (68, 48), (36, 40), (60, 36)]:
 save_png(img.convert('RGBA'), 'thumb_volcano.png')
 
 # ════════════════════════════════════════════════════════════════════════════════
-#  FEEDING thumb (silhouette – coming soon)
+#  FEEDING (Poke Feast) thumb — chibi Pikachu at a feast, matches feast.js
 # ════════════════════════════════════════════════════════════════════════════════
 img, d = new_sheet(TW, TH)
-SKY0F = h2c('#0f1a0f')
-SKY1F = h2c('#1a3020')
-GND_F = h2c('#080f08')
-HORZ_F = 66
-fill_sky(d, SKY0F, SKY1F, HORZ_F)
-fill_ground(d, GND_F, HORZ_F)
-FDG = (20, 50, 20, 255)
-FOOD = h2c('#39ff14')
-# Monster (center)
-rect(d, 30, 78, 36, 34, FDG)  # body
-rect(d, 36, 62, 24, 20, FDG)  # head
-rect(d, 40, 58,  6, 6, FDG)   # left horn
-rect(d, 50, 58,  6, 6, FDG)   # right horn
-rect(d, 20, 82, 12, 18, FDG)  # left arm
-rect(d, 64, 82, 12, 18, FDG)  # right arm
-# Food item (glowing in hand)
-draw_circle_fill(d, 24, 90, 7, FOOD)
-rect(d, 22, 89, 4, 1, (0,0,0,0))  # bite mark
-# Crumbs / food particles
-for cx, cy in [(10,94),(8,88),(12,98),(62,92)]:
-    draw_circle_fill(d, cx, cy, 2, FOOD)
+TANF0 = h2c('#F5E3C0')
+TANF1 = h2c('#E4C48F')
+for y in range(TH):
+    d.rectangle([0, y, TW - 1, y], fill=lerp_color(TANF0, TANF1, y / (TH - 1)))
+
+PIKA   = h2c('#FFDE00')
+PIKA_H = h2c('#FFEE66')
+PIKA_D = h2c('#D9B800')
+BLK    = h2c('#221800')
+CHEEK  = h2c('#FF3B30')
+TAILC  = h2c('#8A5A2B')
+PLATE  = h2c('#FFFFFF')
+PLATE_D= h2c('#D8D0C0')
+FOOD_R = h2c('#C81E1E')
+FOOD_G = h2c('#3FA34D')
+FOOD_B = h2c('#6B4226')
+
+# Platter (mini white oval), lower-center
+PCX, PCY, PRW, PRH = 48, 100, 30, 9
+soft = img.load()
+d.ellipse([PCX - PRW, PCY - PRH, PCX + PRW, PCY + PRH], fill=PLATE)
+d.ellipse([PCX - PRW, PCY - 2, PCX + PRW, PCY + PRH], fill=PLATE_D)
+d.ellipse([PCX - PRW + 4, PCY - PRH + 3, PCX + PRW - 4, PCY - 1], fill=PLATE)
+# Food dots on the platter
+for fx, fy, fc in [(30, 98, FOOD_R), (40, 102, FOOD_G), (56, 101, FOOD_B),
+                    (66, 97, FOOD_R), (48, 96, FOOD_G)]:
+    draw_circle_fill(d, fx, fy, 3, fc)
+    rect(d, fx - 1, fy - 1, 1, 1, (255, 255, 255, 110))
+
+# Pikachu tail (brown zigzag lightning shape), behind body to the right
+TX, TY = 74, 76
+d.polygon([(TX, TY), (TX + 10, TY - 10), (TX + 4, TY - 8),
+           (TX + 12, TY - 20), (TX + 4, TY - 14), (TX + 8, TY - 12),
+           (TX - 2, TY - 4)], fill=TAILC)
+d.polygon([(TX, TY), (TX + 6, TY - 6), (TX, TY - 4)], fill=h2c('#6E4419'))
+
+# Pikachu body (round blob)
+BXc, BYc, BR = 48, 82, 17
+draw_circle_fill(d, BXc, BYc, BR, PIKA)
+draw_circle_fill(d, BXc - 5, BYc - 5, 7, PIKA_H)   # highlight
+draw_circle_fill(d, BXc + 7, BYc + 6, 6, PIKA_D)   # shade
+# Belly patch
+d.ellipse([BXc - 7, BYc - 2, BXc + 7, BYc + 11], fill=h2c('#FFF3B0'))
+
+# Pikachu head (round blob, slightly overlapping body)
+HXc, HYc, HR = 48, 56, 16
+draw_circle_fill(d, HXc, HYc, HR, PIKA)
+draw_circle_fill(d, HXc - 5, HYc - 5, 7, PIKA_H)
+draw_circle_fill(d, HXc + 7, HYc + 5, 6, PIKA_D)
+
+# Ears (long, tapering, black tips) — drawn behind/around head top
+for ex, tip_dx in [(-10, -4), (10, 4)]:
+    ex0, ey0 = HXc + ex, HYc - 12
+    ex1, ey1 = HXc + ex + tip_dx, HYc - 34
+    d.polygon([(ex0 - 4, ey0), (ex0 + 4, ey0), (ex1 + 2, ey1 + 6), (ex1 - 2, ey1 + 6)], fill=PIKA)
+    d.polygon([(ex1 - 3, ey1 + 8), (ex1 + 3, ey1 + 8), (ex1, ey1)], fill=BLK)  # black tip
+    d.polygon([(ex0 - 3, ey0), (ex0, ey0), (ex1, ey1 + 8)], fill=PIKA_H)      # inner highlight
+
+# Cheeks (red circles)
+draw_circle_fill(d, HXc - 12, HYc + 4, 4, CHEEK)
+draw_circle_fill(d, HXc + 12, HYc + 4, 4, CHEEK)
+
+# Eyes (black dots) + shine
+for eyx in (HXc - 6, HXc + 6):
+    draw_circle_fill(d, eyx, HYc - 1, 3, BLK)
+    rect(d, eyx - 1, HYc - 2, 1, 1, (255, 255, 255, 220))
+
+# Nose
+rect(d, HXc - 1, HYc + 3, 2, 1, h2c('#5A3A1A'))
+
+# Arms holding food (small yellow nubs reaching toward platter)
+draw_circle_fill(d, BXc - 14, BYc + 8, 4, PIKA)
+draw_circle_fill(d, BXc + 15, BYc + 8, 4, PIKA)
+
+# Small white lightning bolt above head (Pikachu signature spark)
+LBX, LBY = HXc + 16, HYc - 30
+d.polygon([(LBX, LBY), (LBX - 5, LBY + 8), (LBX - 1, LBY + 8),
+           (LBX - 4, LBY + 16), (LBX + 5, LBY + 6), (LBX + 1, LBY + 6)],
+          fill=(255, 255, 255, 235))
+d.polygon([(LBX, LBY), (LBX - 5, LBY + 8), (LBX - 1, LBY + 8), (LBX - 3, LBY + 13)],
+          fill=(255, 244, 150, 200))
+
 save_png(img.convert('RGBA'), 'thumb_feeding.png')
 
 # ════════════════════════════════════════════════════════════════════════════════

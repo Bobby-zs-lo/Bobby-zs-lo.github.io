@@ -62,6 +62,17 @@ const BRIDGE_LOOP = [
   { note: 'G', oct: 3, dur: 0.5 },
 ];
 
+const FEAST_LOOP = [ // upbeat munchy bounce, ~120bpm
+  { note:'C', oct:4, dur:0.5, type:'square' }, { note:'E', oct:4, dur:0.5, type:'square' },
+  { note:'G', oct:4, dur:0.5, type:'square' }, { note:'E', oct:4, dur:0.5, type:'square' },
+  { note:'A', oct:3, dur:0.5, type:'tri' },    { note:'C', oct:4, dur:0.5, type:'square' },
+  { note:'F', oct:4, dur:1,   type:'square' }, { dur:0.5 },
+  { note:'D', oct:4, dur:0.5, type:'square' }, { note:'F', oct:4, dur:0.5, type:'square' },
+  { note:'A', oct:4, dur:0.5, type:'square' }, { note:'F', oct:4, dur:0.5, type:'square' },
+  { note:'G', oct:3, dur:0.5, type:'tri' },    { note:'B', oct:3, dur:0.5, type:'square' },
+  { note:'C', oct:4, dur:1.5, type:'square' },
+];
+
 /**
  * Compute logical stage dimensions from the current viewport.
  * Shorter side = 240 logical px; longer side = round(240 * ratio),
@@ -133,11 +144,13 @@ export async function renderRun(ctx, { themeId, durationMs }) {
              : themeId === 'mouse'     ? MOUSE_LOOP
              : themeId === 'dragon'    ? DRAGON_LOOP
              : themeId === 'bridge'    ? BRIDGE_LOOP
+             : themeId === 'feeding'   ? FEAST_LOOP
              : CASTLE_LOOP;
   const bpm  = themeId === 'monsterhp' ? 132
              : themeId === 'mouse'     ? 120
              : themeId === 'dragon'    ? 84
              : themeId === 'bridge'    ? 118
+             : themeId === 'feeding'   ? 120
              : 110;
 
   const engine = new TimerEngine(durationMs, {
