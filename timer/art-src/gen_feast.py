@@ -223,13 +223,27 @@ def draw_pika_sit(hd, stage, pose):
 
     # lower body
     blob(hd, bx, by, brx, bry)
-    # cream belly patch (grows with stage; clearly a ball belly at stage 3)
-    bvis = 0.5 + 0.18 * stage
-    hd.ell(bx - 6, by + 4, brx * bvis, bry * (0.55 + 0.12 * stage), BELLY)
 
-    # near foot (front)
+    # near foot (front) — drawn before the belly patch so the belly stays a
+    # single solid cream shape on top, instead of the foot punching a hole in it
     hd.ell(58, 132, 13, 7.5, OUTL); hd.ell(58, 131, 11, 6, BODY)
     hd.ell(55, 132, 4, 2.4, BODY_S)
+
+    # arms that sit low/near the belly — also drawn before the belly patch so
+    # they never punch a body-colored hole through the cream fill (see below)
+    if not lean:  # near arm (the 'lean' reach-arm is drawn later, clear of the belly)
+        hd.ell(bx - brx * 0.7, by - 2, 8, 11, OUTL)
+        hd.ell(bx - brx * 0.7, by - 2, 6, 9, BODY)
+    # far arm resting on belly
+    hd.ell(bx + brx * 0.3, by + 2, 7, 9, OUTL)
+    hd.ell(bx + brx * 0.3, by + 2, 5, 7, BODY)
+
+    # cream belly patch — drawn LAST among body/limb shapes so it is always a
+    # single solid fill on top (no yellow foot/arm poking through as a "ring")
+    bvis = 0.5 + 0.18 * stage
+    hd.ell(bx - 6, by + 4, brx * bvis, bry * (0.55 + 0.12 * stage), BELLY)
+    # subtle inner shading so it doesn't look like a flat sticker
+    hd.ell(bx - 6 - brx * bvis * 0.25, by + 4 - bry * 0.15, brx * bvis * 0.5, bry * 0.3, (255, 247, 220, 255))
 
     # ── head ──
     hxc, hyc, hr = 70 + hx_off, 56, 33
@@ -268,17 +282,11 @@ def draw_pika_sit(hd, stage, pose):
         hd.line(hd.arc_pts(hxc - 27, my, 4, 3, 20, 160), MOUTH, 1.8)
         hd.line(hd.arc_pts(hxc - 19, my, 4, 3, 20, 160), MOUTH, 1.8)
 
-    # ── arms ──
+    # ── reach arm (lean pose only; the resting arms were drawn earlier) ──
     if lean:  # near arm reaches down-left toward the plate
         hd.line([(bx - 14, by - 4), (44, 118), (34, 122)], OUTL, 9)
         hd.line([(bx - 14, by - 4), (44, 118), (34, 122)], BODY, 6.5)
         hd.ell(33, 123, 6, 5, OUTL); hd.ell(33, 122, 4.4, 3.6, BODY)
-    else:
-        hd.ell(bx - brx * 0.7, by - 2, 8, 11, OUTL)
-        hd.ell(bx - brx * 0.7, by - 2, 6, 9, BODY)
-    # far arm resting on belly
-    hd.ell(bx + brx * 0.3, by + 2, 7, 9, OUTL)
-    hd.ell(bx + brx * 0.3, by + 2, 5, 7, BODY)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -311,6 +319,7 @@ def draw_pika_stand(hd, pose):
     by = 118 + crouch
     blob(hd, 75, by, 42, 44 - crouch * 0.5)
     hd.ell(75, by + 6, 30, 30, BELLY)
+    hd.ell(66, by, 15, 9, (255, 247, 220, 255))  # subtle inner shading, still solid
 
     # ── arms ──
     if armsUp:
