@@ -23,7 +23,8 @@ registerScene(
 
 // Phase-2 placeholders (shown locked in the theme picker):
 registerScene({ id: 'volcano', name: 'Volcano Run',   thumb: 'thumb_volcano', comingSoon: true }, null);
-registerScene({ id: 'feeding', name: 'Monster Feast', thumb: 'thumb_feeding', comingSoon: true }, null);
+registerScene({ id: 'feeding', name: 'Poke Feast', thumb: 'thumb_feeding', comingSoon: false },
+  () => import('./feast.js').then(m => m.FeastScene));
 
 // Phase-2 live theme (appended last so it shows last in the picker):
 registerScene(
