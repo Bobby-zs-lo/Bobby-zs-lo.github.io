@@ -294,6 +294,15 @@ export class FeastScene extends Scene {
       ctx.globalAlpha = 1;
     }
 
+    // Storm-sky dim UNDER Pikachu/bolts: gives the bolts contrast (they wash
+    // out over the beige backdrop) and carries the storm drama safely. Static
+    // in reduced motion, where it also makes the gentle bolts visible at all.
+    const dimA = inFinale ? this._stormDim(ms) : 0;
+    if (dimA > 0) {
+      ctx.fillStyle = `rgba(24,16,64,${dimA.toFixed(3)})`;
+      ctx.fillRect(-8, -8, W + 16, H + 16);   // margin covers the shake offset
+    }
+
     // Pikachu (HD sprite: smoothing ON for its blit, restored to false).
     const frame = inFinale ? this._finaleFrame(ms) : this._eatFrame();
     const bob = (inFinale || this.reducedMotion) ? 0 : Math.sin(this.t / 300) * 1.5;
@@ -312,11 +321,17 @@ export class FeastScene extends Scene {
 
     ctx.restore();
 
-    // Full-screen storm flash pulse (not shaken; skipped under reduced motion).
-    if (inFinale && ms >= 1200 && ms < 3700 && !this.reducedMotion) {
-      const fa = 0.85 * (1 - ((ms - 1200) % 220) / 220);
-      ctx.fillStyle = `rgba(255,255,255,${fa.toFixed(3)})`;
-      ctx.fillRect(0, 0, W, H);
+    // Storm flashes: 3 DISCRETE ≤120ms pulses, ≥900ms apart (WCAG 2.3.1 caps
+    // general flashes at 3/s — the old 220ms strobe was ~4.5/s full-screen
+    // white for 2.5s, a photosensitive-seizure risk in a kids' app).
+    if (inFinale && !this.reducedMotion) {
+      for (const t0 of [1200, 2150, 3100]) {
+        if (ms >= t0 && ms < t0 + 120) {
+          const fa = 0.55 * (1 - (ms - t0) / 120);
+          ctx.fillStyle = `rgba(255,255,255,${fa.toFixed(3)})`;
+          ctx.fillRect(0, 0, W, H);
+        }
+      }
     }
 
     // Milestone soft flash (warm white; not under reduced motion).
@@ -366,6 +381,17 @@ export class FeastScene extends Scene {
   _idleFrame(s) {
     const blink = !this.reducedMotion && ((this.t + 2300) % 3000) < 150;
     return `pika_s${s}_${blink ? 'idle1' : 'idle0'}`;
+  }
+
+  // Storm-sky dim alpha: ramps in through late charge-up, holds through the
+  // storm, fades out into the settle. Single slow transitions — not a flash.
+  _stormDim(ms) {
+    const base = this.reducedMotion ? 0.38 : 0.46;
+    if (ms < 900) return 0;
+    if (ms < 1200) return base * ((ms - 900) / 300);
+    if (ms < 3700) return base;
+    if (ms < 4100) return base * (1 - (ms - 3700) / 400);
+    return 0;
   }
 
   _finaleFrame(ms) {
