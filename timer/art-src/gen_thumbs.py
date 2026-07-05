@@ -498,46 +498,45 @@ for fx, fy, fc in [(30, 98, FOOD_R), (40, 102, FOOD_G), (56, 101, FOOD_B),
     draw_circle_fill(d, fx, fy, 3, fc)
     rect(d, fx - 1, fy - 1, 1, 1, (255, 255, 255, 110))
 
-# Pikachu tail (brown zigzag lightning shape), behind body to the right
-TX, TY = 74, 76
-d.polygon([(TX, TY), (TX + 10, TY - 10), (TX + 4, TY - 8),
-           (TX + 12, TY - 20), (TX + 4, TY - 14), (TX + 8, TY - 12),
-           (TX - 2, TY - 4)], fill=TAILC)
-d.polygon([(TX, TY), (TX + 6, TY - 6), (TX, TY - 4)], fill=h2c('#6E4419'))
+# Pikachu tail (YELLOW zigzag bolt + brown base wedge), behind body right —
+# V2 rules: flat cel, no speculars, no cream belly (see reference_pika_v2.py)
+TX, TY = 72, 78
+d.polygon([(TX, TY), (TX + 6, TY - 6), (TX + 2, TY - 10), (TX + 10, TY - 20),
+           (TX + 16, TY - 19), (TX + 11, TY - 13), (TX + 14, TY - 9),
+           (TX + 5, TY - 2)], fill=PIKA)
+d.polygon([(TX, TY), (TX + 6, TY - 6), (TX + 2, TY - 10), (TX + 6, TY - 12),
+           (TX + 8, TY - 7), (TX + 5, TY - 2)], fill=TAILC)
 
-# Pikachu body (round blob)
+# Pikachu body (flat round blob, one same-hue shade crescent at the bottom)
 BXc, BYc, BR = 48, 82, 17
 draw_circle_fill(d, BXc, BYc, BR, PIKA)
-draw_circle_fill(d, BXc - 5, BYc - 5, 7, PIKA_H)   # highlight
-draw_circle_fill(d, BXc + 7, BYc + 6, 6, PIKA_D)   # shade
-# Belly patch
-d.ellipse([BXc - 7, BYc - 2, BXc + 7, BYc + 11], fill=h2c('#FFF3B0'))
+d.ellipse([BXc - 12, BYc + 9, BXc + 12, BYc + 17], fill=PIKA_D)
+d.ellipse([BXc - 12, BYc + 6, BXc + 12, BYc + 14], fill=PIKA)
 
-# Pikachu head (round blob, slightly overlapping body)
+# Pikachu head (flat round blob, slightly overlapping body)
 HXc, HYc, HR = 48, 56, 16
 draw_circle_fill(d, HXc, HYc, HR, PIKA)
-draw_circle_fill(d, HXc - 5, HYc - 5, 7, PIKA_H)
-draw_circle_fill(d, HXc + 7, HYc + 5, 6, PIKA_D)
 
-# Ears (long, tapering, black tips) — drawn behind/around head top
-for ex, tip_dx in [(-10, -4), (10, 4)]:
-    ex0, ey0 = HXc + ex, HYc - 12
+# Ears (broad leaves, black tips only the outer third)
+for ex, tip_dx in [(-10, -6), (10, 6)]:
+    ex0, ey0 = HXc + ex, HYc - 10
     ex1, ey1 = HXc + ex + tip_dx, HYc - 34
-    d.polygon([(ex0 - 4, ey0), (ex0 + 4, ey0), (ex1 + 2, ey1 + 6), (ex1 - 2, ey1 + 6)], fill=PIKA)
-    d.polygon([(ex1 - 3, ey1 + 8), (ex1 + 3, ey1 + 8), (ex1, ey1)], fill=BLK)  # black tip
-    d.polygon([(ex0 - 3, ey0), (ex0, ey0), (ex1, ey1 + 8)], fill=PIKA_H)      # inner highlight
+    d.polygon([(ex0 - 5, ey0), (ex0 + 5, ey0), (ex1 + 2, ey1 + 6), (ex1 - 2, ey1 + 6)], fill=PIKA)
+    d.polygon([(ex1 - 3, ey1 + 9), (ex1 + 3, ey1 + 9), (ex1, ey1)], fill=BLK)  # black tip
 
-# Cheeks (red circles)
-draw_circle_fill(d, HXc - 12, HYc + 4, 4, CHEEK)
-draw_circle_fill(d, HXc + 12, HYc + 4, 4, CHEEK)
+# Cheeks (flat red, lower-outer face, slight silhouette bulge)
+draw_circle_fill(d, HXc - 13, HYc + 6, 5, CHEEK)
+draw_circle_fill(d, HXc + 13, HYc + 6, 5, CHEEK)
 
-# Eyes (black dots) + shine
-for eyx in (HXc - 6, HXc + 6):
+# Eyes (wide-set black dots) + single catchlight upper-right
+for eyx in (HXc - 7, HXc + 7):
     draw_circle_fill(d, eyx, HYc - 1, 3, BLK)
-    rect(d, eyx - 1, HYc - 2, 1, 1, (255, 255, 255, 220))
+    rect(d, eyx, HYc - 3, 1, 1, (255, 255, 255, 230))
 
-# Nose
-rect(d, HXc - 1, HYc + 3, 2, 1, h2c('#5A3A1A'))
+# Nose + w-mouth (centred — the face signature)
+rect(d, HXc - 1, HYc + 2, 2, 1, h2c('#5A3A1A'))
+d.arc([HXc - 5, HYc + 3, HXc, HYc + 8], 20, 160, fill=h2c('#5A3A1A'))
+d.arc([HXc, HYc + 3, HXc + 5, HYc + 8], 20, 160, fill=h2c('#5A3A1A'))
 
 # Arms holding food (small yellow nubs reaching toward platter)
 draw_circle_fill(d, BXc - 14, BYc + 8, 4, PIKA)

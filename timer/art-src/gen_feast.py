@@ -5,8 +5,17 @@ Outputs: timer/assets/feeding.png + feeding.json
 QUALITY CENTERPIECE: Pikachu is drawn as a SMOOTH, high-res cartoon (NOT chunky
 16-bit pixels) by SUPERSAMPLING (rendered 4x with filled curves/ellipses, then
 LANCZOS-downsampled so edges are anti-aliased). The goal is instant "that's
-Pikachu" recognition: long black-tipped ears, big round black eyes, prominent red
-cheeks, the iconic lightning-bolt tail, pear body, cream belly.
+Pikachu" recognition: long black-tipped leaf ears, big wide-set round eyes,
+flat red cheeks that bulge the face silhouette, centred nose + w-mouth, the
+flat zigzag lightning-bolt tail from the lower back, solid-yellow body.
+
+V2 construction rules (style source of truth: reference_pika_v2.py):
+  * ONE consistent 3/4-left projection for sit poses (features shift by FX;
+    nothing sits on the silhouette rim), front view for finale stand poses.
+  * Unified silhouette: outline pass for head+body+feet first, fills second;
+    ear outlines before the head fill, ear fills after (seamless merge).
+  * Flat cel shading: one chocolate outline, one same-hue shadow crescent,
+    NO white speculars, NO cream belly sticker (belly growth = proportions).
 
 Frame contract (HARD — must match js/themes/feast scene):
 --------------------------------------------------------
@@ -31,21 +40,18 @@ from PIL import Image, ImageDraw
 
 random.seed(7)
 
-# ── Pikachu palette (exact hexes from the brief) ──────────────────────────────
+# ── Pikachu palette (flat cel; chocolate outline, same-hue shadow) ────────────
 BODY   = (255, 222, 0, 255)     # #FFDE00 body yellow
-BODY_S = (232, 185, 62, 255)    # #E8B93E shadow
-BODY_H = (255, 243, 166, 255)   # #FFF3A6 highlight
-CHEEK  = (255, 59, 48, 255)     # #FF3B30 red cheeks
-CHEEK_H = (255, 138, 128, 255)  # cheek highlight
+SHAD   = (240, 185, 0, 255)     # #F0B900 same-hue shadow (NOT brown-ochre)
+OUTL   = (74, 50, 18, 255)      # #4A3212 dark chocolate outline, one weight
+CHEEK  = (232, 68, 44, 255)     # #E8442C flat red-orange cheeks (no gloss)
+CHEEK_D = (196, 52, 32, 255)    # cheek under-arc
 BLK    = (26, 26, 26, 255)      # #1A1A1A ears/eyes
-EARIN  = (154, 91, 46, 255)     # #9A5B2E inner ear
-TAILC  = (138, 90, 43, 255)     # #8A5A2B tail + back stripes
-TAIL_U = (201, 138, 61, 255)    # #C98A3D tail underside
-BELLY  = (255, 240, 194, 255)   # #FFF0C2 belly cream
+TAILC  = (138, 90, 43, 255)     # #8A5A2B tail base + back stripes
+TAIL_U = (201, 138, 61, 255)    # tail underside accent
 MOUTH  = (122, 48, 32, 255)     # #7A3020 mouth interior
 TONGUE = (232, 110, 110, 255)
 WHT    = (255, 255, 255, 255)
-OUTL   = (176, 128, 34, 255)    # darkened body tone outline (soft, not black)
 SPARK  = (255, 251, 214, 255)   # white/cream spark dots
 BOLT   = (255, 236, 90, 255)    # electric bolt
 
@@ -93,206 +99,199 @@ class HD:
         return self.img.resize((self.w, self.h), Image.LANCZOS)
 
 
-# ── Lightning-bolt tail (ribbon: zigzag centerline widening toward flat top) ──
-def _ribbon(center, widths):
-    """Build a closed boundary polygon for a variable-width ribbon."""
+# ── V2 character construction helpers ─────────────────────────────────────────
+def _taper_strip(pts_w):
+    """Closed polygon around a centreline of (x, y, width) tuples."""
     left, right = [], []
-    n = len(center)
-    for i in range(n):
-        px, py = center[i]
+    for i, (x, y, ww) in enumerate(pts_w):
         if i == 0:
-            dx, dy = center[1][0] - px, center[1][1] - py
-        elif i == n - 1:
-            dx, dy = px - center[i - 1][0], py - center[i - 1][1]
+            dx, dy = pts_w[1][0] - x, pts_w[1][1] - y
+        elif i == len(pts_w) - 1:
+            dx, dy = x - pts_w[i - 1][0], y - pts_w[i - 1][1]
         else:
-            dx, dy = center[i + 1][0] - center[i - 1][0], center[i + 1][1] - center[i - 1][1]
+            dx, dy = pts_w[i + 1][0] - pts_w[i - 1][0], pts_w[i + 1][1] - pts_w[i - 1][1]
         L = math.hypot(dx, dy) or 1.0
         nx, ny = -dy / L, dx / L
-        w = widths[i] / 2
-        left.append((px + nx * w, py + ny * w))
-        right.append((px - nx * w, py - ny * w))
+        left.append((x + nx * ww / 2, y + ny * ww / 2))
+        right.append((x - nx * ww / 2, y - ny * ww / 2))
     return left + right[::-1]
 
 
-def draw_tail(hd, bx, by, scale=1.0):
-    """Iconic Pikachu lightning-bolt tail: yellow zigzag with brown base,
-    flat wide top, rising up-and-right behind the body."""
-    def S(x, y):
-        return (bx + x * scale, by + y * scale)
-    # sharp zigzag centerline with pronounced horizontal swings + widening
-    center = [S(0, 0), S(13, -14), S(-6, -26), S(16, -40), S(0, -52), S(20, -58)]
-    widths = [w * scale for w in (8, 11, 14, 18, 22, 26)]
-    outline = _ribbon(center, [w + 3 * scale for w in widths])
-    body = _ribbon(center, widths)
-    hd.poly(outline, OUTL)
-    hd.poly(body, BODY)                         # yellow bolt (upper 2/3 look)
-    # brown base: lower two centerline segments stay brown (classic tail base)
-    base_c = center[:3]
-    base_w = widths[:3]
-    hd.poly(_ribbon(base_c, [w + 3 * scale for w in base_w]), OUTL)
-    hd.poly(_ribbon(base_c, base_w), TAILC)
-    # lighter underside stripe on the brown base front edge
-    hd.line([S(3, -2), S(15, -14)], TAIL_U, 3 * scale)
-    # brown base patch where tail meets body
-    hd.ell(bx + 1 * scale, by - 3 * scale, 10 * scale, 8 * scale, TAILC)
-    # highlight on the yellow flat top
-    hd.line([S(8, -50), S(18, -56)], BODY_H, 3 * scale)
+def lerp2(a, b, t):
+    return (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)
 
 
-# ── Soft 3-tone body blob (base + shadow below + highlight above) ─────────────
-def blob(hd, cx, cy, rx, ry, outline=True):
-    if outline:
-        hd.ell(cx, cy, rx + 2, ry + 2, OUTL)
-    hd.ell(cx, cy, rx, ry, BODY)
-    # subtle shading only — the body must read as uniform #FFDE00 at a glance
-    hd.ell(cx + rx * 0.3, cy + ry * 0.6, rx * 0.45, ry * 0.28, BODY_S)
-    hd.ell(cx - rx * 0.32, cy - ry * 0.6, rx * 0.3, ry * 0.18, BODY_H)
+def bolt_tail(hd, bx, by, s=1.0):
+    """Flat hard-cornered lightning-bolt tail from the LOWER back: one zigzag
+    polygon widening to a broad flat top, plus the classic brown base wedge."""
+    def P(x, y):
+        return (bx + x * s, by + y * s)
+    pts = [P(0, 0), P(9, -9), P(2, -16), P(16, -28), P(8, -33), P(26, -52),
+           P(40, -50), P(30, -38), P(38, -40), P(24, -22), P(31, -20), P(12, -4)]
+    cx = sum(p[0] for p in pts) / len(pts)
+    cy = sum(p[1] for p in pts) / len(pts)
+    hd.poly([(cx + (x - cx) * 1.14, cy + (y - cy) * 1.14) for x, y in pts], OUTL)
+    hd.poly(pts, BODY)
+    base = [P(0, 0), P(9, -9), P(2, -16), P(13, -25), P(20, -16), P(12, -4)]
+    bcx = sum(p[0] for p in base) / len(base)
+    bcy = sum(p[1] for p in base) / len(base)
+    hd.poly([(bcx + (x - bcx) * 1.16, bcy + (y - bcy) * 1.16) for x, y in base], OUTL)
+    hd.poly(base, TAILC)
+    hd.line([P(4, -6), P(12, -14)], TAIL_U, 2.2 * s)
 
 
-# ── Long ear (tapered), yellow with black top ~30% ────────────────────────────
-def draw_ear(hd, base, tip, wb, wt=2.4):
-    dx, dy = tip[0] - base[0], tip[1] - base[1]
-    L = math.hypot(dx, dy) or 1.0
-    nx, ny = -dy / L, dx / L
-    def quad(bw, tw, c):
-        hd.poly([(base[0] + nx * bw, base[1] + ny * bw),
-                 (tip[0] + nx * tw, tip[1] + ny * tw),
-                 (tip[0] - nx * tw, tip[1] - ny * tw),
-                 (base[0] - nx * bw, base[1] - ny * bw)], c)
-    quad(wb + 2, wt + 2, OUTL)
-    quad(wb, wt, BODY)
-    # black tip: last ~34%
-    t = 0.66
-    mid = (base[0] + dx * t, base[1] + dy * t)
-    mw = wb + (wt - wb) * t
-    hd.poly([(mid[0] + nx * mw, mid[1] + ny * mw),
-             (tip[0] + nx * wt, tip[1] + ny * wt),
-             (tip[0] - nx * wt, tip[1] - ny * wt),
-             (mid[0] - nx * mw, mid[1] - ny * mw)], BLK)
-    # subtle brown inner shading near base
-    hd.line([(base[0], base[1] + 1), (mid[0], mid[1])], EARIN, 1.6)
-    # highlight streak on the yellow part
-    hd.line([(base[0] - nx * (wb * 0.3), base[1] - ny * (wb * 0.3)),
-             (mid[0] - nx * (mw * 0.3), mid[1] - ny * (mw * 0.3))], BODY_H, 1.8)
+def _ear_segs(base, tip, wb, curve, grow=0.0):
+    """Leaf-shaped ear centreline: base -> mid bulge -> pointed tip."""
+    bx, by = base
+    tx, ty = tip
+    mx = (bx + tx) / 2 + (ty - by) * curve * 0.5
+    my = (by + ty) / 2 - (tx - bx) * curve * 0.5
+    return [(bx, by, wb + grow), (mx, my, wb * 0.88 + grow), (tx, ty, 2.2 + grow * 0.8)]
 
 
-def draw_eye(hd, cx, cy, r, kind='open'):
+def ear_outline(hd, base, tip, wb, curve):
+    """Ear outline pass — call BEFORE the head fill."""
+    hd.poly(_taper_strip(_ear_segs(base, tip, wb, curve, grow=3.4)), OUTL)
+
+
+def ear_fill(hd, base, tip, wb, curve):
+    """Ear fill pass — call AFTER the head fill so the base merges seamlessly.
+    Black tip = outer ~35% only, tapering with the leaf."""
+    segs = _ear_segs(base, tip, wb, curve)
+    hd.poly(_taper_strip(segs), BODY)
+    a, b, c = segs
+    p0 = lerp2((b[0], b[1]), (c[0], c[1]), 0.3)
+    w0 = b[2] + (c[2] - b[2]) * 0.3
+    hd.poly(_taper_strip([(p0[0], p0[1], w0), (c[0], c[1], c[2])]), BLK)
+
+
+def capsule(hd, pts, w, fill):
+    """Stroke a polyline with round end caps (no pipe-seam rings)."""
+    hd.line(pts, fill, w)
+    hd.cir(pts[0][0], pts[0][1], w / 2, fill)
+    hd.cir(pts[-1][0], pts[-1][1], w / 2, fill)
+
+
+def arm(hd, pts, w=8.8):
+    capsule(hd, pts, w + 3.2, OUTL)
+    capsule(hd, pts, w, BODY)
+
+
+def v2_eye(hd, cx, cy, r, kind='open'):
     if kind == 'blink':
         hd.line(hd.arc_pts(cx, cy, r + 1, r * 0.7, 20, 160), BLK, 2.6)
     elif kind == 'happy':          # ^ upward content arc
         hd.line(hd.arc_pts(cx, cy + r * 0.5, r + 1, r, 200, 340), BLK, 2.8)
-    elif kind == 'x':              # squeezed-shut X
-        hd.line([(cx - r, cy - r), (cx + r, cy + r)], BLK, 2.8)
-        hd.line([(cx - r, cy + r), (cx + r, cy - r)], BLK, 2.8)
-    else:                          # big round black eye + white catchlight
+    elif kind == 'shutL':          # > squeezed-shut shout (left eye)
+        hd.line([(cx - r, cy - r * 0.7), (cx + r * 0.6, cy), (cx - r, cy + r * 0.7)], BLK, 2.8)
+    elif kind == 'shutR':          # < squeezed-shut shout (right eye)
+        hd.line([(cx + r, cy - r * 0.7), (cx - r * 0.6, cy), (cx + r, cy + r * 0.7)], BLK, 2.8)
+    else:                          # open: big round black eye, ONE catchlight upper-right
         hd.cir(cx, cy, r, BLK)
-        hd.cir(cx - r * 0.32, cy - r * 0.38, r * 0.34, WHT)
-        hd.cir(cx + r * 0.28, cy + r * 0.24, r * 0.14, (90, 90, 90, 255))
+        hd.cir(cx + r * 0.30, cy - r * 0.34, r * 0.36, WHT)
 
 
-def draw_cheek(hd, cx, cy, r):
-    hd.cir(cx, cy, r + 1.4, OUTL)
+def v2_cheek(hd, cx, cy, r):
+    hd.cir(cx, cy, r + 1.6, OUTL)
     hd.cir(cx, cy, r, CHEEK)
-    hd.cir(cx - r * 0.3, cy - r * 0.3, r * 0.4, CHEEK_H)
+    hd.line(hd.arc_pts(cx, cy, r * 0.72, r * 0.72, 40, 140), CHEEK_D, 1.6)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  SITTING PIKACHU (150x140, facing LEFT)
+#  SITTING PIKACHU (150x140, 3/4 facing LEFT toward the plate)
 # ══════════════════════════════════════════════════════════════════════════════
 PIKA_W, PIKA_H = 150, 140
+GROUND = 134                     # character baseline inside the box
+
 
 def draw_pika_sit(hd, stage, pose):
-    grow = 1 + 0.08 * stage
     lean = pose == 'lean'
     chew = pose.startswith('chew')
-    # jaw / cheek-bulge choreography
-    jaw = {'chew0': 2, 'chew1': 3.5, 'chew2': 1}.get(pose, 0)
-    bulgeL = pose in ('chew0', 'chew2')
-    bulgeR = pose == 'chew1'
-    hx_off = -4 if lean else 0     # head tips toward plate
+    jaw = {'chew0': 1.2, 'chew1': 3.2, 'chew2': 0.6}.get(pose, 0)
+    bulgeL = 2.2 if pose in ('chew0', 'chew2') else 0
+    bulgeR = 2.0 if pose == 'chew1' else 0
 
-    # body centre (lower pear)
-    bx, by = 78, 104
-    brx, bry = 30 * grow, 27 * (1 + 0.05 * stage)
+    # sitting body: pear planted ON the ground, growing with belly stage;
+    # the head drifts back/up slightly as the belly rounds out (leaning back)
+    brx = 33 * (1 + 0.075 * stage)
+    bry = 29 * (1 + 0.06 * stage)
+    bx = 78
+    by = GROUND - bry
+    hxc = 68 + 2 * stage - (4 if lean else 0)
+    hyc = 50 + 1.5 * stage
+    hrx, hry = 34, 29
+    FX = -6                       # 3/4-left feature shift (never on the rim)
 
-    # tail behind
-    draw_tail(hd, bx + brx * 0.7, by - 6)
+    # tail first (behind everything), from the LOWER back
+    bolt_tail(hd, bx + brx * 0.6, GROUND - 14, 1.0)
 
-    # back foot (far)
-    hd.ell(96, 130, 12, 7, OUTL); hd.ell(96, 129, 10, 5.5, BODY)
+    # ears: outline pass BEFORE the head fill
+    earL = ((hxc - 18, hyc - hry * 0.5), (hxc - 36, 8), 17, 0.30)
+    earR = ((hxc + 20, hyc - hry * 0.45), (hxc + 42, 10), 18, -0.26)
+    ear_outline(hd, *earR)
+    ear_outline(hd, *earL)
 
-    # lower body
-    blob(hd, bx, by, brx, bry)
+    # unified silhouette: outlines first, fills second
+    hd.ell(bx, by, brx + 2.6, bry + 2.6, OUTL)
+    hd.ell(hxc, hyc, hrx + 2.6, hry + 2.6, OUTL)
+    hd.ell(52, GROUND - 4, 12.5, 7, OUTL)        # near foot, pointing forward
+    hd.ell(88, GROUND - 2, 11.5, 6.5, OUTL)      # far foot
+    hd.ell(bx, by, brx, bry, BODY)
+    hd.ell(hxc, hyc, hrx, hry, BODY)
+    hd.ell(52, GROUND - 4.5, 10.6, 5.6, BODY)
+    hd.ell(88, GROUND - 2.5, 9.6, 5.2, BODY)
+    ear_fill(hd, *earR)
+    ear_fill(hd, *earL)
+    # flat cel shadow: single same-hue crescent at the body bottom
+    hd.ell(bx, by + bry * 0.58, brx * 0.78, bry * 0.30, SHAD)
+    hd.ell(bx, by + bry * 0.58 - 3.5, brx * 0.76, bry * 0.28, BODY)
+    # toe nicks (near foot)
+    hd.line([(49, GROUND - 7), (49, GROUND - 2)], OUTL, 1.3)
+    hd.line([(55, GROUND - 8), (55, GROUND - 2)], OUTL, 1.3)
 
-    # near foot (front) — drawn before the belly patch so the belly stays a
-    # single solid cream shape on top, instead of the foot punching a hole in it
-    hd.ell(58, 132, 13, 7.5, OUTL); hd.ell(58, 131, 11, 6, BODY)
-    hd.ell(55, 132, 4, 2.4, BODY_S)
+    # two brown back stripes on the 3/4 back edge (clear of tail + arms)
+    hd.line(hd.arc_pts(bx + brx * 0.42, by - bry * 0.45, brx * 0.5, 4, -28, 28), TAILC, 6)
+    hd.line(hd.arc_pts(bx + brx * 0.44, by - bry * 0.08, brx * 0.46, 4, -28, 28), TAILC, 6)
 
-    # arms that sit low/near the belly — also drawn before the belly patch so
-    # they never punch a body-colored hole through the cream fill (see below)
-    if not lean:  # near arm (the 'lean' reach-arm is drawn later, clear of the belly)
-        hd.ell(bx - brx * 0.7, by - 2, 8, 11, OUTL)
-        hd.ell(bx - brx * 0.7, by - 2, 6, 9, BODY)
-    # far arm resting on belly
-    hd.ell(bx + brx * 0.3, by + 2, 7, 9, OUTL)
-    hd.ell(bx + brx * 0.3, by + 2, 5, 7, BODY)
+    # ── face (consistent 3/4-left) ──
+    ek = 'blink' if pose == 'idle1' else ('happy' if pose == 'chew1' else 'open')
+    v2_eye(hd, hxc - 19 + FX, hyc - 1, 8.2, ek)
+    v2_eye(hd, hxc + 19 + FX * 0.4, hyc - 1, 7.6, ek)
+    v2_cheek(hd, hxc - hrx * 0.70 + FX * 0.5, hyc + hry * 0.40, 10.5 + bulgeL)
+    v2_cheek(hd, hxc + hrx * 0.70, hyc + hry * 0.36, 9.5 + bulgeR)
+    hd.ell(hxc - 4 + FX, hyc + 5, 2.1, 1.4, BLK)             # tiny nose
+    mxc, myc = hxc - 4 + FX, hyc + 12 + jaw
+    if pose == 'chew1' or lean:
+        # open mouth (mid-chew / anticipation)
+        hd.ell(mxc, myc + 1, 5.6, 4.4 + jaw * 0.3, OUTL)
+        hd.ell(mxc, myc + 1, 4.4, 3.4 + jaw * 0.3, MOUTH)
+        hd.ell(mxc, myc + 2.6, 2.8, 1.5, TONGUE)
+    else:
+        # closed w-smile (chew0/chew2 carry motion via jaw offset + cheek bulge)
+        hd.line(hd.arc_pts(mxc - 4.5, myc, 4.6, 3.4, 15, 165), OUTL, 2.4)
+        hd.line(hd.arc_pts(mxc + 4.5, myc, 4.6, 3.4, 15, 165), OUTL, 2.4)
 
-    # cream belly patch — drawn LAST among body/limb shapes so it is always a
-    # single solid fill on top (no yellow foot/arm poking through as a "ring")
-    bvis = 0.5 + 0.18 * stage
-    hd.ell(bx - 6, by + 4, brx * bvis, bry * (0.55 + 0.12 * stage), BELLY)
-    # subtle inner shading so it doesn't look like a flat sticker
-    hd.ell(bx - 6 - brx * bvis * 0.25, by + 4 - bry * 0.15, brx * bvis * 0.5, bry * 0.3, (255, 247, 220, 255))
-
-    # ── head ──
-    hxc, hyc, hr = 70 + hx_off, 56, 33
-    # ears (attach at head top, angle up-and-back = up-right)
-    draw_ear(hd, (hxc - 12, hyc - 26), (hxc - 26 + hx_off, 8), 9)
-    draw_ear(hd, (hxc + 12, hyc - 28), (hxc + 34, 4), 9.5)
-    # head fill
-    hd.cir(hxc, hyc, hr + 2, OUTL)
-    hd.cir(hxc, hyc, hr, BODY)                                   # uniform #FFDE00
-    hd.ell(hxc + 10, hyc + 18, hr * 0.5, hr * 0.26, BODY_S)      # small chin shadow
-    hd.ell(hxc - 8, hyc - 20, hr * 0.34, hr * 0.18, BODY_H)      # small forehead sheen
-
-    # cheeks (near cheek prominent but set back on the face, clear of the muzzle)
-    draw_cheek(hd, hxc - 16, hyc + 14 + jaw * 0.4, 10 + (2.5 if bulgeL else 0))
-    draw_cheek(hd, hxc + 22, hyc + 12, 8 + (2 if bulgeR else 0))
-
-    # eyes
-    ek = {'idle1': 'blink', 'chew1': 'blink'}.get(pose, 'open')
-    draw_eye(hd, hxc - 15, hyc - 2, 7.5, ek)
-    draw_eye(hd, hxc + 16, hyc - 4, 6.8, ek)
-
-    # nose (tiny triangle) at muzzle front-left
-    nx, ny = hxc - 33, hyc + 6
-    hd.poly([(nx, ny), (nx + 5, ny - 2.5), (nx + 5, ny + 2.5)], BLK)
-
-    # mouth
-    my = hyc + 12 + jaw
-    if chew or lean:
-        # small dark chewing mouth, low on the muzzle; the alternating cheek
-        # bulge + jaw offset carry the chewing motion (not a big red blob)
-        mmx, mmy = hxc - 31, hyc + 16 + jaw * 0.8   # forward on the muzzle, clear of the cheek
-        mrx, mry = 3.2, 2.0 + jaw * 0.35
-        hd.ell(mmx, mmy, mrx + 1.0, mry + 1.0, (94, 58, 30, 255))  # thin dark rim
-        hd.ell(mmx, mmy, mrx, mry, MOUTH)
-    else:  # classic w-shape
-        hd.line(hd.arc_pts(hxc - 27, my, 4, 3, 20, 160), MOUTH, 1.8)
-        hd.line(hd.arc_pts(hxc - 19, my, 4, 3, 20, 160), MOUTH, 1.8)
-
-    # ── reach arm (lean pose only; the resting arms were drawn earlier) ──
-    if lean:  # near arm reaches down-left toward the plate
-        hd.line([(bx - 14, by - 4), (44, 118), (34, 122)], OUTL, 9)
-        hd.line([(bx - 14, by - 4), (44, 118), (34, 122)], BODY, 6.5)
-        hd.ell(33, 123, 6, 5, OUTL); hd.ell(33, 122, 4.4, 3.6, BODY)
+    # ── arms (drawn last; shoulders sit ON the silhouette edge and the arm
+    #    breaks OUTSIDE it, so it reads as a limb, not a slit in the belly) ──
+    shL = (bx - brx * 0.88, by - bry * 0.45)
+    if lean:
+        # near arm reaches out-and-down toward the plate, clear of the body
+        arm(hd, [shL, (36, 112), (27, 121)])
+    elif chew:
+        # near paw up at the mouth (nibble); the far arm is hidden behind the
+        # head in 3/4 view — a crossing far arm reads as a strap, so none drawn
+        arm(hd, [shL, (bx - brx - 5, by - bry * 0.1), (mxc - 4, myc + 7)])
+    else:
+        # idle: near arm hugs the body's front edge, paw at the lap
+        arm(hd, [shL, (bx - brx * 0.72, by + bry * 0.28)])
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  STANDING PIKACHU (150x170, front-ish, belly stage 3)
+#  STANDING PIKACHU (150x170, front view, belly stage 3 baked)
 # ══════════════════════════════════════════════════════════════════════════════
 STAND_W, STAND_H = 150, 170
+SGROUND = 164
+
 
 def bolt_glyph(hd, cx, cy, s, c):
     """Small lightning bolt centred at cx,cy scaled by s."""
@@ -301,86 +300,98 @@ def bolt_glyph(hd, cx, cy, s, c):
 
 
 def draw_pika_stand(hd, pose):
-    crouch = {'charge0': 6, 'charge1': 12}.get(pose, 0)
-    cheekR = {'charge0': 14, 'charge1': 16, 'thunder': 14}.get(pose, 12)
+    crouch = {'charge0': 5, 'charge1': 10}.get(pose, 0)
+    cheekR = {'charge0': 12.5, 'charge1': 13.5, 'thunder': 13}.get(pose, 11.5)
     armsUp = pose == 'thunder'
-    hxc, hyc, hr = 75, 52 + crouch * 0.4, 36
+    happy = pose == 'happy'
 
-    # tail behind (bigger)
-    draw_tail(hd, 108, 118)
+    # stage-3 round body standing on short tucked legs
+    brx = 40
+    bry = 42 - crouch * 0.5
+    bx = 75
+    by = SGROUND - 12 - bry + crouch * 0.5
+    hrx, hry = 35, 30
+    hyc = by - bry - hry + 26 + crouch * 0.3
+    hxc = 75
 
-    # ── legs / feet ──
-    fy = 162
+    bolt_tail(hd, bx + brx * 0.62, SGROUND - 26, 1.05)
+
+    earL = ((hxc - 20, hyc - hry * 0.45), (hxc - 40, hyc - hry - 26), 18, 0.28)
+    earR = ((hxc + 20, hyc - hry * 0.45), (hxc + 40, hyc - hry - 26), 18, -0.28)
+    ear_outline(hd, *earR)
+    ear_outline(hd, *earL)
+
+    # unified silhouette: outlines first, fills second
+    hd.ell(bx, by, brx + 2.6, bry + 2.6, OUTL)
+    hd.ell(hxc, hyc, hrx + 2.6, hry + 2.6, OUTL)
     for sgn in (-1, 1):
-        fx = 75 + sgn * 20
-        hd.ell(fx, fy, 15, 9, OUTL); hd.ell(fx, fy - 1, 12.5, 7, BODY)
+        hd.ell(bx + sgn * 18, SGROUND - 6, 13.5, 8, OUTL)
+    hd.ell(bx, by, brx, bry, BODY)
+    hd.ell(hxc, hyc, hrx, hry, BODY)
+    for sgn in (-1, 1):
+        hd.ell(bx + sgn * 18, SGROUND - 6.5, 11.6, 6.6, BODY)
+    ear_fill(hd, *earR)
+    ear_fill(hd, *earL)
+    hd.ell(bx, by + bry * 0.6, brx * 0.75, bry * 0.26, SHAD)
+    hd.ell(bx, by + bry * 0.6 - 3.5, brx * 0.73, bry * 0.24, BODY)
+    for sgn in (-1, 1):   # toe nicks
+        hd.line([(bx + sgn * 18 - 3, SGROUND - 9), (bx + sgn * 18 - 3, SGROUND - 4)], OUTL, 1.3)
+        hd.line([(bx + sgn * 18 + 3, SGROUND - 9), (bx + sgn * 18 + 3, SGROUND - 4)], OUTL, 1.3)
 
-    # ── body (big round belly, stage 3) ──
-    by = 118 + crouch
-    blob(hd, 75, by, 42, 44 - crouch * 0.5)
-    hd.ell(75, by + 6, 30, 30, BELLY)
-    hd.ell(66, by, 15, 9, (255, 247, 220, 255))  # subtle inner shading, still solid
+    # ── face (front view; features centred, never on the rim) ──
+    if pose == 'thunder':
+        v2_eye(hd, hxc - 16, hyc - 2, 8, 'shutL')
+        v2_eye(hd, hxc + 16, hyc - 2, 8, 'shutR')
+    elif happy:
+        v2_eye(hd, hxc - 16, hyc - 2, 8, 'happy')
+        v2_eye(hd, hxc + 16, hyc - 2, 8, 'happy')
+    else:
+        v2_eye(hd, hxc - 16, hyc - 2, 8.4, 'open')
+        v2_eye(hd, hxc + 16, hyc - 2, 8.4, 'open')
+    v2_cheek(hd, hxc - hrx * 0.72, hyc + hry * 0.38, cheekR)
+    v2_cheek(hd, hxc + hrx * 0.72, hyc + hry * 0.38, cheekR)
+    hd.ell(hxc, hyc + 5, 2.2, 1.5, BLK)
+    if pose == 'thunder':
+        # wide open shout-grin (triumph, NOT a horror "O")
+        hd.ell(hxc, hyc + 14, 8.5, 6.5, OUTL)
+        hd.ell(hxc, hyc + 14, 7, 5.2, MOUTH)
+        hd.ell(hxc, hyc + 16.5, 4.5, 2.4, TONGUE)
+    elif happy:
+        hd.line(hd.arc_pts(hxc, hyc + 12, 8, 5.5, 15, 165), OUTL, 2.6)
+    else:
+        hd.line(hd.arc_pts(hxc - 4.5, hyc + 12, 4.6, 3.4, 15, 165), OUTL, 2.4)
+        hd.line(hd.arc_pts(hxc + 4.5, hyc + 12, 4.6, 3.4, 15, 165), OUTL, 2.4)
 
     # ── arms ──
     if armsUp:
         for sgn in (-1, 1):
-            sx = 75 + sgn * 30
-            hd.line([(sx, by - 26), (sx + sgn * 14, by - 58), (sx + sgn * 18, by - 74)], OUTL, 12)
-            hd.line([(sx, by - 26), (sx + sgn * 14, by - 58), (sx + sgn * 18, by - 74)], BODY, 9)
-            hd.ell(sx + sgn * 18, by - 76, 7, 6, OUTL); hd.ell(sx + sgn * 18, by - 76, 5.2, 4.4, BODY)
+            arm(hd, [(bx + sgn * brx * 0.72, by - bry * 0.45),
+                     (bx + sgn * (brx * 0.72 + 12), by - bry - 24),
+                     (bx + sgn * (brx * 0.72 + 16), by - bry - 38)], 9.5)
+    elif pose in ('charge0', 'charge1'):
+        for sgn in (-1, 1):   # arms braced back/down while crouching
+            arm(hd, [(bx + sgn * brx * 0.78, by - bry * 0.3), (bx + sgn * brx * 0.9, by + 10)], 9)
     else:
-        for sgn in (-1, 1):
-            sx = 75 + sgn * 38
-            dyx = 6 if pose in ('charge0', 'charge1') else 0
-            hd.ell(sx, by - 10 + dyx, 9, 13, OUTL); hd.ell(sx, by - 10 + dyx, 7, 11, BODY)
+        for sgn in (-1, 1):   # short arms angled outward-down, breaking the side
+            arm(hd, [(bx + sgn * brx * 0.8, by - bry * 0.42), (bx + sgn * (brx + 3), by - bry * 0.02)], 9)
 
-    # ── head ──
-    draw_ear(hd, (hxc - 15, hyc - 28), (hxc - 30, 6), 10)
-    draw_ear(hd, (hxc + 15, hyc - 28), (hxc + 30, 4), 10)
-    hd.cir(hxc, hyc, hr + 2, OUTL)
-    hd.cir(hxc, hyc, hr, BODY)                                   # uniform #FFDE00
-    hd.ell(hxc, hyc + 20, hr * 0.5, hr * 0.24, BODY_S)           # small chin shadow
-    hd.ell(hxc - 9, hyc - 22, hr * 0.32, hr * 0.16, BODY_H)      # small forehead sheen
-
-    # cheeks (both prominent)
-    draw_cheek(hd, hxc - 26, hyc + 16, cheekR)
-    draw_cheek(hd, hxc + 26, hyc + 16, cheekR)
-
-    # eyes
-    ek = {'thunder': 'x', 'happy': 'happy'}.get(pose, 'open')
-    draw_eye(hd, hxc - 13, hyc - 2, 8, ek)
-    draw_eye(hd, hxc + 13, hyc - 2, 8, ek)
-
-    # nose
-    hd.poly([(hxc - 3, hyc + 8), (hxc + 3, hyc + 8), (hxc, hyc + 11)], BLK)
-
-    # mouth
-    if pose == 'thunder':
-        hd.ell(hxc, hyc + 20, 9, 11, MOUTH)
-        hd.ell(hxc, hyc + 24, 5, 5, TONGUE)
-    elif pose == 'happy':
-        hd.line(hd.arc_pts(hxc, hyc + 14, 7, 5, 20, 160), MOUTH, 2.2)
-    else:
-        hd.line(hd.arc_pts(hxc - 5, hyc + 15, 4, 3, 20, 160), MOUTH, 1.8)
-        hd.line(hd.arc_pts(hxc + 3, hyc + 15, 4, 3, 20, 160), MOUTH, 1.8)
-
-    # spark dots around cheeks (charging)
+    # spark dots around the cheeks (charging)
     if pose in ('charge0', 'charge1'):
         n = 5 if pose == 'charge0' else 8
         for i in range(n):
             a = i * (2 * math.pi / n)
-            rr = 24 + (i % 3) * 4
-            for cx0 in (hxc - 26, hxc + 26):
+            rr = 22 + (i % 3) * 4
+            for cx0 in (hxc - hrx * 0.72, hxc + hrx * 0.72):
                 sx = cx0 + math.cos(a) * rr
-                sy = hyc + 16 + math.sin(a) * rr
+                sy = hyc + hry * 0.38 + math.sin(a) * rr
                 hd.poly([(sx - 2, sy), (sx, sy - 3), (sx + 2, sy), (sx, sy + 3)], SPARK)
-    # thunderbolts (thunder + charge1)
+    # thunderbolts around the frame (thunder pose)
     if pose == 'thunder':
-        for bx0, by0, s in [(28, 40, 2.0), (122, 44, 2.0), (18, 96, 1.6), (132, 92, 1.6)]:
+        for bx0, by0, s in [(24, 38, 2.0), (126, 42, 2.0), (16, 96, 1.6), (134, 92, 1.6)]:
             bolt_glyph(hd, bx0, by0, s, BOLT)
             bolt_glyph(hd, bx0, by0, s * 0.5, WHT)
-    if pose == 'happy':
-        for sx, sy, sr in [(30, 30, 4), (120, 28, 3), (112, 70, 2.5)]:
+    if happy:
+        for sx, sy, sr in [(28, 30, 4), (122, 28, 3), (114, 70, 2.5)]:
             hd.poly([(sx - sr, sy), (sx, sy - sr * 1.8), (sx + sr, sy), (sx, sy + sr * 1.8)], SPARK)
             hd.poly([(sx - sr * 1.8, sy), (sx, sy - sr), (sx + sr * 1.8, sy), (sx, sy + sr)], SPARK)
 
