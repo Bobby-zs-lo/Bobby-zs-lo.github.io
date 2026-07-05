@@ -450,7 +450,10 @@ def draw_food(hd, i):
         hd.poly([(CX, CY - 15), (CX - 15, CY + 12), (CX + 15, CY + 12)], (200, 150, 40, 255))  # subtle outline via bg? keep
         hd.poly([(CX, CY - 14), (CX - 14, CY + 11), (CX + 14, CY + 11)], (250, 250, 250, 255))
         hd.poly([(CX - 6, CY - 8), (CX + 6, CY - 8), (CX + 2, CY - 2), (CX - 2, CY - 2)], (240, 240, 240, 255))
-        hd.rrect(CX - 9, CY + 4, CX + 9, CY + 12, 2, (40, 40, 46, 255))  # nori band
+        # nori band: smaller + lifted grey-green so it reads as seaweed, not a
+        # black blob, at in-scene food scale
+        hd.rrect(CX - 7, CY + 6, CX + 7, CY + 12, 2, (62, 72, 62, 255))
+        hd.line([(CX - 5, CY + 8), (CX + 5, CY + 8)], (86, 98, 84, 255), 1.4)
         if i == 10:
             hd.cir(CX, CY - 6, 3, (220, 60, 60, 255))
     elif i in (4, 11):  # cookies (4 tan, 11 chocolate)
@@ -535,14 +538,16 @@ def carve_bite(hd, i):
 #  PROPS
 # ══════════════════════════════════════════════════════════════════════════════
 def draw_plate(hd):
+    # warm cream platter (stark white read as a sterile void against the
+    # warm backdrop); rim ring for a bit of character
     w, h = 320, 110
     cx, cy = w / 2, h / 2 + 6
     hd.ell(cx, cy + 10, 150, 34, (0, 0, 0, 60))       # soft shadow
-    hd.ell(cx, cy, 150, 40, (208, 210, 220, 255))     # rim
-    hd.ell(cx, cy - 2, 150, 40, (246, 246, 250, 255))
-    hd.ell(cx, cy, 120, 30, (224, 226, 236, 255))     # inner well rim
-    hd.ell(cx, cy - 1, 116, 28, (252, 252, 255, 255)) # cream inner
-    hd.line(hd.arc_pts(cx, cy - 4, 130, 30, 190, 240), WHT, 3)  # top highlight arc
+    hd.ell(cx, cy, 150, 40, (196, 168, 128, 255))     # under-rim
+    hd.ell(cx, cy - 2, 150, 40, (248, 238, 218, 255)) # platter body
+    hd.ell(cx, cy, 126, 31, (224, 202, 164, 255))     # rim ring
+    hd.ell(cx, cy - 1, 118, 28, (252, 244, 228, 255)) # inner well
+    hd.line(hd.arc_pts(cx, cy - 4, 132, 31, 190, 240), (255, 250, 240, 255), 3)  # top sheen arc
 
 
 def draw_crumb(hd, kind):
