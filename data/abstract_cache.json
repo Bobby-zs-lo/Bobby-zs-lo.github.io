@@ -1011,6 +1011,31 @@
     "summary_generated_at": "2026-05-24T18:17:23.090021+00:00",
     "summary_model": "gemini-2.5-flash-lite"
   },
+  "https://openalex.org/W4238967223": {
+    "abstract": "GastroHep is a journal published by Wiley. It is an international, peer reviewed, quality publication focusing on current and cutting edge research in academic and clinical gastroenterology and hepatology.",
+    "abstract_source": "openalex",
+    "doi": "10.1002/ygh2.v1.6",
+    "last_verified_at": "2026-07-12T05:32:05.964538+00:00",
+    "mesh_terms": [],
+    "openalex_concepts": [
+      "Inflammatory bowel disease",
+      "Phenotype",
+      "Disease",
+      "Clinical phenotype",
+      "Medicine",
+      "Population",
+      "Age of onset",
+      "Genetics",
+      "Biology",
+      "Internal medicine",
+      "Gene",
+      "Environmental health"
+    ],
+    "pmid": null,
+    "summary": "GastroHep is an international, peer-reviewed journal published by Wiley that focuses on cutting-edge academic and clinical research in gastroenterology and hepatology.",
+    "summary_generated_at": "2026-07-12T05:32:05.964538+00:00",
+    "summary_model": "gemini-3.5-flash"
+  },
   "https://openalex.org/W4281636057": {
     "abstract": "BACKGROUND: Although several studies have reported the impact of fears relating to coronavirus-19 on several chronic illnesses, there are few studies focused on gastrointestinal conditions. Therefore, the aim of this study was to compare the fear of coronavirus-19 in patients with inflammatory bowel disease to other gastrointestinal conditions and how the fear of COVID-19 manifests across different demographical backgrounds among inflammatory bowel disease respondents. METHODS: Participants with gastrointestinal conditions (age ≥ 18) were recruited from 27 countries. Demographic, clinical, and psychosocial information was collected. An adapted scale for inflammatory bowel disease patients measuring the fear of coronavirus-19 and gastrointestinal-specific fear of coronavirus-19 was used. RESULTS: In 831 participants (312 inflammatory bowel disease), only significant increases in gastrointestinal-fear of coronavirus-19 were found in between inflammatory bowel disease and other gastrointestinal conditions (mean [standard deviation]: 13.5 [5.5] vs 10.9 [5.0], P < .01). Among inflammatory bowel disease respondents, persons on sick leave had significantly more fear of coronavirus-19 than those employed (median [IQR], 31.0 [28.5-39.5] vs 26.0 [20.0-33.0], P = .035) and significantly more gastrointestinal-fear of coronavirus-19 compared to the employed (18.0 [14.5-22.0] vs 13.0 [9.0-17.0], P = .033) or respondents outside of the labor market (12.0 [7.0-16.0], P = .022). Persons living in a rural setting had significantly more fear of coronavirus-19 compared to persons living in regional setting (29.5 [22.0-37.8] vs 25.0 [20.0-31.3], P = .007) and gastrointestinal-fear of coronavirus-19 (15.0 [11.0-19.8] vs 12.0 [9.0-16.0], P = .02). CONCLUSION: Respondents with inflammatory bowel disease are more afraid of coronavirus-19 regarding their disease; especially, persons on sick leave or persons living in a rural setting. This should be taken into consideration to personalize the support that health care providers can offer in mitigating fear related to coronavirus-19.",
     "abstract_source": "openalex",
