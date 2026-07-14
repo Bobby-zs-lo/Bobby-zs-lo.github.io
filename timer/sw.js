@@ -1,7 +1,7 @@
-const CACHE = 'pixel-timer-v12';
+const CACHE = 'pixel-timer-v13';
 const ASSETS = [
   './', './index.html', './css/shell.css', './css/crt.css',
-  './js/main.js', './js/timer.js', './js/audio.js', './js/input.js',
+  './js/main.js', './js/timer.js', './js/ffclock.js', './js/audio.js', './js/input.js',
   './js/pixelfont.js', './js/palette.js', './js/scene.js',
   './js/themes/registry.js', './js/themes/castle.js', './js/themes/monsterhp.js',
   './js/themes/dragon.js', './js/themes/mouse.js', './js/themes/bridge.js',

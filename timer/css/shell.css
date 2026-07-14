@@ -85,6 +85,10 @@ canvas{display:block; image-rendering:pixelated;}
   font-size:1.2rem; padding:10px;}
 .btn-run.btn-back-home:active{color:var(--ink);}
 .btn-run.btn-pause:active{background:var(--cyan); color:var(--bg);}
+.btn-run.btn-ff{border-color:var(--yellow); color:var(--yellow); min-width:64px;}
+.btn-run.btn-ff:active,
+.btn-run.btn-ff.ff-active{background:var(--yellow); color:var(--bg);}
+.btn-run.btn-ff:disabled{border-color:#444; color:#666; background:transparent;}
 .btn-run.btn-reset{border-color:var(--magenta); color:var(--magenta);}
 .btn-run.btn-reset:active{background:var(--magenta); color:var(--bg);}
 
