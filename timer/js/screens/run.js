@@ -1,4 +1,5 @@
 import { TimerEngine } from '../timer.js';
+import { createScaledClock } from '../ffclock.js';
 import { loadSheet } from '../scene.js';
 import { audio } from '../audio.js';
 import { drawText } from '../pixelfont.js';
@@ -121,6 +122,7 @@ export async function renderRun(ctx, { themeId, durationMs }) {
     <div class="run-buttons">
       <button class="btn-run btn-back-home" id="btn-back-home" aria-label="Home">&#8962;</button>
       <button class="btn-run btn-pause" id="btn-pause">&#9646;&#9646; PAUSE</button>
+      <button class="btn-run btn-ff" id="btn-ff" aria-label="Fast forward">&#9193; x1</button>
       <button class="btn-run btn-reset" id="btn-reset" aria-label="Reset (hold)">&#8635; RESET</button>
     </div>
   `;
@@ -153,10 +155,19 @@ export async function renderRun(ctx, { themeId, durationMs }) {
              : themeId === 'feeding'   ? 120
              : 110;
 
+  // Fast-forward: a scaled clock injected as the engine's `now`. The scene's
+  // dt is scaled by the same factor so the animation keeps pace with the
+  // countdown. At 0:00 the speed snaps back to x1 so the finale plays normally.
+  const clock = createScaledClock();
+  const FF_SPEEDS = [1, 2, 5, 10];
+
   const engine = new TimerEngine(durationMs, {
+    now: clock.now,
     milestones: 5,
     onMilestone: (i, t) => scene.onMilestone(i, t),
     onComplete: () => {
+      setFfSpeed(1);          // finale always plays at normal speed
+      ffBtn.disabled = true;
       scene.onComplete();
       audio.sfx('alarm');
       waitFinale();
@@ -179,8 +190,10 @@ export async function renderRun(ctx, { themeId, durationMs }) {
     // While paused, freeze the countdown AND the scene animation (just keep
     // re-rendering the frozen frame so the HUD/scene stay drawn).
     if (!paused) {
+      // tick first: hitting 0:00 resets the speed to x1 before the scene
+      // update, so the finale's very first frame already gets a normal dt.
       if (engine.state !== 'done') engine.tick();
-      scene.update(engine.getProgress(), dt, engine.getRemainingMs());
+      scene.update(engine.getProgress(), dt * clock.getSpeed(), engine.getRemainingMs());
     }
     scene.render();
     // HUD clock top-left — font scale relative to stage width
@@ -189,6 +202,10 @@ export async function renderRun(ctx, { themeId, durationMs }) {
     const ss = String(Math.floor(ms / 1000) % 60).padStart(2, '0');
     const fontScale = Math.max(2, Math.round(W / 100));
     drawText(c, `${mm}:${ss}`, 6, 6, fontScale, '#00f5d4');
+    // Speed badge under the clock while fast-forwarding
+    if (clock.getSpeed() > 1) {
+      drawText(c, `>>X${clock.getSpeed()}`, 6, 6 + fontScale * 8, Math.max(1, fontScale - 1), '#ffd60a');
+    }
     raf = requestAnimationFrame(frame);
   }
   raf = requestAnimationFrame(frame);
@@ -242,9 +259,23 @@ export async function renderRun(ctx, { themeId, durationMs }) {
 
   // ── Controls ──────────────────────────────────────────────────────────────────
   const pauseBtn = controls.querySelector('#btn-pause');
+  const ffBtn    = controls.querySelector('#btn-ff');
   const resetBtn = controls.querySelector('#btn-reset');
   const backBtn  = controls.querySelector('#btn-back-home');
   const hint     = controls.querySelector('#run-hint');
+
+  // Fast-forward: cycle x1 → x2 → x5 → x10 → x1
+  function setFfSpeed(s) {
+    clock.setSpeed(s);
+    ffBtn.innerHTML = `&#9193; x${s}`;
+    ffBtn.classList.toggle('ff-active', s > 1);
+  }
+  ffBtn.addEventListener('click', () => {
+    if (engine.state === 'done') return;
+    const next = FF_SPEEDS[(FF_SPEEDS.indexOf(clock.getSpeed()) + 1) % FF_SPEEDS.length];
+    setFfSpeed(next);
+    audio.sfx('click');
+  });
 
   // Pause / Resume toggle
   pauseBtn.addEventListener('click', () => {
