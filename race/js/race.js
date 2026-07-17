@@ -74,7 +74,7 @@
     clock.classList.remove('warn');
     await showBanner('READY?', { hold: 950, style: 'gold' });
     A.sfx.count();
-    A.announce('Ready? Go!', { rate: 1.05, pitch: 0.55 });
+    A.announce('Klar? Start!', { rate: 1.05, pitch: 0.55 });
     await showBanner('GO!', { hold: 700, style: '' });
     A.sfx.go();
     shake();
@@ -193,7 +193,7 @@
     positionAvatar(p);   // crosses the line into the safe zone
     const place = players.filter(x => x.finishMs != null).length;
     A.sfx.finish();
-    A.announce(p.pick.name + ' finished!', { rate: 1.05, pitch: 0.6 });
+    A.announce(p.pick.name + ' er i mål!', { rate: 1.05, pitch: 0.6 });
     // spotlight + zoom
     const spot = document.createElement('div');
     spot.className = 'spotlight';
@@ -244,7 +244,7 @@
     if (!running) return;
     running = false;
     stopTimers();
-    A.announce('Everyone made it! Amazing!', { rate: 1.0, pitch: 0.6 });
+    A.announce('Alle nåede i mål! Fantastisk!', { rate: 1.0, pitch: 0.6 });
     await showBanner('ALL CLEAR!', { hold: 1300, style: 'gold' });
     showResults(true);
   }
@@ -255,7 +255,7 @@
     stopTimers();
     setClock(0);
     A.sfx.blast();
-    A.announce('Time!', { rate: 0.9, pitch: 0.45 });
+    A.announce('Tiden er gået!', { rate: 0.9, pitch: 0.45 });
     shake(true);
     await showBanner('TIME!', { hold: 1100, style: 'red' });
     fireSweep();
@@ -321,7 +321,7 @@
     losers.forEach((l) => list.appendChild(resultRow(l.p, '🔥', l.stars + ' / ' + Game.config.stars + ' ⭐ — TOASTED!', true, d += 120)));
     $('#resultsModal').classList.remove('hidden');
     A.sfx.jingle();
-    if (winners.length) A.announce('The winner is ' + winners[0].name + '!', { rate: 1.0, pitch: 0.55 });
+    if (winners.length) A.announce('Vinderen er ' + winners[0].name + '!', { rate: 1.0, pitch: 0.55 });
   }
 
   function resultRow(p, place, timeText, toasted, delay) {

@@ -97,10 +97,11 @@
   function musicStop() { clearInterval(musicTimer); musicTimer = null; }
 
   /* ---- announcer (speechSynthesis) ---- */
+  /* Danish announcer voice; falls back to the engine's da-DK default if no installed voice matches */
   let voice = null;
   function pickVoice() {
-    const vs = speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
-    voice = vs.find(v => /Google UK English Male|Daniel|Male/i.test(v.name)) || vs[0] || null;
+    const vs = speechSynthesis.getVoices().filter(v => v.lang.toLowerCase().startsWith('da'));
+    voice = vs.find(v => /natural|neural/i.test(v.name)) || vs.find(v => /Helle|Dansk|Danish/i.test(v.name)) || vs[0] || null;
   }
   if ('speechSynthesis' in window) {
     pickVoice();
@@ -111,6 +112,7 @@
     try {
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'da-DK';
       if (voice) u.voice = voice;
       u.rate = rate; u.pitch = pitch; u.volume = 1;
       speechSynthesis.speak(u);
