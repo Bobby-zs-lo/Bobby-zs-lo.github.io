@@ -70,6 +70,18 @@
   }));
   syncMuteBtns();
 
+  /* announcer language toggle (DA/EN) */
+  function syncLangBtns() {
+    const l = window.GameAudio.getLang();
+    document.querySelectorAll('.lang-btn').forEach(b => { b.textContent = l.toUpperCase(); });
+  }
+  document.querySelectorAll('.lang-btn').forEach(b => b.addEventListener('click', () => {
+    window.GameAudio.unlock();
+    window.GameAudio.setLang(window.GameAudio.getLang() === 'da' ? 'en' : 'da');
+    syncLangBtns();
+  }));
+  syncLangBtns();
+
   /* unlock audio on first interaction anywhere */
   document.addEventListener('pointerdown', () => window.GameAudio.unlock(), { once: true });
 

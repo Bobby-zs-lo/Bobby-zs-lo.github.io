@@ -159,7 +159,7 @@
     const btn = $('#readyBtn');
     const wasHidden = btn.classList.contains('hidden');
     btn.classList.toggle('hidden', !ready);
-    if (ready && wasHidden) { A.sfx.ready(); A.announce('Klar til ræs!', { rate: 1.0, pitch: 0.55 }); }
+    if (ready && wasHidden) { A.sfx.ready(); A.say('ready'); }
   }
 
   /* ---------- config bar ---------- */

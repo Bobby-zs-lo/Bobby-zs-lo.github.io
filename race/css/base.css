@@ -72,6 +72,7 @@ button {
 }
 .mute-btn:active { transform: scale(.88); }
 .mute-btn.muted { filter: grayscale(1) brightness(.7); }
+.lang-btn { font-size: .95rem; font-weight: 900; letter-spacing: .04em; color: var(--gold-hi); }
 
 /* ---- big announcement banner ("READY? GO!", "TIME!") ---- */
 .big-banner {

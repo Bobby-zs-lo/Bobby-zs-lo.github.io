@@ -97,26 +97,54 @@
   function musicStop() { clearInterval(musicTimer); musicTimer = null; }
 
   /* ---- announcer (speechSynthesis) ---- */
-  /* Danish announcer voice; falls back to the engine's da-DK default if no installed voice matches */
-  let voice = null;
-  function pickVoice() {
-    const vs = speechSynthesis.getVoices().filter(v => v.lang.toLowerCase().startsWith('da'));
-    voice = vs.find(v => /natural|neural/i.test(v.name)) || vs.find(v => /Helle|Dansk|Danish/i.test(v.name)) || vs[0] || null;
+  /* announcer: Danish or English, toggleable; falls back to the engine's default voice per lang */
+  let lang = localStorage.getItem('gsr-lang') === 'en' ? 'en' : 'da';
+  const LANGTAG = { da: 'da-DK', en: 'en-GB' };
+  const voices = { da: null, en: null };
+  function pickVoices() {
+    const all = speechSynthesis.getVoices();
+    const best = (pre, names) => {
+      const vs = all.filter(v => v.lang.toLowerCase().startsWith(pre));
+      return vs.find(v => /natural|neural/i.test(v.name)) || vs.find(v => names.test(v.name)) || vs[0] || null;
+    };
+    voices.da = best('da', /Helle|Dansk|Danish/i);
+    voices.en = best('en', /Google UK English Male|Daniel|Male/i);
   }
   if ('speechSynthesis' in window) {
-    pickVoice();
-    speechSynthesis.onvoiceschanged = pickVoice;
+    pickVoices();
+    speechSynthesis.onvoiceschanged = pickVoices;
   }
   function announce(text, { rate = 1.0, pitch = 0.6 } = {}) {
     if (muted || !('speechSynthesis' in window)) return;
     try {
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = 'da-DK';
-      if (voice) u.voice = voice;
+      u.lang = LANGTAG[lang];
+      if (voices[lang]) u.voice = voices[lang];
       u.rate = rate; u.pitch = pitch; u.volume = 1;
       speechSynthesis.speak(u);
     } catch (e) { /* announcer is optional */ }
+  }
+
+  /* announcer lines: [da, en, rate, pitch] — {n} is replaced by a player name */
+  const PHRASES = {
+    ready:    ['Klar til ræs!', 'Ready to race!', 1.0, 0.55],
+    go:       ['Klar? Start!', 'Ready? Go!', 1.05, 0.55],
+    finished: ['{n} er i mål!', '{n} finished!', 1.05, 0.6],
+    allclear: ['Alle nåede i mål! Fantastisk!', 'Everyone made it! Amazing!', 1.0, 0.6],
+    time:     ['Tiden er gået!', 'Time!', 0.9, 0.45],
+    winner:   ['Vinderen er {n}!', 'The winner is {n}!', 1.0, 0.55],
+  };
+  function say(key, name) {
+    const ph = PHRASES[key];
+    if (!ph) return;
+    const text = (lang === 'da' ? ph[0] : ph[1]).replace('{n}', name || '');
+    announce(text, { rate: ph[2], pitch: ph[3] });
+  }
+  function setLang(l) {
+    lang = l === 'en' ? 'en' : 'da';
+    localStorage.setItem('gsr-lang', lang);
+    announce(lang === 'da' ? 'Dansk!' : 'English!', { rate: 1.0, pitch: 0.6 });
   }
 
   function setMuted(m) {
@@ -126,5 +154,5 @@
     if (m && 'speechSynthesis' in window) speechSynthesis.cancel();
   }
 
-  window.GameAudio = { sfx: SFX, musicStart, musicStop, announce, setMuted, isMuted: () => muted, unlock: ac };
+  window.GameAudio = { sfx: SFX, musicStart, musicStop, announce, say, setLang, getLang: () => lang, setMuted, isMuted: () => muted, unlock: ac };
 })();
