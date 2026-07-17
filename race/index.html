@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="robots" content="noindex, nofollow">
+<title>Goldstar Runner</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⭐</text></svg>">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/select.css">
+<link rel="stylesheet" href="css/race.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ SCREEN 1: FIGHTER SELECT ============ -->
+  <section id="screen-select" class="screen active">
+    <header class="select-header">
+      <h1 class="logo"><span class="logo-star">⭐</span> GOLDSTAR <em>RUNNER</em></h1>
+      <p class="tagline">CHOOSE YOUR FIGHTERS!</p>
+    </header>
+
+    <div class="config-bar panel-angled">
+      <div class="cfg">
+        <label>PLAYERS</label>
+        <div class="stepper">
+          <button type="button" class="step-btn" id="playersMinus">−</button>
+          <output id="playersOut">2</output>
+          <button type="button" class="step-btn" id="playersPlus">+</button>
+        </div>
+      </div>
+      <div class="cfg">
+        <label for="starsIn">STARS TO WIN</label>
+        <input id="starsIn" type="number" min="1" max="50" value="5" inputmode="numeric">
+      </div>
+      <div class="cfg">
+        <label>TIME LIMIT</label>
+        <div class="time-inputs">
+          <input id="minIn" type="number" min="0" max="120" value="10" inputmode="numeric"><span>:</span><input id="secIn" type="number" min="0" max="59" value="00" inputmode="numeric">
+        </div>
+      </div>
+      <button type="button" id="muteBtn" class="mute-btn" title="Sound on/off">🔊</button>
+    </div>
+
+    <div id="roster" class="roster"></div>
+
+    <div class="dock-wrap">
+      <p class="dock-hint">DRAG YOUR COIN ONTO A FIGHTER!</p>
+      <div id="coinDock" class="coin-dock"></div>
+    </div>
+
+    <button type="button" id="readyBtn" class="ready-banner hidden">
+      <span>READY&nbsp;TO&nbsp;RACE!</span><small>TAP TO START</small>
+    </button>
+  </section>
+
+  <!-- ============ SCREEN 2: RACE DASHBOARD ============ -->
+  <section id="screen-race" class="screen">
+    <header class="race-topbar">
+      <button type="button" id="quitBtn" class="quit-btn">✕</button>
+      <div class="race-goal">FIRST TO <b id="goalStars">5</b> ⭐</div>
+      <div id="clock" class="clock">10:00</div>
+      <button type="button" id="muteBtn2" class="mute-btn" title="Sound on/off">🔊</button>
+    </header>
+    <div id="arena" class="arena">
+      <div class="arena-bg">
+        <div class="bg-glow"></div>
+        <div class="bg-stars"></div>
+        <div class="bg-cloud c1"></div><div class="bg-cloud c2"></div><div class="bg-cloud c3"></div>
+      </div>
+      <div id="track" class="track"></div>
+      <div id="fireWave" class="fire-wave hidden"></div>
+    </div>
+  </section>
+
+  <!-- ============ OVERLAYS ============ -->
+  <div id="banner" class="big-banner hidden"><span id="bannerText"></span></div>
+  <div id="slash" class="slash-overlay hidden"><div class="slash-a"></div><div class="slash-b"></div></div>
+
+  <div id="resultsModal" class="results-modal hidden">
+    <div class="results-panel panel-angled">
+      <h2 id="resultsTitle">RESULTS</h2>
+      <div id="resultsList" class="results-list"></div>
+      <div class="results-btns">
+        <button type="button" id="rematchBtn" class="action-btn go">REMATCH</button>
+        <button type="button" id="newGameBtn" class="action-btn alt">CHANGE SETUP</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="confirmQuit" class="results-modal hidden">
+    <div class="results-panel panel-angled small">
+      <h2>QUIT RACE?</h2>
+      <div class="results-btns">
+        <button type="button" id="quitYes" class="action-btn alt">QUIT</button>
+        <button type="button" id="quitNo" class="action-btn go">KEEP RACING</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="js/logic.js"></script>
+<script src="js/characters.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/main.js"></script>
+<script src="js/select.js"></script>
+<script src="js/race.js"></script>
+</body>
+</html>
