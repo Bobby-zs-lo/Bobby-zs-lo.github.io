@@ -35,7 +35,7 @@
         <div class="lane-track" style="--startX:3%; --finishX:86%;">
           <div class="line start"></div>
           <div class="line finish"></div>
-          <div class="avatar pose-idle">${renderCharacter(char, { uid: i })}</div>
+          <div class="avatar pose-idle" style="aspect-ratio:${char.anims.idle.ar}">${renderCharacter(char)}</div>
         </div>`;
       track.appendChild(lane);
       const p = {
@@ -49,6 +49,7 @@
       p.btn.addEventListener('click', () => addStar(p));
       return p;
     });
+    players.forEach(sizeAvatar);
     $('#goalStars').textContent = Game.config.stars;
   }
 
@@ -65,7 +66,13 @@
     p.avatar.style.setProperty('--tx', (frac * runDist(p)) + 'px');
     if (instant) { void p.avatar.offsetWidth; p.avatar.style.transition = ''; }
   }
-  window.addEventListener('resize', () => players.forEach(p => positionAvatar(p, true)));
+  /* avatar height limited by both lane height and a share of track length (wide sprites on tall lanes) */
+  function sizeAvatar(p) {
+    const ar = p.char.anims.idle.ar;
+    const maxW = Math.min(p.laneTrack.clientWidth * 0.28, 170);
+    p.avatar.style.height = Math.min(p.laneTrack.clientHeight * 0.88, maxW / ar) + 'px';
+  }
+  window.addEventListener('resize', () => players.forEach(p => { sizeAvatar(p); positionAvatar(p, true); }));
 
   /* ---------- race start ---------- */
   Game.onRaceStart = async function () {
@@ -150,7 +157,7 @@
         p.avatar.classList.remove('pose-run');
         p.avatar.classList.add('pose-idle');
       }, 780);
-    }, 190);
+    }, 420);
   }
 
   function sparkleBurst(p) {
@@ -329,7 +336,7 @@
     row.className = 'result-row' + (toasted ? ' toasted' : '');
     row.style.setProperty('--delay', delay + 'ms');
     row.innerHTML = `<span class="rr-place">${place}</span>
-      <span class="rr-avatar ${toasted ? 'pose-charred' : 'pose-cheer'}">${renderCharacter(p.char, { uid: 'r' + p.pick.player })}</span>
+      <span class="rr-avatar ${toasted ? 'pose-charred' : 'pose-cheer'}">${renderCharacter(p.char)}</span>
       <span class="rr-name">${escapeHtml(p.pick.name)}</span>
       <span class="rr-time">${timeText}</span>`;
     return row;

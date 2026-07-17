@@ -21,7 +21,7 @@
       card.className = 'fighter-card';
       card.dataset.char = c.id;
       card.innerHTML = `<div class="card-bg" style="${cardBg(c)}"></div>
-        <div class="portrait pose-idle">${renderCharacter(c)}</div>
+        <div class="portrait pose-idle">${renderCharacter(c, { full: false })}</div>
         <div class="char-name">${c.name}</div>`;
       card.addEventListener('click', () => onCardTap(c.id));
       roster.appendChild(card);
@@ -105,6 +105,7 @@
     assignments[playerIdx] = charId;
     card.classList.add('locked');
     card.style.setProperty('--pcolor', PCOLORS[playerIdx]);
+    window.Characters.preload(c);
 
     const coin = dock.querySelector(`.pcoin[data-player="${playerIdx}"]`);
     const stampSlot = document.createElement('div');

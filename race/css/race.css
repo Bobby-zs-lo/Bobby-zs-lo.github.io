@@ -126,64 +126,65 @@
 /* avatar */
 .avatar {
   position: absolute; bottom: 2%; left: var(--startX);
-  height: 92%; aspect-ratio: 5/6;
-  max-width: min(30%, 150px);
+  height: 88%;
+  max-width: min(34%, 190px);
   transform: translateX(var(--tx, 0px));
   transition: transform 750ms cubic-bezier(.45,.05,.35,1);
   z-index: 4;
   will-change: transform;
 }
-.avatar svg { width: 100%; height: 100%; overflow: visible; }
 .avatar .medal {
-  position: absolute; top: 2%; right: -12%;
+  position: absolute; top: 0; right: 4%;
   font-size: clamp(.85rem, 2.6vh, 1.4rem);
   filter: drop-shadow(1px 2px 0 rgba(0,0,0,.6));
   animation: medalPop 500ms cubic-bezier(.2,1.6,.4,1) both;
 }
 @keyframes medalPop { from { transform: scale(0) rotate(-180deg); } }
-.avatar.hitstop svg { animation: hitFlash 140ms steps(2) both; }
+.avatar.hitstop .sprite-box { animation: hitFlash 140ms steps(2) both; }
 @keyframes hitFlash { 50% { filter: brightness(3) saturate(0); } }
 
-/* ============ CHARACTER POSES (SVG groups) ============ */
-.char .arm, .char .leg, .char .head-g { transform-box: fill-box; }
-.char .arm  { transform-origin: 50% 12%; }
-.char .leg  { transform-origin: 50% 8%; }
-.char .head-g { transform-origin: 50% 85%; }
-.char .m-open, .char .eye-x, .char .m-oh { display: none; }
+/* ============ CHARACTER POSES (sprite sheets) ============ */
+.sprite-box { position: relative; height: 100%; max-width: 100%; margin: 0 auto; }
+.anim {
+  position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+  height: 100%; overflow: hidden; display: none;
+}
+.anim .strip { display: block; height: 100%; }
+@keyframes stripLoop { to { transform: translateX(-100%); } }
+@keyframes stripOnce { to { transform: translateX(var(--end)); } }
 
-/* idle: gentle bob */
-.pose-idle .body-g { animation: idleBob 1.6s ease-in-out infinite; transform-box: fill-box; }
-@keyframes idleBob { 50% { transform: translateY(3px); } }
+/* idle (default) */
+.anim.idle { display: block; }
 
-/* run */
-.pose-run .arm.l { animation: swingA .34s ease-in-out infinite alternate; }
-.pose-run .arm.r { animation: swingB .34s ease-in-out infinite alternate; }
-.pose-run .leg.l { animation: swingB .34s ease-in-out infinite alternate; }
-.pose-run .leg.r { animation: swingA .34s ease-in-out infinite alternate; }
-.pose-run .body-g { animation: runLean .34s ease-in-out infinite alternate; transform-box: fill-box; }
-@keyframes swingA { from { transform: rotate(38deg); } to { transform: rotate(-38deg); } }
-@keyframes swingB { from { transform: rotate(-38deg); } to { transform: rotate(38deg); } }
-@keyframes runLean { from { transform: rotate(4deg) translateY(0); } to { transform: rotate(6deg) translateY(-4px); } }
+/* run: play move strip; fighters without one (.hop) bounce their idle strip */
+.pose-run .anim.idle { display: none; }
+.pose-run .anim.move { display: block; }
+.pose-run .sprite-box.hop .anim.idle { display: block; }
+.pose-run .sprite-box.hop { animation: hopBounce .3s ease-in-out infinite; }
+@keyframes hopBounce { 50% { transform: translateY(-13%) rotate(3deg); } }
 
-/* eat: mouth open + squash */
-.pose-eat .m-smile { display: none; } .pose-eat .m-open { display: block; }
-.pose-eat .body-g { animation: eatChomp .5s cubic-bezier(.2,1.4,.4,1) both; transform-box: fill-box; }
-@keyframes eatChomp { 30% { transform: scale(1.12, .88); } 60% { transform: scale(.94, 1.08); } }
+/* eat: play the reaction strip once */
+.pose-eat .anim { display: none; }
+.pose-eat .anim.eat { display: block; }
+.pose-eat .sprite-box { animation: eatPop .4s cubic-bezier(.2,1.4,.4,1) both; }
+.pose-eat .sprite-box:not(:has(.anim.eat)) .anim.idle { display: block; }
+@keyframes eatPop { 30% { transform: scale(1.1, .9); } 60% { transform: scale(.95, 1.06); } }
 
-/* cheer: jumping, arms up */
-.pose-cheer .arm.l { animation: cheerArmL .55s ease-in-out infinite alternate; }
-.pose-cheer .arm.r { animation: cheerArmR .55s ease-in-out infinite alternate; }
-.pose-cheer .body-g { animation: cheerJump .55s ease-in-out infinite alternate; transform-box: fill-box; }
-.pose-cheer .m-smile { display: none; } .pose-cheer .m-open { display: block; }
-@keyframes cheerArmL { from { transform: rotate(160deg); } to { transform: rotate(200deg); } }
-@keyframes cheerArmR { from { transform: rotate(-160deg); } to { transform: rotate(-200deg); } }
-@keyframes cheerJump { from { transform: translateY(0); } to { transform: translateY(-10px); } }
+/* cheer: move strip in place + jump */
+.pose-cheer .anim.idle { display: none; }
+.pose-cheer .anim.move { display: block; }
+.pose-cheer .sprite-box.hop .anim.idle { display: block; }
+.pose-cheer .sprite-box { animation: cheerJump .55s ease-in-out infinite alternate; }
+@keyframes cheerJump { from { transform: translateY(0); } to { transform: translateY(-9%); } }
 
-/* charred: sooty, dizzy */
-.pose-charred svg .char { filter: grayscale(1) brightness(.42) sepia(.35); }
-.pose-charred .m-smile, .pose-charred .m-open, .pose-charred .eye { display: none; }
-.pose-charred .eye-x { display: block; } .pose-charred .m-oh { display: block; }
-.pose-charred .body-g { animation: charWobble 1.1s ease-in-out infinite; transform-box: fill-box; }
+/* charred: play dead strip once and hold; fighters without one go sooty + wobble */
+.pose-charred .anim { display: none; }
+.pose-charred .anim.dead { display: block; }
+.pose-charred .sprite-box.no-dead .anim.idle {
+  display: block;
+  filter: grayscale(1) brightness(.42) sepia(.35);
+}
+.pose-charred .sprite-box.no-dead { animation: charWobble 1.1s ease-in-out infinite; }
 @keyframes charWobble { 0%,100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
 
 /* ============ FX ============ */
@@ -268,8 +269,7 @@
   animation: rowIn 400ms cubic-bezier(.2,1.2,.4,1) both; animation-delay: var(--delay, 0ms);
 }
 .result-row .rr-place { font-size: clamp(1.1rem, 3vw, 1.7rem); min-width: 1.6em; text-align: center; }
-.result-row .rr-avatar { width: clamp(38px, 6vw, 56px); height: clamp(44px, 7vw, 66px); flex: none; }
-.result-row .rr-avatar svg { width: 100%; height: 100%; overflow: visible; }
+.result-row .rr-avatar { width: clamp(44px, 7vw, 70px); height: clamp(44px, 7vw, 66px); flex: none; }
 .result-row .rr-name { font-size: clamp(.95rem, 2.6vw, 1.4rem); font-style: italic; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .result-row .rr-time { font-size: clamp(.8rem, 2.2vw, 1.1rem); color: #4a4032; }
 .result-row.toasted { background: rgba(60,50,50,.65); color: #eee; }
