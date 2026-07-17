@@ -151,6 +151,8 @@
 @keyframes medalPop { from { transform: scale(0) rotate(-180deg); } }
 .avatar.hitstop .sprite-box { animation: hitFlash 140ms steps(2) both; }
 @keyframes hitFlash { 50% { filter: brightness(3) saturate(0); } }
+.avatar.recoil .sprite-box { animation: recoilKnock .38s ease-out; }
+@keyframes recoilKnock { 30% { transform: translateX(-7%) rotate(-4deg); } }
 
 /* ============ CHARACTER POSES (sprite sheets) ============ */
 .sprite-box { position: relative; height: 100%; max-width: 100%; margin: 0 auto; }

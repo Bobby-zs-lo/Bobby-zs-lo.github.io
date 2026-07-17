@@ -75,7 +75,7 @@
     const maxW = Math.min(lt.clientWidth * 0.26, 165);
     const h = Math.min(lt.clientHeight * 0.82, maxW / ar);
     p.avatar.style.height = h + 'px';
-    p.slot.style.height = Math.max(34, Math.min(lt.clientHeight * 0.42, h * 0.58)) + 'px';
+    p.slot.style.height = Math.max(38, Math.min(lt.clientHeight * 0.52, h * 0.78)) + 'px';
   }
 
   function layoutScroll(p) {
@@ -106,6 +106,50 @@
     }
   }
 
+  /* ---------- sparring: avatar and slime trade blows while waiting ---------- */
+  function startSpar(p) {
+    clearTimeout(p.sparTimer);
+    const loop = () => {
+      spar(p);
+      p.sparTimer = setTimeout(loop, 2400 + Math.random() * 1400);
+    };
+    p.sparTimer = setTimeout(loop, 500 + Math.random() * 1600);
+  }
+
+  function spar(p) {
+    const gen = raceGen;
+    const ok = () => gen === raceGen && running && !p.busy && p.queue === 0 && p.finishMs == null;
+    if (!ok()) return;
+    // avatar jab
+    p.avatar.classList.remove('pose-idle', 'pose-eat');
+    void p.avatar.offsetWidth;
+    p.avatar.classList.add('pose-eat');
+    setTimeout(() => {
+      if (!ok()) return;
+      p.slot.classList.add('hitstop');
+      setTimeout(() => p.slot.classList.remove('hitstop'), 150);
+    }, 280);
+    setTimeout(() => {
+      if (!ok()) return;
+      p.avatar.classList.remove('pose-eat');
+      p.avatar.classList.add('pose-idle');
+    }, 750);
+    // slime strikes back (no damage — just the brawl)
+    setTimeout(() => {
+      if (!ok()) return;
+      p.slot.className = 'slime-slot pose-eat';
+    }, 1250);
+    setTimeout(() => {
+      if (!ok()) return;
+      p.avatar.classList.add('recoil');
+      setTimeout(() => p.avatar.classList.remove('recoil'), 380);
+    }, 1650);
+    setTimeout(() => {
+      if (!ok()) return;
+      p.slot.className = 'slime-slot pose-idle';
+    }, 2150);
+  }
+
   /* ---------- race start ---------- */
   Game.onRaceStart = async function () {
     buildTrack();
@@ -123,6 +167,7 @@
     lastTickSec = -1;
     clockTimer = setInterval(tickClock, 150);
     A.musicStart();
+    players.forEach(startSpar);
   };
 
   function setClock(sec) { clock.textContent = L.formatClock(sec); }
@@ -192,9 +237,11 @@
     const gen = raceGen;
     const alive = () => gen === raceGen && (running || p.finishMs != null);
     if (!alive()) return;
-    // avatar attacks
-    p.avatar.classList.remove('pose-idle', 'pose-run');
+    // avatar attacks (restart the strip even if a sparring jab is mid-swing)
+    p.avatar.classList.remove('pose-idle', 'pose-run', 'pose-eat', 'recoil');
+    void p.avatar.offsetWidth;
     p.avatar.classList.add('pose-eat');
+    p.slot.className = 'slime-slot pose-idle';
     await sleep(260);
     if (!alive()) return;
     // impact on slime
@@ -300,7 +347,7 @@
   /* ---------- endgame ---------- */
   function stopTimers() {
     clearInterval(clockTimer); clockTimer = null;
-    players.forEach(p => { clearInterval(p.confettiTimer); p.btn.disabled = true; });
+    players.forEach(p => { clearInterval(p.confettiTimer); clearTimeout(p.sparTimer); p.btn.disabled = true; });
     A.musicStop();
   }
 
