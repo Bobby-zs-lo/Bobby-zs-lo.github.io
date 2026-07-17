@@ -106,6 +106,7 @@
     card.classList.add('locked');
     card.style.setProperty('--pcolor', PCOLORS[playerIdx]);
     window.Characters.preload(c);
+    Object.values(window.MOBS || {}).forEach(m => window.Characters.preload(m));
 
     const coin = dock.querySelector(`.pcoin[data-player="${playerIdx}"]`);
     const stampSlot = document.createElement('div');

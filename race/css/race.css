@@ -27,12 +27,9 @@
 /* ---- arena / floating platform ---- */
 .arena { flex: 1; position: relative; min-height: 0; padding: 0 clamp(.5rem, 2vw, 2rem) clamp(1rem, 3vh, 2rem); }
 .arena-bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-.bg-glow {
-  position: absolute; left: 10%; right: 10%; bottom: -12%; height: 30%;
-  background: radial-gradient(ellipse, rgba(120,80,255,.5), transparent 65%);
-  filter: blur(10px);
-}
-.bg-stars { position: absolute; inset: 0; background:
+.backdrop { position: absolute; inset: 0; background-size: cover; background-position: center 30%; }
+.backdrop-tint { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(18,10,40,.55), rgba(18,10,40,.25) 40%, rgba(18,10,40,.6)); }
+.bg-stars { position: absolute; inset: 0; opacity: .5; background:
   radial-gradient(1.5px 1.5px at 12% 20%, #fff9, transparent),
   radial-gradient(2px 2px at 45% 8%, #ffd70088, transparent),
   radial-gradient(1.5px 1.5px at 78% 15%, #fff8, transparent),
@@ -41,16 +38,7 @@
   radial-gradient(1.5px 1.5px at 60% 30%, #ffd70066, transparent);
   animation: twinkle 3.5s ease-in-out infinite alternate;
 }
-@keyframes twinkle { to { opacity: .45; } }
-.bg-cloud {
-  position: absolute; height: 14%; aspect-ratio: 3/1; border-radius: 999px;
-  background: radial-gradient(ellipse at 50% 100%, rgba(255,255,255,.14), transparent 70%);
-  animation: cloudDrift linear infinite;
-}
-.bg-cloud.c1 { top: 8%;  width: 26%; animation-duration: 38s; }
-.bg-cloud.c2 { top: 28%; width: 18%; animation-duration: 55s; animation-delay: -20s; }
-.bg-cloud.c3 { top: 50%; width: 22%; animation-duration: 46s; animation-delay: -35s; }
-@keyframes cloudDrift { from { transform: translateX(-30vw); } to { transform: translateX(130vw); } }
+@keyframes twinkle { to { opacity: .2; } }
 
 .track {
   position: relative; z-index: 2; height: 100%;
@@ -104,35 +92,56 @@
 }
 .star-btn.done .sb-name, .star-btn.done .sb-count { color: var(--ink); text-shadow: none; }
 
-/* lane track surface */
+/* lane scene: scrolling world strip + one slime + progress rail */
 .lane-track {
   position: relative; min-width: 0;
   border-radius: 8px;
-  background:
-    repeating-linear-gradient(90deg, transparent 0 60px, rgba(255,255,255,.03) 60px 61px),
-    linear-gradient(180deg, rgba(255,255,255,.07), rgba(0,0,0,.18));
-  overflow: visible;
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.2));
+  overflow: hidden;
+  border: 2px solid rgba(0,0,0,.35);
 }
-.line { position: absolute; top: 4%; bottom: 4%; width: 6px; border-radius: 3px; z-index: 1; }
-.line.start  { left: var(--startX); background: repeating-linear-gradient(180deg, #fff 0 8px, #444 8px 16px); opacity: .8; }
-.line.finish {
-  left: var(--finishX); width: clamp(10px, 1.2vw, 16px);
-  background:
-    repeating-conic-gradient(#fff 0% 25%, #16121f 0% 50%) 0 0 / 8px 8px;
-  border: 2px solid var(--ink);
-  box-shadow: 0 0 14px 2px rgba(255,215,0,.65);
+.bg-scroll {
+  position: absolute; top: 0; bottom: 0; left: 0; z-index: 0;
+  background-repeat: repeat-x; background-size: auto 100%;
+  transition: transform 850ms cubic-bezier(.5,.05,.4,1);
+  will-change: transform;
+}
+.rail {
+  position: absolute; top: 4px; left: 2%; right: 9%; height: 8px; z-index: 6;
+  background-color: rgba(0,0,0,.5);
+  border-radius: 4px;
+  box-shadow: 0 0 0 2px rgba(0,0,0,.4), inset 0 1px 2px rgba(0,0,0,.6);
+}
+.rail-fill {
+  height: 100%; border-radius: 4px;
+  background: linear-gradient(180deg, var(--gold-hi), var(--gold));
+  box-shadow: 0 0 8px rgba(255,200,0,.75);
+  transition: width .5s ease;
+}
+.rail-flag {
+  position: absolute; top: 1px; right: 2%; z-index: 6;
+  font-size: clamp(.75rem, 2.4vh, 1.15rem);
+  filter: drop-shadow(1px 1px 0 rgba(0,0,0,.7));
 }
 
 /* avatar */
 .avatar {
-  position: absolute; bottom: 2%; left: var(--startX);
-  height: 88%;
-  max-width: min(34%, 190px);
-  transform: translateX(var(--tx, 0px));
-  transition: transform 750ms cubic-bezier(.45,.05,.35,1);
+  position: absolute; bottom: 3%; left: 4.5%;
+  height: 82%;
   z-index: 4;
-  will-change: transform;
 }
+
+/* slime */
+.slime-slot {
+  position: absolute; bottom: 3%; left: 56%;
+  aspect-ratio: 1; z-index: 3;
+  transition: transform .6s cubic-bezier(.3,.8,.4,1);
+}
+.slime-slot .strip { image-rendering: pixelated; }
+.slime-slot.enter { transform: translateX(180%); transition: none; }
+.slime-slot.lunge { transform: translateX(var(--lunge, -40%)); transition: transform .43s cubic-bezier(.6,0,.9,.6); }
+.slime-slot.gone { opacity: 0; transition: opacity .25s; }
+.slime-slot.hitstop .sprite-box { animation: hitFlash 140ms steps(2) both; }
 .avatar .medal {
   position: absolute; top: 0; right: 4%;
   font-size: clamp(.85rem, 2.6vh, 1.4rem);
@@ -177,15 +186,20 @@
 .pose-cheer .sprite-box { animation: cheerJump .55s ease-in-out infinite alternate; }
 @keyframes cheerJump { from { transform: translateY(0); } to { transform: translateY(-9%); } }
 
-/* charred: play dead strip once and hold; fighters without one go sooty + wobble */
+/* hurt: quick reaction strip (slimes) */
+.pose-hurt .anim { display: none; }
+.pose-hurt .anim.hurt { display: block; }
+.pose-hurt .sprite-box:not(:has(.anim.hurt)) .anim.idle { display: block; }
+
+/* charred/KO: play dead strip once and hold; fighters without one faint comically */
 .pose-charred .anim { display: none; }
 .pose-charred .anim.dead { display: block; }
 .pose-charred .sprite-box.no-dead .anim.idle {
   display: block;
-  filter: grayscale(1) brightness(.42) sepia(.35);
+  filter: grayscale(1) brightness(.5) sepia(.3);
 }
-.pose-charred .sprite-box.no-dead { animation: charWobble 1.1s ease-in-out infinite; }
-@keyframes charWobble { 0%,100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+.pose-charred .sprite-box.no-dead { animation: koFall .7s cubic-bezier(.4,1.6,.6,1) forwards; transform-origin: 50% 90%; }
+@keyframes koFall { 55% { transform: rotate(-95deg) translateY(4%); } 75% { transform: rotate(-82deg); } 100% { transform: rotate(-88deg) translateY(4%); } }
 
 /* ============ FX ============ */
 .fly-star {
@@ -238,28 +252,6 @@
 .finish-zoom { animation: laneZoom 700ms cubic-bezier(.2,.9,.3,1) both; z-index: 8; }
 @keyframes laneZoom { 30% { transform: scale(1.06); } 100% { transform: scale(1); } }
 
-/* ---- fire wave ---- */
-.fire-wave {
-  position: absolute; top: -4%; bottom: -2%; left: 0; width: clamp(90px, 12vw, 170px);
-  z-index: 20; pointer-events: none;
-  transform: translateX(-120%);
-  filter: drop-shadow(0 0 26px rgba(255,90,20,.8));
-}
-.fire-wave.sweep { transition: transform var(--sweep-ms, 2400ms) cubic-bezier(.5,.1,.6,.9); }
-.fire-wave .flames {
-  position: absolute; inset: 0;
-  background:
-    radial-gradient(ellipse 60% 45% at 30% 85%, #fff6c0, transparent 60%),
-    radial-gradient(ellipse 80% 70% at 45% 80%, #ffd23f, transparent 65%),
-    radial-gradient(ellipse 100% 90% at 55% 75%, #ff8a1e, transparent 70%),
-    radial-gradient(ellipse 120% 100% at 60% 70%, #ff4d17 20%, transparent 72%),
-    radial-gradient(ellipse 130% 115% at 65% 65%, #b3221e 30%, transparent 75%);
-  clip-path: polygon(0 100%, 0 22%, 9% 40%, 16% 8%, 25% 36%, 33% 0%, 42% 32%, 52% 6%, 60% 38%, 70% 12%, 79% 42%, 88% 18%, 100% 45%, 100% 100%);
-  animation: flicker 140ms steps(2) infinite;
-}
-.fire-wave .flames.f2 { animation-delay: 70ms; opacity: .7; transform: scaleX(1.06) translateY(-4%); }
-@keyframes flicker { 50% { transform: scaleY(1.07) scaleX(.97); } }
-
 /* ---- results ---- */
 .results-list { display: flex; flex-direction: column; gap: .45rem; }
 .result-row {
@@ -273,6 +265,7 @@
 .result-row .rr-name { font-size: clamp(.95rem, 2.6vw, 1.4rem); font-style: italic; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .result-row .rr-time { font-size: clamp(.8rem, 2.2vw, 1.1rem); color: #4a4032; }
 .result-row.toasted { background: rgba(60,50,50,.65); color: #eee; }
+.result-row .pose-charred .sprite-box.no-dead { animation: none; }   /* no KO-fall inside rows */
 .result-row.toasted .rr-time { color: #ffb08a; font-style: italic; }
 @keyframes rowIn { from { transform: translateX(-40px) skewX(-6deg); opacity: 0; } }
 

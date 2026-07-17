@@ -70,6 +70,8 @@
     tick()    { tone(1200, now(), .05, { type: 'square', vol: .22 }); },
     blast()   { const t = now(); tone(60, t, 1.1, { type: 'sawtooth', vol: .6, slide: -30 }); noise(t, 1.2, { vol: .65, freq: 300, q: .4, slideTo: 60 }); noise(t, .3, { vol: .5, freq: 2500, q: .3, slideTo: 300 }); },
     charred() { tone(900, now(), .7, { type: 'sine', vol: .3, slide: -750 }); },
+    smack()   { const t = now(); tone(140, t, .12, { type: 'square', vol: .5, slide: -60 }); noise(t, .08, { vol: .4, freq: 1800, q: .7 }); },
+    squish()  { const t = now(); noise(t, .28, { vol: .5, freq: 900, q: 2, slideTo: 160 }); tone(320, t, .22, { type: 'sine', vol: .3, slide: -240 }); },
     jingle()  { const t = now(); [659, 784, 988, 1319, 988, 1319, 1568].forEach((f, i) => tone(f, t + i * .12, .22, { type: 'triangle', vol: .22 })); },
   };
 

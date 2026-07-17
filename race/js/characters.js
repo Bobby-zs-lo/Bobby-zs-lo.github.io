@@ -13,7 +13,7 @@
       ? `stripOnce ${dur}s steps(${a.frames - 1}) 1 forwards`
       : `stripLoop ${dur}s steps(${a.frames}) infinite`;
     const endPct = (-(100 * (a.frames - 1)) / a.frames).toFixed(3);
-    return `<div class="anim ${key}" style="aspect-ratio:${a.ar}">` +
+    return `<div class="anim ${key}" style="aspect-ratio:${a.ar};height:${((a.hr || 1) * 100).toFixed(1)}%">` +
       `<img class="strip" src="${a.file}" alt="" draggable="false" ` +
       `style="width:${a.frames * 100}%;--end:${endPct}%;animation:${anim}"></div>`;
   }
@@ -30,6 +30,7 @@
     html += animDiv('idle', an.idle, false);
     if (hasMove) html += animDiv('move', an.move, false);
     if (full && an.eat) html += animDiv('eat', an.eat, true);
+    if (full && an.hurt) html += animDiv('hurt', an.hurt, true);
     if (hasDead) html += animDiv('dead', an.dead, true);
     html += '</div>';
     return html;

@@ -1,4 +1,6 @@
-/* Screen 2: the race — timer, star feeding, movement, finishes, fire wave, results. */
+/* Screen 2: the adventure — each star press slays the lane's slime, the world scrolls
+   forward one segment (idle-game style: one enemy on screen + a progress rail).
+   Timer expiry: the slime strikes back and knocks out the avatar. */
 (function () {
   'use strict';
   const { $, showBanner, slashTo, shake } = window.UI;
@@ -7,72 +9,102 @@
   const A = window.GameAudio;
   const Game = window.Game;
 
-  const track = $('#track'), clock = $('#clock'), fireWave = $('#fireWave');
-  let players = [];         // { pick, char, stars, finishMs, lane, avatar, btn, countEl, laneTrack }
-  let running = false;
-  let raceStart = 0, endAt = 0;
-  let clockTimer = null, burnRAF = null;
-  let lastTickSec = -1;
+  const SEG = 260;               // world px scrolled per slain slime
+  const track = $('#track'), clock = $('#clock');
+  let players = [];
+  let running = false, raceStart = 0, endAt = 0;
+  let clockTimer = null, lastTickSec = -1;
+  let raceGen = 0;               // invalidates in-flight animation chains on rebuild/quit
 
   const charById = (id) => window.Characters.CHARACTERS.find(c => c.id === id);
+  const MOB_KEYS = Object.keys(window.MOBS);
+  const randMob = () => window.MOBS[MOB_KEYS[Math.floor(Math.random() * MOB_KEYS.length)]];
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
   /* ---------- build ---------- */
   function buildTrack() {
+    raceGen++;
+    const backdrop = window.BACKDROPS[Math.floor(Math.random() * window.BACKDROPS.length)];
+    $('#arenaBackdrop').style.backgroundImage = `url(${backdrop.arena})`;
     track.innerHTML = '';
-    fireWave.className = 'fire-wave hidden';
-    fireWave.style.transform = '';
-    fireWave.innerHTML = '<div class="flames"></div><div class="flames f2"></div>';
-    players = Game.picks.map((pick, i) => {
+    players = Game.picks.map((pick) => {
       const char = charById(pick.charId);
       const lane = document.createElement('div');
       lane.className = 'lane';
       lane.style.setProperty('--pcolor', pick.color);
+      const N = Game.config.stars;
       lane.innerHTML = `
         <button type="button" class="star-btn" style="--pcolor:${pick.color}">
           <span class="sb-star">⭐</span>
-          <span class="sb-info"><span class="sb-name">${escapeHtml(pick.name)}</span><span class="sb-count">0 / ${Game.config.stars}</span></span>
+          <span class="sb-info"><span class="sb-name">${escapeHtml(pick.name)}</span><span class="sb-count">0 / ${N}</span></span>
         </button>
-        <div class="lane-track" style="--startX:3%; --finishX:86%;">
-          <div class="line start"></div>
-          <div class="line finish"></div>
+        <div class="lane-track">
+          <div class="bg-scroll" style="background-image:url(${backdrop.strip})"></div>
+          <div class="rail"${N <= 14 ? ` style="background-image:linear-gradient(90deg,transparent calc(100% - 2px),rgba(255,255,255,.35) 0);background-size:${100 / N}% 100%"` : ''}>
+            <div class="rail-fill" style="width:0%"></div>
+          </div>
+          <span class="rail-flag">🏁</span>
           <div class="avatar pose-idle" style="aspect-ratio:${char.anims.idle.ar}">${renderCharacter(char)}</div>
+          <div class="slime-slot"></div>
         </div>`;
       track.appendChild(lane);
       const p = {
-        pick, char, stars: 0, finishMs: null,
+        pick, char, stars: 0, kills: 0, finishMs: null,
+        queue: 0, busy: false, mob: null,
         lane,
         laneTrack: lane.querySelector('.lane-track'),
+        bgScroll: lane.querySelector('.bg-scroll'),
+        railFill: lane.querySelector('.rail-fill'),
         avatar: lane.querySelector('.avatar'),
+        slot: lane.querySelector('.slime-slot'),
         btn: lane.querySelector('.star-btn'),
         countEl: lane.querySelector('.sb-count'),
       };
       p.btn.addEventListener('click', () => addStar(p));
       return p;
     });
-    players.forEach(sizeAvatar);
+    players.forEach(p => { sizeActors(p); layoutScroll(p); spawnSlime(p, true); });
     $('#goalStars').textContent = Game.config.stars;
   }
 
   function escapeHtml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
-  /* distance in px from start line to finish line for a lane */
-  function runDist(p) {
-    const w = p.laneTrack.clientWidth;
-    return Math.max(0, w * 0.86 - w * 0.03 - p.avatar.offsetWidth * 0.5);
-  }
-  function positionAvatar(p, instant = false) {
-    const frac = p.finishMs != null ? 1.06 : L.progressFrac(p.stars, Game.config.stars);
-    if (instant) p.avatar.style.transition = 'none';
-    p.avatar.style.setProperty('--tx', (frac * runDist(p)) + 'px');
-    if (instant) { void p.avatar.offsetWidth; p.avatar.style.transition = ''; }
-  }
-  /* avatar height limited by both lane height and a share of track length (wide sprites on tall lanes) */
-  function sizeAvatar(p) {
+  function sizeActors(p) {
+    const lt = p.laneTrack;
     const ar = p.char.anims.idle.ar;
-    const maxW = Math.min(p.laneTrack.clientWidth * 0.28, 170);
-    p.avatar.style.height = Math.min(p.laneTrack.clientHeight * 0.88, maxW / ar) + 'px';
+    const maxW = Math.min(lt.clientWidth * 0.26, 165);
+    const h = Math.min(lt.clientHeight * 0.82, maxW / ar);
+    p.avatar.style.height = h + 'px';
+    p.slot.style.height = Math.max(34, Math.min(lt.clientHeight * 0.42, h * 0.58)) + 'px';
   }
-  window.addEventListener('resize', () => players.forEach(p => { sizeAvatar(p); positionAvatar(p, true); }));
+
+  function layoutScroll(p) {
+    const w = p.laneTrack.clientWidth + (Game.config.stars + 2) * SEG;
+    p.bgScroll.style.width = w + 'px';
+    setScroll(p, true);
+  }
+
+  function setScroll(p, instant = false) {
+    if (instant) p.bgScroll.style.transition = 'none';
+    p.bgScroll.style.transform = `translateX(${-p.kills * SEG}px)`;
+    if (instant) { void p.bgScroll.offsetWidth; p.bgScroll.style.transition = ''; }
+  }
+
+  window.addEventListener('resize', () => players.forEach(p => { sizeActors(p); layoutScroll(p); }));
+
+  /* ---------- slimes ---------- */
+  function spawnSlime(p, initial = false) {
+    p.mob = randMob();
+    p.slot.innerHTML = renderCharacter(p.mob);
+    p.slot.className = 'slime-slot pose-idle';
+    if (!initial) {
+      p.slot.classList.add('enter');
+      p.slot.classList.replace('pose-idle', 'pose-run');
+      void p.slot.offsetWidth;
+      p.slot.classList.remove('enter');
+      setTimeout(() => { if (p.slot.classList.contains('pose-run')) p.slot.classList.replace('pose-run', 'pose-idle'); }, 650);
+    }
+  }
 
   /* ---------- race start ---------- */
   Game.onRaceStart = async function () {
@@ -106,14 +138,20 @@
     if (left <= 0) timeUp();
   }
 
-  /* ---------- star feeding ---------- */
+  /* ---------- star feeding & slime slaying ---------- */
   function addStar(p) {
-    if (!running || p.finishMs != null || p.stars >= Game.config.stars) return;
+    if (!running || p.stars >= Game.config.stars) return;
     A.sfx.press();
     p.btn.classList.add('pressed');
     setTimeout(() => p.btn.classList.remove('pressed'), 120);
     p.stars++;
     p.countEl.textContent = p.stars + ' / ' + Game.config.stars;
+    if (p.stars >= Game.config.stars) {           // finish counts from the press, not the animation
+      p.finishMs = performance.now() - raceStart;
+      p.btn.disabled = true;
+      p.btn.classList.add('done');
+      p.countEl.textContent = '🏁 ' + L.formatFinish(p.finishMs);
+    }
     flyStar(p);
   }
 
@@ -127,47 +165,100 @@
     star.style.top = (from.top + from.height / 2 - 14) + 'px';
     document.body.appendChild(star);
     const dx = (to.left + to.width * 0.5) - (from.left + from.width * 0.22);
-    const dy = (to.top + to.height * 0.36) - (from.top + from.height / 2 - 14);
+    const dy = (to.top + to.height * 0.3) - (from.top + from.height / 2 - 14);
     star.animate([
       { transform: 'translate(0,0) scale(1) rotate(0deg)' },
       { transform: `translate(${dx * 0.55}px, ${dy - 60}px) scale(1.35) rotate(200deg)`, offset: 0.55 },
       { transform: `translate(${dx}px, ${dy}px) scale(.7) rotate(380deg)` },
     ], { duration: 520, easing: 'cubic-bezier(.3,.2,.4,1)' }).onfinish = () => {
       star.remove();
-      consumeStar(p);
+      A.sfx.collect();
+      p.queue++;
+      processQueue(p);
     };
   }
 
-  function consumeStar(p) {
-    A.sfx.collect();
-    // hit-stop + eat
-    p.avatar.classList.add('hitstop');
-    p.avatar.classList.remove('pose-idle', 'pose-run');
-    p.avatar.classList.add('pose-eat');
-    sparkleBurst(p);
-    setTimeout(() => {
-      p.avatar.classList.remove('hitstop', 'pose-eat');
-      if (p.stars >= Game.config.stars) { finishPlayer(p); return; }
-      // run forward
-      p.avatar.classList.add('pose-run');
-      positionAvatar(p);
-      const dustInt = setInterval(() => spawnDust(p), 130);
-      setTimeout(() => {
-        clearInterval(dustInt);
-        p.avatar.classList.remove('pose-run');
-        p.avatar.classList.add('pose-idle');
-      }, 780);
-    }, 420);
+  function processQueue(p) {
+    if (p.busy || p.queue === 0) return;
+    p.busy = true;
+    p.queue--;
+    killSequence(p).then(() => {
+      p.busy = false;
+      processQueue(p);
+    });
   }
 
-  function sparkleBurst(p) {
-    const r = p.avatar.getBoundingClientRect(), lt = p.laneTrack.getBoundingClientRect();
+  async function killSequence(p) {
+    const gen = raceGen;
+    const alive = () => gen === raceGen && (running || p.finishMs != null);
+    if (!alive()) return;
+    // avatar attacks
+    p.avatar.classList.remove('pose-idle', 'pose-run');
+    p.avatar.classList.add('pose-eat');
+    await sleep(260);
+    if (!alive()) return;
+    // impact on slime
+    A.sfx.smack();
+    p.slot.classList.add('hitstop');
+    p.slot.className = p.slot.className.replace(/pose-\w+/, 'pose-hurt');
+    sparkleBurst(p, p.slot);
+    await sleep(240);
+    if (!alive()) return;
+    // slime dies
+    p.slot.classList.remove('hitstop');
+    p.slot.className = p.slot.className.replace(/pose-\w+/, 'pose-charred');
+    A.sfx.squish();
+    p.kills++;
+    await sleep(620);
+    if (!alive()) return;
+    // world scrolls forward
+    p.slot.classList.add('gone');
+    p.avatar.classList.remove('pose-eat');
+    p.avatar.classList.add('pose-run');
+    setScroll(p);
+    p.railFill.style.width = (p.kills / Game.config.stars * 100) + '%';
+    const dust = setInterval(() => spawnDust(p), 140);
+    await sleep(880);
+    clearInterval(dust);
+    if (!alive()) return;
+    p.avatar.classList.remove('pose-run');
+    p.avatar.classList.add('pose-idle');
+    if (p.kills >= Game.config.stars) { finishCelebrate(p); return; }
+    spawnSlime(p);
+    await sleep(400);
+  }
+
+  /* ---------- finish ---------- */
+  function finishCelebrate(p) {
+    const place = players.filter(x => x.finishMs != null && x.finishMs <= p.finishMs).length;
+    A.sfx.finish();
+    A.say('finished', p.pick.name);
+    const spot = document.createElement('div');
+    spot.className = 'spotlight';
+    p.laneTrack.appendChild(spot);
+    setTimeout(() => spot.remove(), 1000);
+    p.lane.classList.add('finish-zoom');
+    setTimeout(() => p.lane.classList.remove('finish-zoom'), 750);
+    p.avatar.classList.remove('pose-idle', 'pose-run', 'pose-eat');
+    p.avatar.classList.add('pose-cheer');
+    const medal = document.createElement('div');
+    medal.className = 'medal';
+    medal.textContent = L.placeMedal(place - 1);
+    p.avatar.appendChild(medal);
+    confettiBurst(p);
+    p.confettiTimer = setInterval(() => { if (running) confettiBurst(p); }, 1800);
+    if (players.every(x => x.finishMs != null)) setTimeout(allClear, 1200);
+  }
+
+  /* ---------- FX ---------- */
+  function sparkleBurst(p, el) {
+    const r = el.getBoundingClientRect(), lt = p.laneTrack.getBoundingClientRect();
     for (let i = 0; i < 8; i++) {
       const s = document.createElement('div');
       s.className = 'sparkle';
       s.style.left = (r.left - lt.left + r.width / 2) + 'px';
-      s.style.top = (r.top - lt.top + r.height * 0.35) + 'px';
-      const a = Math.random() * Math.PI * 2, d = 26 + Math.random() * 34;
+      s.style.top = (r.top - lt.top + r.height * 0.4) + 'px';
+      const a = Math.random() * Math.PI * 2, d = 24 + Math.random() * 30;
       s.style.setProperty('--dx', Math.cos(a) * d + 'px');
       s.style.setProperty('--dy', Math.sin(a) * d + 'px');
       p.laneTrack.appendChild(s);
@@ -176,65 +267,32 @@
   }
 
   function spawnDust(p) {
+    const x = p.avatar.offsetLeft + p.avatar.offsetWidth * 0.15;
     const d = document.createElement('div');
     d.className = 'dust';
-    const tx = parseFloat(getComputedStyle(p.avatar).getPropertyValue('--tx')) || 0;
-    d.style.left = (p.laneTrack.clientWidth * 0.03 + tx) + 'px';
+    d.style.left = x + 'px';
     p.laneTrack.appendChild(d);
     const line = document.createElement('div');
     line.className = 'speedline';
-    line.style.left = d.style.left;
+    line.style.left = (x + 30) + 'px';
     line.style.top = (30 + Math.random() * 40) + '%';
     p.laneTrack.appendChild(line);
     setTimeout(() => { d.remove(); line.remove(); }, 550);
   }
 
-  /* ---------- finish ---------- */
-  function finishPlayer(p) {
-    p.finishMs = performance.now() - raceStart;
-    p.btn.disabled = true;
-    p.btn.classList.add('done');
-    p.countEl.textContent = '🏁 ' + L.formatFinish(p.finishMs);
-    p.avatar.classList.remove('pose-idle', 'pose-run', 'pose-eat');
-    p.avatar.classList.add('pose-run');
-    positionAvatar(p);   // crosses the line into the safe zone
-    const place = players.filter(x => x.finishMs != null).length;
-    A.sfx.finish();
-    A.say('finished', p.pick.name);
-    // spotlight + zoom
-    const spot = document.createElement('div');
-    spot.className = 'spotlight';
-    p.laneTrack.appendChild(spot);
-    setTimeout(() => spot.remove(), 1000);
-    p.lane.classList.add('finish-zoom');
-    setTimeout(() => p.lane.classList.remove('finish-zoom'), 750);
-    setTimeout(() => {
-      p.avatar.classList.remove('pose-run');
-      p.avatar.classList.add('pose-cheer');
-      const medal = document.createElement('div');
-      medal.className = 'medal';
-      medal.textContent = L.placeMedal(place - 1);
-      p.avatar.appendChild(medal);
-      confettiBurst(p);
-      p.confettiTimer = setInterval(() => { if (running) confettiBurst(p); }, 1800);
-    }, 800);
-    if (players.every(x => x.finishMs != null)) setTimeout(allClear, 1400);
-  }
-
   function confettiBurst(p) {
-    const lt = p.laneTrack;
-    const tx = parseFloat(getComputedStyle(p.avatar).getPropertyValue('--tx')) || 0;
     const colors = ['#ffd23f', '#ff5da2', '#4dc3ff', '#a4e04d', '#ff7a00', '#c792ff'];
+    const x = p.avatar.offsetLeft + p.avatar.offsetWidth / 2;
     for (let i = 0; i < 14; i++) {
       const c = document.createElement('div');
       c.className = 'confetti-bit';
       c.style.background = colors[i % colors.length];
-      c.style.left = (lt.clientWidth * 0.03 + tx + p.avatar.offsetWidth / 2) + 'px';
-      c.style.top = '10%';
+      c.style.left = x + 'px';
+      c.style.top = '8%';
       c.style.setProperty('--dx', (Math.random() * 120 - 60) + 'px');
       c.style.setProperty('--dy', (40 + Math.random() * 60) + 'px');
       c.style.setProperty('--rot', (Math.random() * 720 - 360) + 'deg');
-      lt.appendChild(c);
+      p.laneTrack.appendChild(c);
       setTimeout(() => c.remove(), 1500);
     }
   }
@@ -242,7 +300,6 @@
   /* ---------- endgame ---------- */
   function stopTimers() {
     clearInterval(clockTimer); clockTimer = null;
-    cancelAnimationFrame(burnRAF);
     players.forEach(p => { clearInterval(p.confettiTimer); p.btn.disabled = true; });
     A.musicStop();
   }
@@ -265,67 +322,47 @@
     A.say('time');
     shake(true);
     await showBanner('TIME!', { hold: 1100, style: 'red' });
-    fireSweep();
+    const losers = players.filter(p => p.finishMs == null);
+    losers.forEach((p, i) => setTimeout(() => slimeStrikes(p), i * 220));
+    setTimeout(() => showResults(false), 1600 + losers.length * 220 + 1200);
   }
 
-  function fireSweep() {
-    fireWave.classList.remove('hidden');
-    const arena = $('#arena');
-    const sweepMs = 2400;
-    fireWave.style.setProperty('--sweep-ms', sweepMs + 'ms');
-    void fireWave.offsetWidth;
-    fireWave.classList.add('sweep');
-    // the fire stops AT the finish line — finishers beyond it stay safe
-    const arenaRect = arena.getBoundingClientRect();
-    const lt = players[0].laneTrack.getBoundingClientRect();
-    const frontTarget = (lt.left - arenaRect.left) + lt.width * 0.86 + 10;
-    fireWave.style.transform = `translateX(${frontTarget - fireWave.offsetWidth}px)`;
-    const burned = new Set();
-    const check = () => {
-      const front = fireWave.getBoundingClientRect().right - 20;
-      players.forEach(p => {
-        if (p.finishMs == null && !burned.has(p)) {
-          const r = p.avatar.getBoundingClientRect();
-          if (r.left + r.width * 0.5 < front) { burned.add(p); charPlayer(p); }
-        }
-      });
-      if (burned.size < players.filter(p => p.finishMs == null).length) burnRAF = requestAnimationFrame(check);
-    };
-    burnRAF = requestAnimationFrame(check);
+  /* the slime gets its revenge */
+  function slimeStrikes(p) {
+    p.queue = 0;
+    const dist = p.slot.offsetLeft - (p.avatar.offsetLeft + p.avatar.offsetWidth * 0.55);
+    p.slot.className = 'slime-slot pose-eat lunge';
+    p.slot.style.setProperty('--lunge', -Math.max(0, dist) + 'px');
     setTimeout(() => {
-      fireWave.classList.add('hidden');
-      showResults(false);
-    }, sweepMs + 900);
-  }
-
-  function charPlayer(p) {
-    p.avatar.classList.remove('pose-idle', 'pose-run', 'pose-eat', 'pose-cheer');
-    p.avatar.classList.add('pose-charred', 'hitstop');
-    setTimeout(() => p.avatar.classList.remove('hitstop'), 200);
-    A.sfx.charred();
-    const lt = p.laneTrack;
-    const tx = parseFloat(getComputedStyle(p.avatar).getPropertyValue('--tx')) || 0;
-    for (let i = 0; i < 5; i++) {
-      const s = document.createElement('div');
-      s.className = 'smoke';
-      s.style.left = (lt.clientWidth * 0.03 + tx + p.avatar.offsetWidth * (0.2 + Math.random() * 0.6)) + 'px';
-      s.style.top = (20 + Math.random() * 50) + '%';
-      s.style.setProperty('--dx', (Math.random() * 30 - 15) + 'px');
-      s.style.animationDelay = (i * 140) + 'ms';
-      lt.appendChild(s);
-      setTimeout(() => s.remove(), 1600 + i * 140);
-    }
+      A.sfx.smack();
+      shake();
+      p.avatar.classList.remove('pose-idle', 'pose-run', 'pose-eat', 'pose-cheer');
+      p.avatar.classList.add('pose-charred', 'hitstop');
+      setTimeout(() => p.avatar.classList.remove('hitstop'), 200);
+      A.sfx.charred();
+      for (let i = 0; i < 5; i++) {
+        const s = document.createElement('div');
+        s.className = 'smoke';
+        s.style.left = (p.avatar.offsetLeft + p.avatar.offsetWidth * (0.2 + Math.random() * 0.6)) + 'px';
+        s.style.top = (20 + Math.random() * 50) + '%';
+        s.style.setProperty('--dx', (Math.random() * 30 - 15) + 'px');
+        s.style.animationDelay = (i * 140) + 'ms';
+        p.laneTrack.appendChild(s);
+        setTimeout(() => s.remove(), 1600 + i * 140);
+      }
+      setTimeout(() => { p.slot.classList.remove('pose-eat'); p.slot.classList.add('pose-idle'); }, 700);
+    }, 430);
   }
 
   /* ---------- results ---------- */
   function showResults(allWon) {
     const { winners, losers } = L.rankResults(players.map(p => ({ p, name: p.pick.name, stars: p.stars, finishMs: p.finishMs })));
-    $('#resultsTitle').textContent = allWon ? 'ALL WINNERS!' : (winners.length ? 'RESULTS' : 'EVERYONE GOT TOASTED!');
+    $('#resultsTitle').textContent = allWon ? 'ALL WINNERS!' : (winners.length ? 'RESULTS' : 'EVERYONE GOT SLIMED!');
     const list = $('#resultsList');
     list.innerHTML = '';
     let d = 0;
     winners.forEach((w, i) => list.appendChild(resultRow(w.p, L.placeMedal(i), L.formatFinish(w.finishMs), false, d += 120)));
-    losers.forEach((l) => list.appendChild(resultRow(l.p, '🔥', l.stars + ' / ' + Game.config.stars + ' ⭐ — TOASTED!', true, d += 120)));
+    losers.forEach((l) => list.appendChild(resultRow(l.p, '🟢', l.stars + ' / ' + Game.config.stars + ' ⭐ — SLIMED!', true, d += 120)));
     $('#resultsModal').classList.remove('hidden');
     A.sfx.jingle();
     if (winners.length) A.say('winner', winners[0].name);
@@ -355,6 +392,7 @@
 
   Game.abortRace = function () {
     running = false;
+    raceGen++;
     stopTimers();
     $('#resultsModal').classList.add('hidden');
   };
