@@ -85,6 +85,23 @@
   /* unlock audio on first interaction anywhere */
   document.addEventListener('pointerdown', () => window.GameAudio.unlock(), { once: true });
 
+  /* keep the screen awake for the whole session (shared-screen party game).
+     The browser force-releases the wake lock whenever the tab goes hidden (app switch,
+     screen lock, etc.) and never re-grants it on its own — re-request on visibilitychange
+     or the screen can sleep again after you leave the browser and come back. */
+  let wakeLock = null;
+  async function requestWakeLock() {
+    if (!('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    } catch (e) { /* denied (e.g. low battery) — game still works without it */ }
+  }
+  requestWakeLock();
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') requestWakeLock();
+  });
+
   /* quit confirmation */
   $('#quitBtn').addEventListener('click', () => { window.GameAudio.sfx.click(); $('#confirmQuit').classList.remove('hidden'); });
   $('#quitNo').addEventListener('click', () => { window.GameAudio.sfx.click(); $('#confirmQuit').classList.add('hidden'); });
