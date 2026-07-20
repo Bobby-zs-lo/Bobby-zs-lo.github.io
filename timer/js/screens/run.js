@@ -177,9 +177,13 @@ export async function renderRun(ctx, { themeId, durationMs }) {
   engine.start();
   audio.playTrack(loop, bpm);
 
-  // Screen wake lock (best-effort)
+  // Screen wake lock (best-effort). The OS/browser releases this automatically
+  // whenever the tab is hidden, so it must be re-requested on return (below).
   let wakeLock = null;
-  try { wakeLock = await navigator.wakeLock?.request('screen'); } catch (_) {}
+  const requestWakeLock = async () => {
+    try { wakeLock = await navigator.wakeLock?.request('screen'); } catch (_) {}
+  };
+  await requestWakeLock();
 
   // ── Render loop ───────────────────────────────────────────────────────────────
   let last = performance.now();
@@ -226,8 +230,13 @@ export async function renderRun(ctx, { themeId, durationMs }) {
     check();
   }
 
-  // ── Visibility: re-sync rAF timestamp when tab returns ───────────────────────
-  const onVisibilityChange = () => { if (!document.hidden) { last = performance.now(); } };
+  // ── Visibility: re-sync rAF timestamp + re-acquire wake lock when tab returns ──
+  const onVisibilityChange = () => {
+    if (!document.hidden) {
+      last = performance.now();
+      requestWakeLock();
+    }
+  };
   document.addEventListener('visibilitychange', onVisibilityChange);
 
   // ── Resize / orientation handler (debounced ~100 ms) ─────────────────────────
