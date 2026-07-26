@@ -21,23 +21,52 @@
   const randMob = () => window.MOBS[MOB_KEYS[Math.floor(Math.random() * MOB_KEYS.length)]];
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
+  /* every 3rd slime is a big (50% bigger, 3-hit) brute; the last slime of the race is
+     always the boss (100% bigger, 3-hit) — the boss check wins if both would apply. */
+  function slimeSpec(index, total) {
+    const isBoss = index === total;
+    const isBig = !isBoss && index % 3 === 0;
+    return { hp: (isBoss || isBig) ? 3 : 1, scale: isBoss ? 2 : (isBig ? 1.5 : 1), isBig, isBoss };
+  }
+  function totalHitsFor(total) {
+    let sum = 0;
+    for (let i = 1; i <= total; i++) sum += slimeSpec(i, total).hp;
+    return sum;
+  }
+  function hitsConsumedThrough(kills, total) {
+    let sum = 0;
+    for (let i = 1; i <= kills; i++) sum += slimeSpec(i, total).hp;
+    return sum;
+  }
+  function slotClasses(p, extra) {
+    return 'slime-slot' + (p.slimeBig ? ' big' : '') + (p.slimeBoss ? ' boss' : '') + (extra ? ' ' + extra : '');
+  }
+  function hpBarHtml(maxHp) {
+    if (maxHp <= 1) return '';
+    return `<div class="hp-bar">${'<span class="hp-pip full"></span>'.repeat(maxHp)}</div>`;
+  }
+
   /* ---------- build ---------- */
   function buildTrack() {
     raceGen++;
     const backdrop = window.BACKDROPS[Math.floor(Math.random() * window.BACKDROPS.length)];
     $('#arenaBackdrop').style.backgroundImage = `url(${backdrop.arena})`;
     track.innerHTML = '';
+    const N = Game.config.stars;
+    const totalHits = totalHitsFor(N);
     players = Game.picks.map((pick) => {
       const char = charById(pick.charId);
       const lane = document.createElement('div');
       lane.className = 'lane';
       lane.style.setProperty('--pcolor', pick.color);
-      const N = Game.config.stars;
       lane.innerHTML = `
-        <button type="button" class="star-btn" style="--pcolor:${pick.color}">
-          <span class="sb-star">⭐</span>
-          <span class="sb-info"><span class="sb-name">${escapeHtml(pick.name)}</span><span class="sb-count">0 / ${N}</span></span>
-        </button>
+        <div class="lane-controls">
+          <button type="button" class="star-btn" style="--pcolor:${pick.color}">
+            <span class="sb-star">⭐</span>
+            <span class="sb-info"><span class="sb-name">${escapeHtml(pick.name)}</span><span class="sb-count">0 / ${totalHits}</span></span>
+          </button>
+          <button type="button" class="penalty-btn" title="Penalty" aria-label="Penalty">⚠️</button>
+        </div>
         <div class="lane-track">
           <div class="bg-scroll" style="background-image:url(${backdrop.strip})"></div>
           <div class="rail"${N <= 14 ? ` style="background-image:linear-gradient(90deg,transparent calc(100% - 2px),rgba(255,255,255,.35) 0);background-size:${100 / N}% 100%"` : ''}>
@@ -50,7 +79,9 @@
       track.appendChild(lane);
       const p = {
         pick, char, stars: 0, kills: 0, finishMs: null,
-        queue: 0, busy: false, mob: null,
+        queue: 0, busy: false, mob: null, gen: 0,
+        totalSlimes: N, totalHits,
+        slimeHp: 0, slimeMaxHp: 0, slimeScale: 1, slimeBig: false, slimeBoss: false,
         lane,
         laneTrack: lane.querySelector('.lane-track'),
         bgScroll: lane.querySelector('.bg-scroll'),
@@ -59,12 +90,14 @@
         slot: lane.querySelector('.slime-slot'),
         btn: lane.querySelector('.star-btn'),
         countEl: lane.querySelector('.sb-count'),
+        penaltyBtn: lane.querySelector('.penalty-btn'),
       };
       p.btn.addEventListener('click', () => addStar(p));
+      p.penaltyBtn.addEventListener('click', () => penalize(p));
       return p;
     });
     players.forEach(p => { sizeActors(p); layoutScroll(p); spawnSlime(p, true); });
-    $('#goalStars').textContent = Game.config.stars;
+    $('#goalStars').textContent = totalHits;
   }
 
   function escapeHtml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
@@ -75,7 +108,16 @@
     const maxW = Math.min(lt.clientWidth * 0.26, 165);
     const h = Math.min(lt.clientHeight * 0.82, maxW / ar);
     p.avatar.style.height = h + 'px';
-    p.slot.style.height = Math.max(38, Math.min(lt.clientHeight * 0.52, h * 0.78)) + 'px';
+    p.baseSlimeH = Math.max(38, Math.min(lt.clientHeight * 0.52, h * 0.78));
+    sizeSlime(p);
+  }
+
+  /* slime box scales up for big/boss slimes, but stays clamped to the lane so a 2x
+     boss never overflows a narrow mobile lane (portrait or landscape). */
+  function sizeSlime(p) {
+    const lt = p.laneTrack;
+    const maxH = Math.min(lt.clientHeight * 0.94, lt.clientWidth * 0.42);
+    p.slot.style.height = Math.min(p.baseSlimeH * (p.slimeScale || 1), maxH) + 'px';
   }
 
   function layoutScroll(p) {
@@ -94,9 +136,16 @@
 
   /* ---------- slimes ---------- */
   function spawnSlime(p, initial = false) {
+    const spec = slimeSpec(p.kills + 1, p.totalSlimes);
     p.mob = randMob();
-    p.slot.innerHTML = renderCharacter(p.mob);
-    p.slot.className = 'slime-slot pose-idle';
+    p.slimeHp = spec.hp;
+    p.slimeMaxHp = spec.hp;
+    p.slimeScale = spec.scale;
+    p.slimeBig = spec.isBig;
+    p.slimeBoss = spec.isBoss;
+    p.slot.innerHTML = renderCharacter(p.mob) + hpBarHtml(spec.hp);
+    p.slot.className = slotClasses(p, 'pose-idle');
+    sizeSlime(p);
     if (!initial) {
       p.slot.classList.add('enter');
       p.slot.classList.replace('pose-idle', 'pose-run');
@@ -104,6 +153,14 @@
       p.slot.classList.remove('enter');
       setTimeout(() => { if (p.slot.classList.contains('pose-run')) p.slot.classList.replace('pose-run', 'pose-idle'); }, 650);
     }
+  }
+
+  /* apply one hit to the active slime's health pips; returns true once it's dead */
+  function hitSlime(p) {
+    p.slimeHp = Math.max(0, p.slimeHp - 1);
+    const bar = p.slot.querySelector('.hp-bar');
+    if (bar) bar.querySelectorAll('.hp-pip').forEach((pip, i) => pip.classList.toggle('full', i < p.slimeHp));
+    return p.slimeHp <= 0;
   }
 
   /* ---------- sparring: avatar and slime trade blows while waiting ---------- */
@@ -137,7 +194,7 @@
     // slime strikes back (no damage — just the brawl)
     setTimeout(() => {
       if (!ok()) return;
-      p.slot.className = 'slime-slot pose-eat';
+      p.slot.className = slotClasses(p, 'pose-eat');
     }, 1250);
     setTimeout(() => {
       if (!ok()) return;
@@ -146,7 +203,7 @@
     }, 1650);
     setTimeout(() => {
       if (!ok()) return;
-      p.slot.className = 'slime-slot pose-idle';
+      p.slot.className = slotClasses(p, 'pose-idle');
     }, 2150);
   }
 
@@ -185,19 +242,66 @@
 
   /* ---------- star feeding & slime slaying ---------- */
   function addStar(p) {
-    if (!running || p.stars >= Game.config.stars) return;
+    if (!running || p.stars >= p.totalHits) return;
     A.sfx.press();
     p.btn.classList.add('pressed');
     setTimeout(() => p.btn.classList.remove('pressed'), 120);
     p.stars++;
-    p.countEl.textContent = p.stars + ' / ' + Game.config.stars;
-    if (p.stars >= Game.config.stars) {           // finish counts from the press, not the animation
+    p.countEl.textContent = p.stars + ' / ' + p.totalHits;
+    if (p.stars >= p.totalHits) {           // finish counts from the press, not the animation
       p.finishMs = performance.now() - raceStart;
       p.btn.disabled = true;
       p.btn.classList.add('done');
       p.countEl.textContent = '🏁 ' + L.formatFinish(p.finishMs);
     }
     flyStar(p);
+  }
+
+  /* ---------- adult penalty: a misbehaving kid loses their last kill and the slime
+     bites back. Only active during a running race; short cooldown guards against
+     accidental double-taps. ---------- */
+  function penalize(p) {
+    if (!running || p.penaltyBtn.disabled) return;
+    p.gen++;
+    const gen = p.gen;
+    A.sfx.penalty();
+    A.say('penalty');
+    shake();
+    p.penaltyBtn.disabled = true;
+    setTimeout(() => { p.penaltyBtn.disabled = !running; }, 2000);
+    p.queue = 0;
+    p.busy = false;
+
+    // avatar takes the hit
+    p.avatar.classList.remove('pose-idle', 'pose-run', 'pose-eat', 'pose-cheer', 'recoil');
+    void p.avatar.offsetWidth;
+    p.avatar.classList.add('pose-hurt', 'hitstop');
+    setTimeout(() => p.avatar.classList.remove('hitstop'), 200);
+    setTimeout(() => {
+      if (gen !== p.gen) return;
+      p.avatar.classList.remove('pose-hurt');
+      p.avatar.classList.add('pose-idle');
+    }, 520);
+
+    // undo a finish, if they'd already crossed the line
+    if (p.finishMs != null) {
+      p.finishMs = null;
+      p.btn.disabled = false;
+      p.btn.classList.remove('done');
+      const medal = p.avatar.querySelector('.medal');
+      if (medal) medal.remove();
+      clearInterval(p.confettiTimer);
+    }
+
+    // un-slay the last slime and bring it back
+    if (p.kills > 0) {
+      p.kills--;
+      p.railFill.style.width = (p.kills / p.totalSlimes * 100) + '%';
+      setScroll(p);
+      spawnSlime(p);
+    }
+    p.stars = hitsConsumedThrough(p.kills, p.totalSlimes);
+    p.countEl.textContent = p.stars + ' / ' + p.totalHits;
   }
 
   function flyStar(p) {
@@ -234,25 +338,35 @@
   }
 
   async function killSequence(p) {
-    const gen = raceGen;
-    const alive = () => gen === raceGen && (running || p.finishMs != null);
+    const gen = raceGen, pgen = p.gen;
+    const alive = () => gen === raceGen && pgen === p.gen && (running || p.finishMs != null);
     if (!alive()) return;
     // avatar attacks (restart the strip even if a sparring jab is mid-swing)
     p.avatar.classList.remove('pose-idle', 'pose-run', 'pose-eat', 'recoil');
     void p.avatar.offsetWidth;
     p.avatar.classList.add('pose-eat');
-    p.slot.className = 'slime-slot pose-idle';
+    p.slot.className = slotClasses(p, 'pose-idle');
     await sleep(260);
     if (!alive()) return;
     // impact on slime
-    A.sfx.smack();
+    const big = p.slimeMaxHp > 1;
+    (big ? A.sfx.bigHit : A.sfx.smack)();
     p.slot.classList.add('hitstop');
     p.slot.className = p.slot.className.replace(/pose-\w+/, 'pose-hurt');
     sparkleBurst(p, p.slot);
+    const dead = hitSlime(p);
     await sleep(240);
     if (!alive()) return;
-    // slime dies
     p.slot.classList.remove('hitstop');
+    if (!dead) {
+      // big/boss slime shrugs off the hit — no death, no world progress this press
+      p.slot.className = p.slot.className.replace(/pose-\w+/, 'pose-idle');
+      p.avatar.classList.remove('pose-eat');
+      p.avatar.classList.add('pose-idle');
+      await sleep(160);
+      return;
+    }
+    // slime dies
     p.slot.className = p.slot.className.replace(/pose-\w+/, 'pose-charred');
     A.sfx.squish();
     p.kills++;
@@ -263,14 +377,14 @@
     p.avatar.classList.remove('pose-eat');
     p.avatar.classList.add('pose-run');
     setScroll(p);
-    p.railFill.style.width = (p.kills / Game.config.stars * 100) + '%';
+    p.railFill.style.width = (p.kills / p.totalSlimes * 100) + '%';
     const dust = setInterval(() => spawnDust(p), 140);
     await sleep(880);
     clearInterval(dust);
     if (!alive()) return;
     p.avatar.classList.remove('pose-run');
     p.avatar.classList.add('pose-idle');
-    if (p.kills >= Game.config.stars) { finishCelebrate(p); return; }
+    if (p.kills >= p.totalSlimes) { finishCelebrate(p); return; }
     spawnSlime(p);
     await sleep(400);
   }
@@ -347,7 +461,7 @@
   /* ---------- endgame ---------- */
   function stopTimers() {
     clearInterval(clockTimer); clockTimer = null;
-    players.forEach(p => { clearInterval(p.confettiTimer); clearTimeout(p.sparTimer); p.btn.disabled = true; });
+    players.forEach(p => { clearInterval(p.confettiTimer); clearTimeout(p.sparTimer); p.btn.disabled = true; p.penaltyBtn.disabled = true; });
     A.musicStop();
   }
 
@@ -378,7 +492,7 @@
   function slimeStrikes(p) {
     p.queue = 0;
     const dist = p.slot.offsetLeft - (p.avatar.offsetLeft + p.avatar.offsetWidth * 0.55);
-    p.slot.className = 'slime-slot pose-eat lunge';
+    p.slot.className = slotClasses(p, 'pose-eat lunge');
     p.slot.style.setProperty('--lunge', -Math.max(0, dist) + 'px');
     setTimeout(() => {
       A.sfx.smack();
@@ -409,7 +523,7 @@
     list.innerHTML = '';
     let d = 0;
     winners.forEach((w, i) => list.appendChild(resultRow(w.p, L.placeMedal(i), L.formatFinish(w.finishMs), false, d += 120)));
-    losers.forEach((l) => list.appendChild(resultRow(l.p, '🟢', l.stars + ' / ' + Game.config.stars + ' ⭐ — SLIMED!', true, d += 120)));
+    losers.forEach((l) => list.appendChild(resultRow(l.p, '🟢', l.stars + ' / ' + l.p.totalHits + ' ⭐ — SLIMED!', true, d += 120)));
     $('#resultsModal').classList.remove('hidden');
     A.sfx.jingle();
     if (winners.length) A.say('winner', winners[0].name);

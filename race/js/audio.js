@@ -73,6 +73,8 @@
     smack()   { const t = now(); tone(140, t, .12, { type: 'square', vol: .5, slide: -60 }); noise(t, .08, { vol: .4, freq: 1800, q: .7 }); },
     squish()  { const t = now(); noise(t, .28, { vol: .5, freq: 900, q: 2, slideTo: 160 }); tone(320, t, .22, { type: 'sine', vol: .3, slide: -240 }); },
     jingle()  { const t = now(); [659, 784, 988, 1319, 988, 1319, 1568].forEach((f, i) => tone(f, t + i * .12, .22, { type: 'triangle', vol: .22 })); },
+    penalty() { const t = now(); tone(220, t, .22, { type: 'sawtooth', vol: .35, slide: -140 }); tone(140, t + .16, .28, { type: 'sawtooth', vol: .3, slide: -80 }); noise(t, .3, { vol: .3, freq: 500, q: .5 }); },
+    bigHit()  { const t = now(); tone(90, t, .3, { type: 'square', vol: .45, slide: -40 }); noise(t, .22, { vol: .45, freq: 1400, q: .6 }); },
   };
 
   /* ---- background music: 148 BPM synth-rock loop, lookahead scheduler ---- */
@@ -136,6 +138,7 @@
     allclear: ['Alle nåede i mål! Fantastisk!', 'Everyone made it! Amazing!', 1.0, 0.6],
     time:     ['Tiden er gået!', 'Time!', 0.9, 0.45],
     winner:   ['Vinderen er {n}!', 'The winner is {n}!', 1.0, 0.55],
+    penalty:  ['Uh oh!', 'Uh oh!', 1.05, 0.6],
   };
   function say(key, name) {
     const ph = PHRASES[key];
