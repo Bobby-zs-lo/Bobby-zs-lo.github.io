@@ -907,15 +907,11 @@
 
       if (includeSkills) {
         var groups = selectedSkills || collectSkillGroups();
-        var skills = [];
         groups.forEach(function (g) {
           if (!g.items.length) return;
-          if (g.title && skills.indexOf(g.title) === -1) skills.push(g.title);
-          g.items.forEach(function (item) {
-            if (skills.indexOf(item) === -1) skills.push(item);
-          });
+          if (g.title) subHeading(g.title);
+          body(g.items.map(function (s) { return sanitize(s); }).join('  \xB7  '));
         });
-        if (skills.length) body(skills.map(function (s) { return sanitize(s); }).join('  \xB7  '));
       }
 
       if (includeCourses) {
