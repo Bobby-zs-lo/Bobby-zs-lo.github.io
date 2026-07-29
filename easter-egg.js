@@ -23,6 +23,8 @@
   var toggleState = {};
   var pubMode = 'all';
   var expertiseMode = 'skills';
+  var chooseSkills = false;
+  var selectedSkills = null;
   var customPubs = [];
   var allPubsCache = [];
 
@@ -30,8 +32,28 @@
     SECTIONS.forEach(function (s) { toggleState[s.key] = true; });
     pubMode = 'all';
     expertiseMode = 'skills';
+    chooseSkills = false;
+    selectedSkills = null;
     customPubs = [];
     allPubsCache = [];
+  }
+
+  // -- Skills read from the Expertise section, grouped by competence card --
+  function collectSkillGroups() {
+    var groups = [];
+    document.querySelectorAll('#expertise .comp-card').forEach(function (card) {
+      var title = card.querySelector('h3');
+      var para = card.querySelector('p');
+      var items = [];
+      if (para) {
+        para.textContent.split(/[\u00B7,]/).forEach(function (s) {
+          var tr = s.replace(/\s+/g, ' ').trim().replace(/\.$/, '').trim();
+          if (tr && items.indexOf(tr) === -1) items.push(tr);
+        });
+      }
+      groups.push({ title: title ? title.textContent.trim() : '', items: items });
+    });
+    return groups;
   }
 
   function buildModal() {
@@ -101,19 +123,38 @@
 
       if (s.key === 'expertise') {
         var expSub = document.createElement('div');
-        expSub.className = 'ee-pub-sub is-open';
+        expSub.className = 'ee-pub-sub ee-exp-sub is-open';
         expSub.id = 'eeExpSub';
         var expSelect = document.createElement('select');
         expSelect.className = 'ee-pub-select';
-        expSelect.setAttribute('aria-label', 'Expertise detail level');
-        [['skills', 'Skills only'], ['skills_courses', 'Skills + Courses']].forEach(function (pair) {
+        expSelect.id = 'eeExpSelect';
+        expSelect.setAttribute('aria-label', 'Expertise content');
+        [['skills', 'Skills only'], ['skills_courses', 'Skills + Courses'], ['courses', 'Courses only']].forEach(function (pair) {
           var opt = document.createElement('option');
           opt.value = pair[0];
           opt.textContent = pair[1];
           expSelect.appendChild(opt);
         });
-        expSelect.addEventListener('change', function () { expertiseMode = this.value; });
+
+        var skillPick = document.createElement('label');
+        skillPick.className = 'ee-sub-check';
+        skillPick.id = 'eeSkillPick';
+        var skillPickInput = document.createElement('input');
+        skillPickInput.type = 'checkbox';
+        skillPickInput.id = 'eeSkillPickInput';
+        skillPickInput.addEventListener('change', function () { chooseSkills = this.checked; });
+        var skillPickText = document.createElement('span');
+        skillPickText.textContent = 'Choose which skills to include';
+        skillPick.appendChild(skillPickInput);
+        skillPick.appendChild(skillPickText);
+
+        expSelect.addEventListener('change', function () {
+          expertiseMode = this.value;
+          syncSkillPick();
+        });
+
         expSub.appendChild(expSelect);
+        expSub.appendChild(skillPick);
         togglesWrap.appendChild(expSub);
       }
 
@@ -242,9 +283,94 @@
       updatePubCount();
     });
 
+    // Skills picker panel (hidden by default)
+    var stepSkills = document.createElement('div');
+    stepSkills.className = 'ee-step2';
+    stepSkills.id = 'eeStepSkills';
+
+    var skDots = document.createElement('div');
+    skDots.className = 'ee-step-dots';
+    skDots.innerHTML = '<span class="ee-step-dot ee-step-dot-done">1</span><span class="ee-step-dot ee-step-dot-active">2</span>';
+
+    var skHeader = document.createElement('div');
+    skHeader.className = 'ee-header';
+    skHeader.innerHTML = '<h2 class="ee-title">Select skills</h2><div class="ee-subtitle">// pick your competencies</div>';
+
+    var skSearch = document.createElement('input');
+    skSearch.className = 'ee-pub-search';
+    skSearch.type = 'text';
+    skSearch.placeholder = 'Search skills...';
+    skSearch.setAttribute('aria-label', 'Search skills');
+
+    var skList = document.createElement('div');
+    skList.className = 'ee-pub-list';
+    skList.id = 'eeSkillList';
+
+    var skCount = document.createElement('div');
+    skCount.className = 'ee-pub-count';
+    skCount.id = 'eeSkillCount';
+    skCount.innerHTML = '<span>0 of 0 selected</span><span><a id="eeSkillSelAll">Select all</a> &middot; <a id="eeSkillClear">Clear</a></span>';
+
+    var skFooter = document.createElement('div');
+    skFooter.className = 'ee-step2-footer';
+    var skBack = document.createElement('button');
+    skBack.className = 'ee-step2-back';
+    skBack.textContent = '\u2190 Back';
+    var skNext = document.createElement('button');
+    skNext.className = 'ee-step2-gen';
+    skNext.id = 'eeSkillNext';
+    skNext.textContent = 'Generate PDF \u2192';
+    skFooter.appendChild(skBack);
+    skFooter.appendChild(skNext);
+
+    stepSkills.appendChild(skDots);
+    stepSkills.appendChild(skHeader);
+    stepSkills.appendChild(skSearch);
+    stepSkills.appendChild(skList);
+    stepSkills.appendChild(skCount);
+    stepSkills.appendChild(skFooter);
+
+    skSearch.addEventListener('input', function () {
+      var q = this.value.toLowerCase();
+      skList.querySelectorAll('.ee-skill-item').forEach(function (row) {
+        row.classList.toggle('is-hidden', q && !row.textContent.toLowerCase().includes(q));
+      });
+      skList.querySelectorAll('.ee-skill-head').forEach(function (head) {
+        var g = head.dataset.group;
+        var visible = skList.querySelectorAll('.ee-skill-item[data-group="' + g + '"]:not(.is-hidden)').length;
+        head.classList.toggle('is-hidden', !visible);
+      });
+    });
+
+    skBack.addEventListener('click', function () {
+      stepSkills.classList.remove('is-visible');
+      step1.style.display = '';
+      closeBtn.style.display = '';
+    });
+
+    skNext.addEventListener('click', function () {
+      selectedSkills = readSelectedSkills();
+      stepSkills.classList.remove('is-visible');
+      step1.style.display = '';
+      closeBtn.style.display = '';
+      continueToPubs();
+    });
+
+    skCount.querySelector('#eeSkillSelAll').addEventListener('click', function (e) {
+      e.preventDefault();
+      skList.querySelectorAll('.ee-pub-row:not(.is-hidden) .ee-pub-cb').forEach(function (cb) { cb.classList.add('is-checked'); });
+      updateSkillCount();
+    });
+    skCount.querySelector('#eeSkillClear').addEventListener('click', function (e) {
+      e.preventDefault();
+      skList.querySelectorAll('.ee-pub-cb').forEach(function (cb) { cb.classList.remove('is-checked'); });
+      updateSkillCount();
+    });
+
     card.appendChild(closeBtn);
     card.appendChild(step1);
     card.appendChild(step2);
+    card.appendChild(stepSkills);
     overlay.appendChild(card);
 
     overlay.addEventListener('click', function (e) {
@@ -296,9 +422,117 @@
     var step1 = document.getElementById('eeStep1');
     var step2 = document.getElementById('eeStep2');
     var closeBtn = overlay.querySelector('.ee-close');
+    var dots = step2 ? step2.querySelector('.ee-step-dots') : null;
+    if (dots) {
+      dots.innerHTML = selectedSkills
+        ? '<span class="ee-step-dot ee-step-dot-done">1</span><span class="ee-step-dot ee-step-dot-done">2</span><span class="ee-step-dot ee-step-dot-active">3</span>'
+        : '<span class="ee-step-dot ee-step-dot-done">1</span><span class="ee-step-dot ee-step-dot-active">2</span>';
+    }
     if (step1) step1.style.display = 'none';
     if (closeBtn) closeBtn.style.display = 'none';
     if (step2) step2.classList.add('is-visible');
+  }
+
+  // -- Skills picker --
+
+  function syncSkillPick() {
+    var pick = document.getElementById('eeSkillPick');
+    if (!pick) return;
+    var show = expertiseMode !== 'courses';
+    pick.style.display = show ? '' : 'none';
+    if (!show) {
+      var input = document.getElementById('eeSkillPickInput');
+      if (input) input.checked = false;
+      chooseSkills = false;
+    }
+  }
+
+  function updateSkillCount() {
+    var list = document.getElementById('eeSkillList');
+    if (!list) return;
+    var total = list.querySelectorAll('.ee-skill-item').length;
+    var checked = list.querySelectorAll('.ee-skill-item .ee-pub-cb.is-checked').length;
+    var countEl = document.querySelector('#eeSkillCount span:first-child');
+    if (countEl) countEl.textContent = checked + ' of ' + total + ' selected';
+    list.querySelectorAll('.ee-skill-head').forEach(function (head) {
+      var g = head.dataset.group;
+      var items = list.querySelectorAll('.ee-skill-item[data-group="' + g + '"]');
+      var on = list.querySelectorAll('.ee-skill-item[data-group="' + g + '"] .ee-pub-cb.is-checked');
+      var cb = head.querySelector('.ee-pub-cb');
+      if (cb) cb.classList.toggle('is-checked', items.length > 0 && items.length === on.length);
+    });
+    var next = document.getElementById('eeSkillNext');
+    if (next) next.disabled = checked === 0;
+  }
+
+  function populateSkillsStep(groups) {
+    var list = document.getElementById('eeSkillList');
+    if (!list) return;
+    list.innerHTML = '';
+    if (!groups.length) {
+      list.innerHTML = '<div class="ee-pub-empty">No skills found.</div>';
+      return;
+    }
+    groups.forEach(function (g, gi) {
+      var head = document.createElement('div');
+      head.className = 'ee-pub-row ee-skill-head';
+      head.dataset.group = String(gi);
+      head.innerHTML = '<div class="ee-pub-cb is-checked"></div><div><div class="ee-pub-row-title">' +
+        (g.title || 'Skills').replace(/</g, '&lt;') + '</div></div>';
+      head.addEventListener('click', function () {
+        var cb = head.querySelector('.ee-pub-cb');
+        var turnOn = !cb.classList.contains('is-checked');
+        list.querySelectorAll('.ee-skill-item[data-group="' + gi + '"] .ee-pub-cb').forEach(function (icb) {
+          icb.classList.toggle('is-checked', turnOn);
+        });
+        updateSkillCount();
+      });
+      list.appendChild(head);
+
+      g.items.forEach(function (item) {
+        var row = document.createElement('div');
+        row.className = 'ee-pub-row ee-skill-item';
+        row.dataset.group = String(gi);
+        row.dataset.item = item;
+        var cb = document.createElement('div');
+        cb.className = 'ee-pub-cb is-checked';
+        var info = document.createElement('div');
+        info.innerHTML = '<div class="ee-pub-row-title">' + item.replace(/</g, '&lt;') + '</div>';
+        row.appendChild(cb);
+        row.appendChild(info);
+        row.addEventListener('click', function () {
+          cb.classList.toggle('is-checked');
+          updateSkillCount();
+        });
+        list.appendChild(row);
+      });
+    });
+    updateSkillCount();
+  }
+
+  function readSelectedSkills() {
+    var list = document.getElementById('eeSkillList');
+    var groups = collectSkillGroups();
+    if (!list) return groups;
+    return groups.map(function (g, gi) {
+      var kept = [];
+      list.querySelectorAll('.ee-skill-item[data-group="' + gi + '"]').forEach(function (row) {
+        if (row.querySelector('.ee-pub-cb.is-checked')) kept.push(row.dataset.item);
+      });
+      return { title: g.title, items: kept };
+    });
+  }
+
+  function showSkillsStep() {
+    populateSkillsStep(collectSkillGroups());
+    var next = document.getElementById('eeSkillNext');
+    if (next) next.textContent = (pubMode === 'custom' && toggleState.publications) ? 'Next \u2192' : 'Generate PDF \u2192';
+    var step1 = document.getElementById('eeStep1');
+    var stepSkills = document.getElementById('eeStepSkills');
+    var closeBtn = overlay.querySelector('.ee-close');
+    if (step1) step1.style.display = 'none';
+    if (closeBtn) closeBtn.style.display = 'none';
+    if (stepSkills) stepSkills.classList.add('is-visible');
   }
 
   function openModal() {
@@ -307,17 +541,22 @@
       buildModal();
     } else {
       initState();
-      overlay.querySelectorAll('input[type="checkbox"]').forEach(function (cb) { cb.checked = true; });
+      overlay.querySelectorAll('.ee-toggle input[type="checkbox"]').forEach(function (cb) { cb.checked = true; });
       overlay.querySelectorAll('.ee-pub-select').forEach(function (sel) { sel.selectedIndex = 0; });
+      var skillPickInput = document.getElementById('eeSkillPickInput');
+      if (skillPickInput) skillPickInput.checked = false;
       var sub = document.getElementById('eePubSub');
       if (sub) sub.classList.add('is-open');
       var expSub = document.getElementById('eeExpSub');
       if (expSub) expSub.classList.add('is-open');
       var s2 = document.getElementById('eeStep2');
       if (s2) s2.classList.remove('is-visible');
+      var sk = document.getElementById('eeStepSkills');
+      if (sk) sk.classList.remove('is-visible');
       var s1 = document.getElementById('eeStep1');
       if (s1) s1.style.display = '';
     }
+    syncSkillPick();
     previousFocus = document.activeElement;
     requestAnimationFrame(function () {
       overlay.classList.add('is-open');
@@ -662,22 +901,25 @@
 
     // -- EXPERTISE --
     if (toggleState.expertise) {
+      var includeSkills = expertiseMode !== 'courses';
+      var includeCourses = expertiseMode !== 'skills';
       heading('Expertise');
-      var compCards = document.querySelectorAll('#expertise .comp-card');
-      var skills = [];
-      compCards.forEach(function (c) {
-        var t = c.querySelector('h3');
-        var p = c.querySelector('p');
-        if (t) skills.push(t.textContent.trim());
-        if (p) p.textContent.split(/[·,]/).forEach(function (s) {
-          var tr = s.trim(); if (tr && skills.indexOf(tr) === -1) skills.push(tr);
+
+      if (includeSkills) {
+        var groups = selectedSkills || collectSkillGroups();
+        var skills = [];
+        groups.forEach(function (g) {
+          if (!g.items.length) return;
+          if (g.title && skills.indexOf(g.title) === -1) skills.push(g.title);
+          g.items.forEach(function (item) {
+            if (skills.indexOf(item) === -1) skills.push(item);
+          });
         });
-      });
+        if (skills.length) body(skills.map(function (s) { return sanitize(s); }).join('  \xB7  '));
+      }
 
-      body(skills.map(function (s) { return sanitize(s); }).join('  \xB7  '));
-
-      if (expertiseMode === 'skills_courses') {
-        y += 1;
+      if (includeCourses) {
+        if (includeSkills) y += 1;
         subHeading('Continuing Education');
         document.querySelectorAll('#expertise .course-list li').forEach(function (li) {
           var date = li.querySelector('.tl-date');
@@ -715,11 +957,9 @@
     // -- PUBLICATIONS --
     if (toggleState.publications && pubs && pubs.length) {
       heading('Publications');
-      if (pubMode !== 'custom') {
-        doc.setFont('helvetica', 'italic'); doc.setFontSize(6); rgb(ink3);
-        doc.text('Publication list generated automatically from OpenAlex. Errors may occur.', mL, y);
-        y += 4;
-      }
+      doc.setFont('helvetica', 'italic'); doc.setFontSize(6); rgb(ink3);
+      doc.text('Publication list generated automatically from OpenAlex. Errors and omissions may occur.', mL, y);
+      y += 4;
       pubs.forEach(function (p) {
         var year = p.publication_year || '';
         var title = sanitize(p.title || 'Untitled');
@@ -820,8 +1060,17 @@
       });
   }
 
-  // -- Main generate handler (conditional: step 2 or direct) --
+  // -- Main generate handler: skills picker first, then publications --
   function generatePDF() {
+    selectedSkills = null;
+    if (toggleState.expertise && chooseSkills && expertiseMode !== 'courses') {
+      showSkillsStep();
+      return;
+    }
+    continueToPubs();
+  }
+
+  function continueToPubs() {
     if (pubMode === 'custom' && toggleState.publications) {
       var btn = document.getElementById('eeGenBtn');
       btn.disabled = true;

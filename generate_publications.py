@@ -316,6 +316,7 @@ def render_html(author: Dict[str, Any], works: List[Dict[str, Any]],
           <div class="section-gutter"><span class="eyebrow">// 03  All publications</span></div>
           <div class="section-body">
             <h2>Peer-reviewed publications</h2>
+            <p class="section-sub" style="font-size:11px;font-style:italic;color:var(--ink-3)">This publication list is generated automatically from OpenAlex and may contain occasional errors or omissions.</p>
             {chip_bar}
             <input type="text" id="searchBox" onkeyup="filterPublications()" placeholder="Search publications&hellip;" class="pubs-search" />
             <button id="toggleAllBtn" onclick="toggleAll()" class="btn btn-outline" style="margin-bottom:18px">Expand All</button>

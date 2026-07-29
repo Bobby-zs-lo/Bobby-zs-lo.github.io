@@ -391,6 +391,9 @@ ul { list-style: none; }
 /* Publications sub-option */
 .ee-pub-sub { overflow: hidden; max-height: 0; transition: max-height .2s ease; padding-left: 4px; }
 .ee-pub-sub.is-open { max-height: 50px; }
+.ee-exp-sub.is-open { max-height: 110px; }
+.ee-sub-check { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 12px; color: var(--ink-2); cursor: pointer; }
+.ee-sub-check input { width: 14px; height: 14px; accent-color: var(--accent); cursor: pointer; }
 .ee-pub-select {
   margin-top: 6px; font-family: inherit; font-size: 12px;
   padding: 4px 8px; border: 1px solid var(--rule); border-radius: 6px;
@@ -465,6 +468,10 @@ ul { list-style: none; }
 }
 .ee-pub-cb.is-checked { background: var(--accent); border-color: var(--accent); }
 .ee-pub-cb.is-checked::after { content: '✓'; color: var(--paper); font-size: 11px; font-weight: 700; }
+
+.ee-skill-head { border-bottom: 1px solid var(--rule); margin-bottom: 2px; }
+.ee-skill-head .ee-pub-row-title { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-2); }
+.ee-skill-item { padding-left: 28px; }
 
 .ee-pub-row-title { font-size: 13px; font-weight: 500; color: var(--ink); line-height: 1.35; }
 .ee-pub-row-meta { font-size: 11px; color: var(--ink-3); font-style: italic; margin-top: 2px; }
