@@ -1888,5 +1888,35 @@
     "summary": "Testing a standard MRSA decolonization treatment showed that while it successfully cleared the bacteria in most carriers, it also caused long-lasting disruptions to their nasal microbiomes.",
     "summary_generated_at": "2026-05-24T17:48:04.781331+00:00",
     "summary_model": "gemini-3.5-flash"
+  },
+  "https://openalex.org/W7171768761": {
+    "abstract": "ABSTRACT Background and Aims Intestinal ultrasound (IUS) is used to monitor inflammatory bowel disease (IBD), but bowel wall thickness (BWT) measurements are operator dependent and hard to standardize. The aim was to develop a system for identifying the bowel wall and measuring BWT, while accounting for interobserver disagreement. Methods Two U‐Net‐based networks were trained on 570 annotated images. On an independent test set of 55 images, each annotated by four IBUS‐certified experts, model measurements were compared with the experts' mean and span and used to classify normal versus abnormal BWT using a 3 mm cut‐off. A blinded “guessing test” was performed in which experts were asked to distinguish model from expert calipers. Generalizability of bowel wall localization was assessed on 180 external images from the C‐TRUS dataset. Results On the test set, mean distance between model and experts' mean was 1.0 mm (SD 1.1 mm); mean distance to the experts' span was 0.4 mm (SD 0.9 mm). Classification of abnormal BWT achieved accuracy 0.77, sensitivity 0.69, and specificity 0.94. Across the 3 mm threshold, expert spans crossed the cut‐off in 14 images, and the model misclassified 12 images. Experts identified AI versus human calipers with a mean accuracy of 69%, and in 61% of images at least one expert misclassified the source. On C‐TRUS, bowel wall was detected in 98% of images, with an estimated deviation of 0.5–1.4 mm. Conclusions Interpretable BWT measurements close to multiexpert reference values were obtained, supporting further development toward an end‐to‐end AI‐assisted IUS system in IBD.",
+    "abstract_source": "openalex",
+    "doi": "10.1002/jcc5.70062",
+    "last_verified_at": "2026-08-01T05:32:57.597557+00:00",
+    "mesh_terms": [],
+    "openalex_concepts": [
+      "Medicine",
+      "Inflammatory bowel disease",
+      "Ultrasound",
+      "Calipers",
+      "Generalizability theory",
+      "Radiology",
+      "Diagnostic accuracy",
+      "Limits of agreement",
+      "Artificial intelligence",
+      "Nuclear medicine",
+      "Test set",
+      "Sensitivity (control systems)",
+      "Crohn disease",
+      "Data set",
+      "Biopsy",
+      "Ulcerative colitis",
+      "Reference values"
+    ],
+    "pmid": null,
+    "summary": "An AI system tested for measuring bowel wall thickness on intestinal ultrasound scans of inflammatory bowel disease patients produced measurements that closely matched those of medical experts.",
+    "summary_generated_at": "2026-08-01T05:32:57.597557+00:00",
+    "summary_model": "gemini-3.5-flash"
   }
 }
