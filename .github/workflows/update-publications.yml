@@ -13,12 +13,20 @@ on:
 permissions:
   contents: write
 
+# Two of these must never push to main at the same time.
+concurrency:
+  group: update-site-content
+  cancel-in-progress: false
+
 jobs:
   update:
     runs-on: ubuntu-latest
     steps:
       - name: Check out
         uses: actions/checkout@v5
+        with:
+          ref: main        # re-runs default to the original SHA, which is stale
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -48,11 +56,54 @@ jobs:
         run: python generate_index.py
 
       - name: Commit changes
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "Automated update: publications + cache + index"
-          branch: main
-          file_pattern: "publications.html publications.xml index.html data/abstract_cache.json"
-          commit_user_name: "GitHub Actions Bot"
-          commit_user_email: "actions@github.com"
-          commit_author: "GitHub Actions Bot <actions@github.com>"
+        env:
+          GENERATED_FILES: "publications.html publications.xml index.html data/abstract_cache.json"
+          COMMIT_MESSAGE: "Automated update: publications + cache + index"
+        run: |
+          set -euo pipefail
+          git config user.name  "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+
+          git add -A -- $GENERATED_FILES
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "$COMMIT_MESSAGE"
+
+          # Snapshot the generated output so it can be replayed onto a newer
+          # main if anything lands there while this job is running. Replaying
+          # the files beats rebasing: the generated output is the desired end
+          # state, so there is nothing to resolve.
+          snapshot="$RUNNER_TEMP/generated"
+          for f in $GENERATED_FILES; do
+            [ -e "$f" ] || continue
+            mkdir -p "$snapshot/$(dirname "$f")"
+            cp "$f" "$snapshot/$f"
+          done
+
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              echo "Pushed on attempt $attempt."
+              exit 0
+            fi
+
+            echo "Push rejected on attempt $attempt; replaying onto current origin/main."
+            git fetch origin main
+            git reset --hard origin/main
+            for f in $GENERATED_FILES; do
+              [ -e "$snapshot/$f" ] || continue
+              mkdir -p "$(dirname "$f")"
+              cp "$snapshot/$f" "$f"
+            done
+
+            git add -A -- $GENERATED_FILES
+            if git diff --cached --quiet; then
+              echo "origin/main already matches the generated output."
+              exit 0
+            fi
+            git commit -m "$COMMIT_MESSAGE"
+          done
+
+          echo "Could not push after 3 attempts." >&2
+          exit 1
