@@ -1486,6 +1486,23 @@
      API restrictions in the Google Cloud console, not by secrecy. Override
      with ?key=… for local testing against a different project.
      ---------------------------------------------------------------------- */
+  /* NOT A LEAKED SECRET — please read before "fixing" this.
+     This is a Google Maps *browser* key. Every client-side Google map on the
+     web ships its key in page source; it cannot be hidden, and rotating it
+     would only publish a new one. Automated scanners (incl. GitHub secret
+     scanning) flag any `AIza…` string because they cannot tell a browser key
+     from a server key.
+
+     It is protected by restriction, not secrecy:
+       • HTTP referrers  → bobbylo.dk, www.bobbylo.dk, bobby-zs-lo.github.io
+       • API targets     → Maps JS, Places (New), Directions, Geocoding only
+     Verified: called without a referrer it returns
+     `API_KEY_HTTP_REFERRER_BLOCKED`, and every other Google API is refused.
+
+     The residual risk is spend, not data: the `Referer` header is
+     client-controlled and can be forged, so per-SKU daily quota caps in Google
+     Cloud Console are the real ceiling. A server-side proxy would remove the
+     key from the client altogether — see HANDOFF.md. */
   const DEFAULT_API_KEY = 'AIzaSyBfBnEk8c-xxWlLleg7Y-vVZ4LRQ1hAg9A';
   const API_KEY = new URLSearchParams(location.search).get('key') || DEFAULT_API_KEY;
 
