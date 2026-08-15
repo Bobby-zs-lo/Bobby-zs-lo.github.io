@@ -1,0 +1,793 @@
+/* ============================================
+   Bobby Lo — Apps / Studio page
+   Paper shell (inherits style.css tokens) +
+   full-bleed dark product "stages".
+   ============================================ */
+
+/* ---------- page-local tokens ---------- */
+.apps-page {
+  --stage-bg:    #07070B;
+  --stage-fg:    #F2F2F5;
+  --stage-dim:   #8E8E9C;
+  --stage-line:  rgba(255, 255, 255, 0.10);
+  --accent-app:  #C4302B;          /* overridden per stage */
+  --ease:        cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ============================================
+   1. HERO — "lights out"
+
+   The hero does not hand off to a dark section; it turns its own lights off.
+   .lights is a tall scroll track, .apps-hero sticks inside it, and apps.js
+   writes a 0→1 progress number into --dim as you scroll the track. Every colour
+   below is a mix driven by that one number, so the whole room dims together.
+   With JS off or reduced motion on, --dim stays 0 and the hero is simply paper.
+   ============================================ */
+.lights { position: relative; height: 210vh; }
+/* the outro resolves faster than the hero, so it needs less track to do it in */
+.lights--out { height: 165vh; }
+
+.apps-hero {
+  position: sticky;
+  top: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  background-color: color-mix(in oklab, #07070B calc(var(--dim, 0) * 100%), var(--paper));
+  color: color-mix(in oklab, #F2F2F5 calc(var(--dimfg, 0) * 100%), var(--ink));
+}
+
+/* dark rules on paper, fading out … */
+.apps-hero::after,
+.apps-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-size: 72px 72px;
+  mask-image: radial-gradient(ellipse 70% 60% at 70% 30%, #000, transparent 75%);
+}
+.apps-hero::after {
+  background-image:
+    linear-gradient(var(--rule) 1px, transparent 1px),
+    linear-gradient(90deg, var(--rule) 1px, transparent 1px);
+  opacity: calc(0.5 * (1 - var(--dim, 0)));
+}
+/* … and light rules on black, fading in */
+.apps-hero::before {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, .07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, .07) 1px, transparent 1px);
+  opacity: calc(var(--dim, 0));
+}
+
+/* the accent light that comes up as the room goes down */
+.hero-glow {
+  position: absolute;
+  right: -8%;
+  top: 14%;
+  width: min(680px, 70vw);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #B22F26;
+  filter: blur(120px);
+  pointer-events: none;
+  opacity: calc(var(--dim, 0) * 0.45);
+}
+
+.apps-hero-inner { position: relative; z-index: 1; max-width: 860px; }
+
+.apps-hero .eyebrow {
+  color: color-mix(in oklab, #E0574F calc(var(--dimfg, 0) * 100%), var(--accent));
+}
+
+.apps-hero h1 {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(42px, 7.2vw, 82px);
+  font-weight: 300;
+  line-height: 1.0;
+  letter-spacing: -2.4px;
+  margin: 20px 0 24px;
+  max-width: 15ch;
+  color: inherit;
+}
+.apps-hero h1 em {
+  font-style: italic;
+  color: color-mix(in oklab, #E0574F calc(var(--dimfg, 0) * 100%), var(--accent));
+}
+
+.apps-lede {
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--ink-2);
+  max-width: 58ch;
+}
+.apps-hero .apps-lede { color: inherit; opacity: .72; }
+
+/* index of apps */
+.apps-index {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 28px;
+  margin-top: 44px;
+  padding-top: 26px;
+  border-top: 1px solid color-mix(in oklab, currentColor 16%, transparent);
+}
+.apps-index a {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 1.2px;
+  color: inherit;
+  opacity: .5;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 9px;
+  transition: opacity .2s ease, color .2s ease;
+}
+.apps-index a b { font-weight: 600; letter-spacing: 0; opacity: 1; }
+.apps-index a:hover {
+  opacity: 1;
+  color: color-mix(in oklab, #E0574F calc(var(--dimfg, 0) * 100%), var(--accent));
+}
+
+.scroll-cue {
+  margin-top: 56px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2.4px;
+  color: inherit;
+  opacity: calc(0.55 * (1 - var(--dim, 0)));
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.scroll-cue span {
+  display: block;
+  width: 1px;
+  height: 34px;
+  background: linear-gradient(currentColor, transparent);
+  animation: cue 2.4s var(--ease) infinite;
+}
+@keyframes cue { 0%,100% { transform: scaleY(.4); opacity:.3 } 50% { transform: scaleY(1); opacity:1 } }
+
+/* Without the scroll morph there is no transition to smooth, so each morphing
+   block simply renders its resting state: the hero dark, the outro on paper. */
+.no-morph .apps-hero    { --dim: 1; --dimfg: 1; }
+.no-morph .capabilities { --dim: 1; --dimfg: 1; --grid: 1; }
+
+/* ---------- nav follows the ground beneath it ----------
+   The nav is sticky and this page spends most of its length on black, so it
+   inverts while it is over the dark stretch instead of sitting there as a
+   bright bar. apps.js toggles the class. */
+.apps-page .nav {
+  transition: background-color .4s var(--ease), border-color .4s var(--ease);
+}
+.apps-page .nav.nav--dark {
+  background: rgba(7, 7, 11, .78);
+  border-bottom-color: rgba(255, 255, 255, .10);
+}
+.apps-page .nav.nav--dark .nav-brand { color: #F2F2F5; }
+.apps-page .nav.nav--dark .nav-links a { color: rgba(242, 242, 245, .68); }
+.apps-page .nav.nav--dark .nav-links a:hover,
+.apps-page .nav.nav--dark .nav-links a.active { color: #FFF; }
+
+/* ============================================
+   2. DARK STAGES
+   ============================================ */
+.stage {
+  position: relative;
+  background: var(--stage-bg);
+  color: var(--stage-fg);
+  padding: 120px 0;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* soft accent light fields, moved by parallax JS */
+.stage-glow {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(110px);
+  pointer-events: none;
+  z-index: 0;
+  will-change: transform;
+}
+.stage-glow.a { width: 560px; height: 560px; top: -160px; left: -140px; opacity: .40; }
+.stage-glow.b { width: 480px; height: 480px; bottom: -200px; right: -160px; opacity: .26; }
+
+.stage-inner {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: center;
+}
+.stage.flip .stage-inner { direction: rtl; }
+.stage.flip .stage-copy,
+.stage.flip .stage-visual { direction: ltr; }
+
+/* --- copy column --- */
+.stage-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--stage-dim);
+}
+.stage-domain {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--accent-app);
+  border: 1px solid color-mix(in oklab, var(--accent-app) 40%, transparent);
+  background: color-mix(in oklab, var(--accent-app) 12%, transparent);
+  padding: 7px 12px;
+  border-radius: 999px;
+}
+.stage-domain::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent-app);
+  box-shadow: 0 0 10px var(--accent-app);
+}
+
+.stage h2 {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(34px, 5vw, 56px);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: -1.8px;
+  color: var(--stage-fg);
+  margin: 18px 0 6px;
+}
+.stage .stage-tagline {
+  font-size: 18px;
+  line-height: 1.5;
+  color: var(--accent-app);
+  font-weight: 500;
+  margin-bottom: 18px;
+}
+.stage p.stage-body {
+  font-size: 15.5px;
+  line-height: 1.8;
+  color: var(--stage-dim);
+  max-width: 46ch;
+}
+
+.stage-feats { margin-top: 26px; display: grid; gap: 11px; }
+.stage-feats li {
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: #C6C6D2;
+  padding-left: 24px;
+  position: relative;
+}
+.stage-feats li::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 8px;
+  width: 9px; height: 9px;
+  border-radius: 2px;
+  background: var(--accent-app);
+  transform: rotate(45deg);
+}
+
+.stage-tech {
+  margin-top: 26px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.stage-tech span {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .6px;
+  color: var(--stage-dim);
+  border: 1px solid var(--stage-line);
+  border-radius: 5px;
+  padding: 6px 10px;
+}
+
+.stage-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 32px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #07070B;
+  background: var(--accent-app);
+  padding: 14px 22px;
+  border-radius: 10px;
+  transition: transform .22s var(--ease), box-shadow .22s var(--ease), color .2s;
+}
+.stage-cta:hover {
+  color: #07070B;
+  transform: translateY(-3px);
+  box-shadow: 0 14px 34px -12px var(--accent-app);
+}
+.stage-cta .arr { transition: transform .22s var(--ease); }
+.stage-cta:hover .arr { transform: translateX(4px); }
+
+.stage-cta.ghost {
+  background: transparent;
+  color: var(--stage-fg);
+  border: 1px solid var(--stage-line);
+  margin-left: 10px;
+}
+.stage-cta.ghost:hover { color: #fff; border-color: var(--accent-app); box-shadow: none; }
+
+/* ============================================
+   3. VISUAL COLUMN — device frames
+   ============================================ */
+.stage-visual { position: relative; will-change: transform; }
+
+.frame {
+  border-radius: 14px;
+  border: 1px solid var(--stage-line);
+  background: #0C0C13;
+  overflow: hidden;
+  box-shadow: 0 40px 90px -40px rgba(0, 0, 0, .9);
+}
+.frame-bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--stage-line);
+  background: rgba(255, 255, 255, .03);
+}
+.frame-bar i { width: 9px; height: 9px; border-radius: 50%; background: #2E2E38; display: block; }
+.frame-bar .url {
+  margin-left: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  color: var(--stage-dim);
+  letter-spacing: .4px;
+}
+.frame img { width: 100%; height: auto; display: block; }
+
+/* floating stat chip over a frame */
+.chip {
+  position: absolute;
+  background: rgba(12, 12, 19, .88);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--stage-line);
+  border-radius: 12px;
+  padding: 13px 16px;
+  box-shadow: 0 20px 50px -20px rgba(0, 0, 0, .9);
+}
+.chip b {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 19px;
+  color: var(--accent-app);
+  line-height: 1.1;
+}
+.chip small {
+  font-size: 10.5px;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--stage-dim);
+}
+
+/* ---- phone frame (timer) ---- */
+.phone {
+  width: min(300px, 78%);
+  margin: 0 auto;
+  aspect-ratio: 9 / 17.5;
+  border-radius: 34px;
+  border: 1px solid var(--stage-line);
+  background: #05050A;
+  padding: 9px;
+  position: relative;
+  box-shadow: 0 50px 110px -46px rgba(0, 0, 0, 1), inset 0 1px 0 rgba(255, 255, 255, .07);
+}
+.phone iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 26px;
+  display: block;
+  background: #0a0a1a;
+}
+.phone::before {
+  content: "";
+  position: absolute;
+  top: 18px; left: 50%;
+  transform: translateX(-50%);
+  width: 78px; height: 5px;
+  border-radius: 3px;
+  background: #16161F;
+  z-index: 2;
+}
+
+/* pixel-art thumbnails row (timer themes) */
+.pixel-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.pixel-row img {
+  width: 48px;
+  height: 64px;                      /* source thumbs are 96×128 */
+  image-rendering: pixelated;
+  border: 1px solid var(--stage-line);
+  border-radius: 8px;
+  background: #0a0a1a;
+  transition: transform .2s var(--ease), border-color .2s;
+}
+.pixel-row img:hover { transform: translateY(-4px) scale(1.06); border-color: var(--accent-app); }
+
+/* ============================================
+   4. RACE ARENA — scrolling parallax + sprites
+   ============================================ */
+.arena {
+  position: relative;
+  border-radius: 16px;
+  border: 1px solid var(--stage-line);
+  overflow: hidden;
+  aspect-ratio: 16 / 11;
+  background: #10121C;
+  image-rendering: pixelated;
+  box-shadow: 0 40px 90px -40px rgba(0, 0, 0, .9);
+}
+/* The backdrop is one wide strip tiled horizontally. It is scrolled by
+   translating exactly one tile width — measured in JS into --tile, because the
+   tile's rendered width depends on the arena's height, not its width. */
+.arena-bg {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: calc(100% + var(--tile, 2000px));
+  background-image: url('image/apps/race-bg-strip.webp');
+  background-repeat: repeat-x;
+  background-size: auto 100%;
+  image-rendering: pixelated;
+  animation: arena-scroll 26s linear infinite;
+  will-change: transform;
+}
+@keyframes arena-scroll { to { transform: translate3d(calc(-1 * var(--tile, 2000px)), 0, 0); } }
+
+.arena-vig {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(7,7,11,.85), transparent 55%);
+  pointer-events: none;
+}
+
+.lane {
+  position: absolute;
+  left: 0; right: 0;
+  height: 25%;
+  display: flex;
+  align-items: flex-end;
+}
+.lane::after {                                   /* lane divider */
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, .10);
+}
+.lane.l1 { top: 4%; }
+.lane.l2 { top: 29%; }
+.lane.l3 { top: 54%; }
+
+/* sprite: horizontal webp spritesheet stepped with CSS */
+/* Each sprite sheet is 12 frames laid out horizontally. Sizing the background
+   to 1200% makes one frame exactly one element wide; stepping background-position
+   from 0% to 100%*12/11 then lands on all twelve frames and no others. */
+.sprite {
+  height: 82%;
+  align-self: flex-end;
+  margin-bottom: 5%;
+  background-repeat: no-repeat;
+  background-size: 1200% 100%;
+  /* these frames are 154x200 and get drawn at roughly a third of that, so
+     smooth downscaling reads better here than nearest-neighbour shimmer */
+  image-rendering: auto;
+  will-change: transform, background-position;
+}
+.sprite.knighty {
+  aspect-ratio: 0.77;
+  background-image: url('image/apps/race-knighty-move.webp');
+  animation: sp12 .75s steps(12) infinite, run-a 9s linear infinite;
+}
+.sprite.gobbo {
+  aspect-ratio: 0.76;
+  background-image: url('image/apps/race-gobbo-move.webp');
+  animation: sp12 .68s steps(12) infinite, run-b 11s linear infinite;
+}
+.sprite.toro {
+  aspect-ratio: 0.805;
+  background-image: url('image/apps/race-toro-move.webp');
+  animation: sp12 .8s steps(12) infinite, run-c 13s linear infinite;
+}
+@keyframes sp12 { from { background-position-x: 0%; } to { background-position-x: 109.0909%; } }
+@keyframes run-a { from { transform: translateX(-90px) } to { transform: translateX(112cqw) } }
+@keyframes run-b { from { transform: translateX(-140px) } to { transform: translateX(112cqw) } }
+@keyframes run-c { from { transform: translateX(-200px) } to { transform: translateX(112cqw) } }
+.arena { container-type: inline-size; }
+
+/* finish line */
+.finish {
+  position: absolute;
+  top: 0; bottom: 0;
+  right: 9%;
+  width: 12px;
+  background:
+    repeating-conic-gradient(#F4F4F6 0 25%, #101018 0 50%) 0 0 / 12px 12px;
+  opacity: .85;
+}
+
+/* star HUD */
+.arena-hud {
+  position: absolute;
+  top: 12px; left: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 1.4px;
+  color: #FFD75E;
+  background: rgba(7, 7, 11, .7);
+  border: 1px solid rgba(255, 215, 94, .3);
+  padding: 6px 11px;
+  border-radius: 6px;
+  z-index: 3;
+}
+
+/* ============================================
+   5. ORBIT UI MOCK
+
+   Orbit's real interface is light — paper ground, serif wordmark, mono meta,
+   outlined check-in buttons — so the mock is built light and floated on the
+   dark stage rather than recoloured to match the stage.
+   ============================================ */
+.ui-mock {
+  background: #FDFCFA;
+  color: #16130F;
+  padding: 22px 22px 12px;
+}
+.ui-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: #9A938C;
+}
+.ui-wordmark {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 30px;
+  font-weight: 500;
+  letter-spacing: -1px;
+  line-height: 1.1;
+  margin: 6px 0 2px;
+}
+.ui-sub { font-size: 13px; color: #6B635C; }
+
+.ui-tabs {
+  display: flex;
+  gap: 18px;
+  margin: 18px 0 4px;
+  border-bottom: 1px solid rgba(0, 0, 0, .08);
+}
+.ui-tabs span {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: #A39B94;
+  padding-bottom: 9px;
+}
+.ui-tabs span.on { color: #16130F; box-shadow: inset 0 -2px 0 #16130F; }
+
+.ui-row {
+  display: grid;
+  grid-template-columns: 8px 1fr 74px auto;
+  gap: 12px;
+  align-items: center;
+  padding: 13px 2px;
+  border-bottom: 1px solid rgba(0, 0, 0, .06);
+  transition: background .25s var(--ease);
+}
+.ui-row:hover { background: rgba(0, 0, 0, .022); }
+.ui-row:last-child { border-bottom: 0; }
+
+.ui-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3E9B6A;
+}
+.ui-dot.warn { background: #D8A13A; }
+
+.ui-name { font-size: 14.5px; font-weight: 600; letter-spacing: -.2px; }
+.ui-sub2 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #A39B94;
+  margin-top: 4px;
+}
+
+.ui-bar {
+  height: 2px;
+  background: rgba(0, 0, 0, .10);
+  overflow: hidden;
+}
+.ui-bar i {
+  display: block;
+  height: 100%;
+  background: #16130F;
+  transform-origin: left;
+  animation: grow 1.6s var(--ease) both;
+}
+@keyframes grow { from { transform: scaleX(0) } }
+
+.ui-checkin {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #16130F;
+  border: 1px solid rgba(0, 0, 0, .18);
+  border-radius: 999px;
+  padding: 6px 12px;
+  white-space: nowrap;
+}
+
+/* ============================================
+   6. CAPABILITY OUTRO — "lights on"
+
+   The same morph as the hero, run the other way: the page comes back up to
+   paper on this block rather than at a seam between two blocks. --dim 0 is the
+   dark end, 1 is paper, and the capability grid only resolves once the lights
+   are actually up (--grid).
+   ============================================ */
+.capabilities {
+  position: sticky;
+  top: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  padding: var(--section-y) 0;
+  background-color: color-mix(in oklab, var(--paper) calc(var(--dim, 0) * 100%), #0B0910);
+  color: color-mix(in oklab, var(--ink) calc(var(--dimfg, 0) * 100%), #F2F2F5);
+}
+.capabilities > .container { position: relative; z-index: 1; width: 100%; }
+
+.capabilities .eyebrow {
+  color: color-mix(in oklab, var(--accent) calc(var(--dimfg, 0) * 100%), #FFD75E);
+}
+.capabilities h2 { color: inherit; }
+.capabilities .apps-lede { color: inherit; opacity: .72; }
+
+/* the last stage's gold, going out as the room comes up */
+.outro-glow {
+  position: absolute;
+  left: -10%;
+  bottom: -20%;
+  width: min(700px, 72vw);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #FFA51E;
+  filter: blur(120px);
+  pointer-events: none;
+  opacity: calc((1 - var(--dim, 0)) * 0.35);
+}
+
+.cap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1px;
+  background: color-mix(in oklab, currentColor 12%, transparent);
+  border: 1px solid color-mix(in oklab, currentColor 12%, transparent);
+  margin-top: 40px;
+  opacity: var(--grid, 1);
+}
+.cap {
+  background: color-mix(in oklab, var(--paper) calc(var(--dim, 0) * 100%), #0B0910);
+  padding: 28px 24px;
+  transition: background .25s ease;
+}
+.cap:hover { background: color-mix(in oklab, currentColor 5%, transparent); }
+.cap h3 {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -.4px;
+  margin-bottom: 8px;
+  color: inherit;
+}
+.cap p { font-size: 14px; line-height: 1.7; color: inherit; opacity: .72; }
+.cap .n {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--ochre);
+  display: block;
+  margin-bottom: 14px;
+}
+
+/* ============================================
+   7. MOTION / REVEAL
+   ============================================ */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity .8s var(--ease), transform .8s var(--ease);
+}
+.reveal.in { opacity: 1; transform: none; }
+.reveal.d1 { transition-delay: .08s }
+.reveal.d2 { transition-delay: .16s }
+.reveal.d3 { transition-delay: .24s }
+
+/* ============================================
+   8. RESPONSIVE
+   ============================================ */
+@media (max-width: 900px) {
+  .stage { padding: 84px 0; }
+  .stage-inner { grid-template-columns: 1fr; gap: 40px; }
+  .stage.flip .stage-inner { direction: ltr; }
+  .stage-visual { order: 2; }
+  .lights { height: 190vh; }
+  .apps-hero { min-height: 100svh; }
+
+  /* the stacked capability grid outgrows a sticky viewport — see apps.js */
+  .lights:last-of-type { height: auto; }
+  .capabilities {
+    position: static;
+    min-height: 0;
+    display: block;
+    overflow: visible;
+  }
+  .outro-glow { display: none; }
+}
+
+@media (max-width: 520px) {
+  .chip { display: none; }
+  .stage-cta.ghost { margin-left: 0; margin-top: 10px; }
+}
+
+/* ============================================
+   9. REDUCED MOTION
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  /* No sticky morph: the tracks collapse and each block renders at rest —
+     see .no-morph above for the colours that go with it. */
+  .lights { height: auto; }
+  .apps-hero,
+  .capabilities {
+    position: static;
+    min-height: 0;
+    display: block;
+  }
+  .apps-hero { padding: 132px 0 88px; }
+  .hero-glow,
+  .outro-glow { display: none; }
+
+  .arena-bg,
+  .sprite,
+  .scroll-cue span,
+  .ui-bar i { animation: none !important; }
+  .sprite.knighty { transform: translateX(18%) }
+  .sprite.gobbo   { transform: translateX(44%) }
+  .sprite.toro    { transform: translateX(66%) }
+  .ui-bar i { transform: scaleX(.7) }
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .stage-glow { transform: none !important; }
+}

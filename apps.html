@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Apps &amp; Studio — Software built by Bobby Zhao Sheng Lo</title>
+
+  <meta name="description"
+    content="Four apps built end to end: Cake, Coffee &amp; Cadence (cycling routes to Danish bakeries), Orbit (project management with check-ins), Pixel Timer (an 8-bit focus timer) and Goldstar Runner (a task racing game for kids). All live, all free to use.">
+  <meta name="keywords"
+    content="Bobby Lo apps, ccc-bike.com, Cake Coffee Cadence, orbitproject.app, Orbit project manager, Pixel Timer, 8-bit timer, Goldstar Runner, web apps Denmark, React Firebase apps, cycling route planner Denmark">
+  <meta name="author" content="Bobby Zhao Sheng Lo">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="theme-color" content="#1A1614">
+  <meta name="color-scheme" content="light">
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="apps.css">
+  <link rel="canonical" href="https://bobbylo.dk/apps.html">
+  <link rel="icon" type="image/jpeg" href="image/profile-2026.jpg">
+  <link rel="apple-touch-icon" href="image/profile-2026.jpg">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Bobby Zhao Sheng Lo, MD, PhD">
+  <meta property="og:title" content="Apps &amp; Studio — Software built by Bobby Lo">
+  <meta property="og:description"
+    content="Four apps built end to end — a bakery-hunting route planner, a project manager, an 8-bit focus timer and a task racing game for kids.">
+  <meta property="og:url" content="https://bobbylo.dk/apps.html">
+  <meta property="og:image" content="https://bobbylo.dk/image/og-card.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "Apps & Studio — Software built by Bobby Zhao Sheng Lo",
+    "url": "https://bobbylo.dk/apps.html",
+    "author": { "@type": "Person", "name": "Bobby Zhao Sheng Lo" },
+    "hasPart": [
+      {
+        "@type": "WebApplication",
+        "name": "Cake, Coffee & Cadence",
+        "url": "https://www.ccc-bike.com/",
+        "applicationCategory": "TravelApplication",
+        "operatingSystem": "Web",
+        "description": "Plans cycling routes in Denmark that end at a bakery or café that is actually open.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "DKK" }
+      },
+      {
+        "@type": "WebApplication",
+        "name": "Orbit",
+        "url": "https://orbitproject.app/",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web, iOS, Android",
+        "description": "Project management built around check-ins and health scoring, with shared journeys and real-time sync.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "DKK" }
+      },
+      {
+        "@type": "WebApplication",
+        "name": "Pixel Timer",
+        "url": "https://bobbylo.dk/timer/",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Web",
+        "description": "An installable 8-bit focus timer where the countdown is a boss fight.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "DKK" }
+      },
+      {
+        "@type": "WebApplication",
+        "name": "Goldstar Runner",
+        "url": "https://bobbylo.dk/race/",
+        "applicationCategory": "GameApplication",
+        "operatingSystem": "Web",
+        "description": "A task racing game that motivates children to finish chores before the timer runs out.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "DKK" }
+      }
+    ]
+  }
+  </script>
+</head>
+
+<body class="apps-page">
+
+  <nav class="nav">
+    <div class="container nav-inner">
+      <a href="index.html" class="nav-brand">Bobby<span class="nav-brand-dot">.</span>Lo</a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="publications.html">Publications</a></li>
+        <li><a href="apps.html" class="active">Apps</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- ============================================================
+         HERO — paper
+         ============================================================ -->
+    <div class="lights">
+    <header class="apps-hero">
+      <div class="hero-glow" aria-hidden="true"></div>
+      <div class="container apps-hero-inner">
+        <div class="eyebrow reveal">Off the clock · Four apps, all live</div>
+        <h1 class="reveal d1">Besides the medicine, I build the things I <em>wish existed</em>.</h1>
+        <p class="apps-lede reveal d2">
+          Most of my week goes to gastroenterology, research and running GAIN. The rest of it
+          sometimes ends up here. Something annoys me, I build the thing that fixes it, and I take it
+          the whole way — sketch, interface, code, infrastructure, a domain of its own. Nobody asked
+          for any of these. People use all four anyway.
+        </p>
+
+        <nav class="apps-index reveal d3" aria-label="Apps on this page">
+          <a href="#ccc"><span>01</span> <b>Cake, Coffee &amp; Cadence</b></a>
+          <a href="#orbit"><span>02</span> <b>Orbit</b></a>
+          <a href="#timer"><span>03</span> <b>Pixel Timer</b></a>
+          <a href="#race"><span>04</span> <b>Goldstar Runner</b></a>
+        </nav>
+
+        <div class="scroll-cue"><span></span> Scroll</div>
+      </div>
+    </header>
+    </div>
+
+
+    <!-- ============================================================
+         01 — CAKE, COFFEE & CADENCE
+         ============================================================ -->
+    <section class="stage" id="ccc" style="--accent-app:#E0574F" aria-labelledby="ccc-h">
+      <div class="stage-glow a" style="background:#B22F26" data-par="0.12"></div>
+      <div class="stage-glow b" style="background:#C9A96E" data-par="-0.08"></div>
+
+      <div class="container stage-inner">
+        <div class="stage-copy">
+          <p class="stage-num reveal">01 / Route planning</p>
+          <a class="stage-domain reveal" href="https://www.ccc-bike.com/" target="_blank" rel="noopener">ccc-bike.com</a>
+          <h2 id="ccc-h" class="reveal d1">Cake, Coffee<br>&amp; Cadence</h2>
+          <p class="stage-tagline reveal d1">The ride ends where the cake is.</p>
+          <p class="stage-body reveal d2">
+            Say how far you want to ride and how many stops you want to make. The app builds a route through
+            Denmark past the best-rated bakeries, patisseries and cafés on the way — and only the ones that are
+            still open by the time you actually get there.
+          </p>
+          <ul class="stage-feats reveal d2">
+            <li>Loops or point-to-point, with ferry, train and bus transfers between waypoints</li>
+            <li>Arrival times computed from your average speed and pause length, then matched against real opening hours</li>
+            <li>Curated Danish index of bakeries, patisseries, cafés, tea houses, ice cream and chocolate</li>
+            <li>Saved routes, group rides and a shop-facing side — free, no account needed to start</li>
+          </ul>
+          <div class="stage-tech reveal d3">
+            <span>Route engine</span><span>Opening-hours data</span><span>Maps</span><span>Danish UI</span><span>Public beta</span>
+          </div>
+          <div class="reveal d3">
+            <a class="stage-cta" href="https://www.ccc-bike.com/" target="_blank" rel="noopener">Plan a ride <span class="arr">→</span></a>
+            <a class="stage-cta ghost" href="https://www.ccc-bike.com/app/" target="_blank" rel="noopener">Open the planner</a>
+          </div>
+        </div>
+
+        <div class="stage-visual reveal d1" data-par="0.06">
+          <div class="frame">
+            <div class="frame-bar"><i></i><i></i><i></i><span class="url">www.ccc-bike.com</span></div>
+            <img src="image/apps/ccc-landing.jpg" width="1497" height="812" loading="lazy" decoding="async"
+                 alt="Cake, Coffee &amp; Cadence landing page showing a generated 68 km bakery route with three stops.">
+          </div>
+          <div class="chip" style="bottom:-22px; left:-18px">
+            <b>68 km</b><small>3 stops · all open</small>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ============================================================
+         02 — ORBIT
+         ============================================================ -->
+    <section class="stage flip" id="orbit" style="--accent-app:#5B82FF" aria-labelledby="orbit-h">
+      <div class="stage-glow a" style="background:#3B5BFF" data-par="-0.10"></div>
+      <div class="stage-glow b" style="background:#8A5BFF" data-par="0.09"></div>
+
+      <div class="container stage-inner">
+        <div class="stage-copy">
+          <p class="stage-num reveal">02 / Project management</p>
+          <a class="stage-domain reveal" href="https://orbitproject.app/" target="_blank" rel="noopener">orbitproject.app</a>
+          <h2 id="orbit-h" class="reveal d1">Orbit</h2>
+          <p class="stage-tagline reveal d1">Keep every journey on track with clear check-ins.</p>
+          <p class="stage-body reveal d2">
+            Most project tools nag you about deadlines. Orbit asks you to check in. Each project carries a
+            check-in threshold and a health score, so a project going quiet is visible long before it is late —
+            and everything syncs live across every device you own.
+          </p>
+          <ul class="stage-feats reveal d2">
+            <li>Projects with check-in thresholds and health scoring; tasks with priorities, reminders and repeats</li>
+            <li>Rich task descriptions in Markdown — paste images, attach files up to 25&nbsp;MB</li>
+            <li>Shared journeys: invite collaborators, group chat per project, 1-on-1 direct messages, buddy network</li>
+            <li>Real-time notification centre with deep-linking, plus browser push notifications</li>
+            <li>Community ideas board — users submit, vote and discuss feature requests</li>
+          </ul>
+          <div class="stage-tech reveal d3">
+            <span>React</span><span>TypeScript</span><span>Zustand</span><span>Firebase / Firestore</span><span>Capacitor iOS + Android</span>
+          </div>
+          <div class="reveal d3">
+            <a class="stage-cta" href="https://orbitproject.app/" target="_blank" rel="noopener">Open Orbit <span class="arr">→</span></a>
+          </div>
+        </div>
+
+        <div class="stage-visual reveal d1" data-par="-0.05">
+          <div class="frame">
+            <div class="frame-bar"><i></i><i></i><i></i><span class="url">orbitproject.app / journeys</span></div>
+            <div class="ui-mock">
+              <p class="ui-meta">4 projects &middot; 6 tasks</p>
+              <p class="ui-wordmark">Orbit</p>
+              <p class="ui-sub">Keep your projects on track.</p>
+
+              <div class="ui-tabs">
+                <span class="on">My journeys</span><span>Shared with me</span><span>To-dos</span>
+              </div>
+
+              <div class="ui-row">
+                <span class="ui-dot"></span>
+                <span>
+                  <span class="ui-name">Website redesign</span>
+                  <span class="ui-sub2">0 open &middot; 2 done &middot; checked in 3 hours ago</span>
+                </span>
+                <span class="ui-bar"><i style="width:86%; animation-delay:.10s"></i></span>
+                <span class="ui-checkin">Check in</span>
+              </div>
+              <div class="ui-row">
+                <span class="ui-dot"></span>
+                <span>
+                  <span class="ui-name">Marathon training</span>
+                  <span class="ui-sub2">1 open &middot; 9 done &middot; checked in yesterday</span>
+                </span>
+                <span class="ui-bar"><i style="width:64%; animation-delay:.25s"></i></span>
+                <span class="ui-checkin">Check in</span>
+              </div>
+              <div class="ui-row">
+                <span class="ui-dot warn"></span>
+                <span>
+                  <span class="ui-name">Kitchen renovation</span>
+                  <span class="ui-sub2">3 open &middot; 4 done &middot; checked in 11 days ago</span>
+                </span>
+                <span class="ui-bar"><i style="width:38%; animation-delay:.40s"></i></span>
+                <span class="ui-checkin">Check in</span>
+              </div>
+              <div class="ui-row">
+                <span class="ui-dot"></span>
+                <span>
+                  <span class="ui-name">Reading list</span>
+                  <span class="ui-sub2">2 open &middot; 7 done &middot; checked in 2 days ago</span>
+                </span>
+                <span class="ui-bar"><i style="width:72%; animation-delay:.55s"></i></span>
+                <span class="ui-checkin">Check in</span>
+              </div>
+            </div>
+          </div>
+          <div class="chip" style="top:-20px; right:-16px">
+            <b>Live</b><small>Synced across devices</small>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ============================================================
+         03 — PIXEL TIMER
+         ============================================================ -->
+    <section class="stage" id="timer" style="--accent-app:#2BD9D9; --stage-bg:#0A0A1A" aria-labelledby="timer-h">
+      <div class="stage-glow a" style="background:#2BD9D9" data-par="0.11"></div>
+      <div class="stage-glow b" style="background:#7A5BFF" data-par="-0.07"></div>
+
+      <div class="container stage-inner">
+        <div class="stage-copy">
+          <p class="stage-num reveal">03 / Focus</p>
+          <a class="stage-domain reveal" href="timer/">bobbylo.dk/timer</a>
+          <h2 id="timer-h" class="reveal d1">Pixel Timer</h2>
+          <p class="stage-tagline reveal d1">Twenty-five minutes of work. One boss fight.</p>
+          <p class="stage-body reveal d2">
+            A focus timer where the countdown is rendered as a battle. A knight chips away at a monster's HP
+            bar as your session runs; finish the session and the monster falls. Every sprite is generated
+            programmatically from Python art scripts, frame by frame, in this repository.
+          </p>
+          <ul class="stage-feats reveal d2">
+            <li>Six playable pixel themes — castle siege, dragon sleep, canyon bridge, monster HP, Poke feast and mouse timer — with more still locked in the picker</li>
+            <li>Installable as a PWA with a service worker: works fully offline, launches like a native app</li>
+            <li>Sprite sheets and frame maps generated in Python, not drawn by hand</li>
+            <li>Respects reduced-motion, with an accessible on-screen HP readout</li>
+          </ul>
+          <div class="stage-tech reveal d3">
+            <span>Vanilla JS</span><span>Canvas</span><span>Service worker / PWA</span><span>Python sprite pipeline</span>
+          </div>
+          <div class="reveal d3">
+            <a class="stage-cta" href="timer/">Start a session <span class="arr">→</span></a>
+          </div>
+        </div>
+
+        <div class="stage-visual reveal d1" data-par="0.06">
+          <div class="phone">
+            <iframe src="timer/" title="Pixel Timer — live preview" loading="lazy" tabindex="-1" scrolling="no"></iframe>
+          </div>
+          <div class="pixel-row reveal d2">
+            <img src="timer/assets/thumb_castle.png" width="48" height="64" loading="lazy" alt="Castle siege theme">
+            <img src="timer/assets/thumb_dragon.png" width="48" height="64" loading="lazy" alt="Dragon sleep theme">
+            <img src="timer/assets/thumb_mouse.png" width="48" height="64" loading="lazy" alt="Mouse timer theme">
+            <img src="timer/assets/thumb_bridge.png" width="48" height="64" loading="lazy" alt="Canyon bridge theme">
+            <img src="timer/assets/thumb_monsterhp.png" width="48" height="64" loading="lazy" alt="Monster HP theme">
+            <img src="timer/assets/thumb_feeding.png" width="48" height="64" loading="lazy" alt="Poke feast theme">
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ============================================================
+         04 — GOLDSTAR RUNNER
+         ============================================================ -->
+    <section class="stage flip" id="race" style="--accent-app:#FFD75E; --stage-bg:#0B0910" aria-labelledby="race-h">
+      <div class="stage-glow a" style="background:#FFA51E" data-par="-0.11"></div>
+      <div class="stage-glow b" style="background:#E0574F" data-par="0.08"></div>
+
+      <div class="container stage-inner">
+        <div class="stage-copy">
+          <p class="stage-num reveal">04 / Games</p>
+          <a class="stage-domain reveal" href="race/">bobbylo.dk/race</a>
+          <h2 id="race-h" class="reveal d1">Goldstar Runner</h2>
+          <p class="stage-tagline reveal d1">Finish the chore. Feed the star. Beat the fire.</p>
+          <p class="stage-body reveal d2">
+            A racing game for children, built to make tasks at home feel like a fighting-game tournament.
+            Everyone picks a fighter from the roster, then earns gold stars by finishing real tasks off-screen.
+            Each star pushes your runner further down the track — and when the clock hits zero, a wall of fire
+            sweeps everyone who has not crossed the line.
+          </p>
+          <ul class="stage-feats reveal d2">
+            <li>Fighter-select screen: drag your player coin onto a card to lock in, complete with announcer callout</li>
+            <li>Up to ten players racing in parallel lanes with a shared countdown</li>
+            <li>34 animated characters and 20 parallax backdrops, all sprite-sheet driven</li>
+            <li>Adjustable star target and time limit, so the difficulty matches the chore</li>
+          </ul>
+          <div class="stage-tech reveal d3">
+            <span>Vanilla JS</span><span>Sprite-sheet engine</span><span>Web Audio</span><span>Touch-first</span>
+          </div>
+          <div class="reveal d3">
+            <a class="stage-cta" href="race/">Start a race <span class="arr">→</span></a>
+          </div>
+        </div>
+
+        <div class="stage-visual reveal d1" data-par="-0.05">
+          <div class="arena" role="img"
+               aria-label="Goldstar Runner: three pixel-art characters racing along parallel lanes towards a chequered finish line.">
+            <div class="arena-bg"></div>
+            <span class="arena-hud">★ 3 / 5 · 04:12</span>
+            <div class="lane l1"><div class="sprite knighty"></div></div>
+            <div class="lane l2"><div class="sprite gobbo"></div></div>
+            <div class="lane l3"><div class="sprite toro"></div></div>
+            <div class="finish"></div>
+            <div class="arena-vig"></div>
+          </div>
+          <div class="chip" style="bottom:-22px; right:-16px">
+            <b>34</b><small>Playable fighters</small>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ============================================================
+         OUTRO — paper
+         ============================================================ -->
+    <div class="lights lights--out">
+    <section class="capabilities">
+      <div class="outro-glow" aria-hidden="true"></div>
+      <div class="container">
+        <div class="eyebrow reveal">The open invitation</div>
+        <h2 class="reveal d1" style="max-width:16ch">Got an idea? Let&rsquo;s build it.</h2>
+        <p class="apps-lede reveal d2" style="margin-top:18px">
+          Every app above started as somebody being mildly annoyed about something, and I do the whole
+          build myself — the design, the code, the infrastructure, the launch, and the maintenance nobody
+          warns you about. If there is something you keep wishing existed, bring it. I would much rather
+          make the thing with you than have another meeting about it.
+        </p>
+
+        <div class="cap-grid">
+          <div class="cap">
+            <span class="n">01</span>
+            <h3>Designed, not assembled</h3>
+            <p>Each one gets its own type, palette and motion, drawn from scratch. No template, no component kit, no house style borrowed from somewhere else.</p>
+          </div>
+          <div class="cap">
+            <span class="n">02</span>
+            <h3>Built end to end</h3>
+            <p>React and TypeScript where they earn their keep, plain JavaScript where they do not. Firebase, Firestore and service workers doing the work underneath.</p>
+          </div>
+          <div class="cap">
+            <span class="n">03</span>
+            <h3>Actually shipped</h3>
+            <p>Custom domains, real deployments, installable web apps, mobile builds — and the unglamorous part that starts the day after launch.</p>
+          </div>
+          <div class="cap">
+            <span class="n">04</span>
+            <h3>Kept running</h3>
+            <p>Automated data pipelines, scheduled jobs and LLM-assisted tooling — the same plumbing I rely on for research, pointed at something more fun.</p>
+          </div>
+        </div>
+
+        <p class="apps-lede reveal d3" style="margin-top:44px">
+          You bring the idea, I will bring the build. <a href="index.html#contact" style="border-bottom:2px solid var(--accent)">Get in touch</a>.
+        </p>
+      </div>
+    </section>
+    </div>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container site-footer-inner">
+      <span>&copy; 2026 Bobby Zhao Sheng Lo.</span>
+      <span class="site-footer-meta">All rights reserved.</span>
+    </div>
+  </footer>
+
+  <script src="apps.js"></script>
+</body>
+
+</html>
