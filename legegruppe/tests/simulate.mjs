@@ -83,7 +83,7 @@ export function runSimulations(options) {
     infeasible: { heuristic: 0, exact: 0 },
     hardViolations: { heuristic: 0, exact: 0 },
     unexplained: 0, nondeterministic: 0, capacityBreaches: 0, exactTimeouts: 0,
-    runtime: { heuristic: [], exact: [] },
+    runtime: { heuristic: [], exact: [], exactGaveUp: [] },
     scores: { heuristic: [], exact: [] },
     qualityGaps: [], qualityWithin5pct: 0,
     byProfile: {}, failures: [], text: ''
@@ -151,7 +151,12 @@ export function runSimulations(options) {
       // 15s: the exact solver proves a 24-child class in ~4s median, but a hard
       // instance can take three or four times that. Timeouts are counted, not hidden.
       const e = Solve.solve(problem, { solver: 'exact', seed: 1, timeBudgetMs: 15000 });
-      report.runtime.exact.push(e.meta.runtimeMs);
+      // Two different questions, so two different measurements. "How long does it
+      // take to PROVE an optimum" is the number that matters for the solver's
+      // usefulness; a run that gave up simply spent the whole budget, and averaging
+      // those in would report the budget back to us dressed up as a measurement.
+      if (e.status === 'ok') report.runtime.exact.push(e.meta.runtimeMs);
+      else report.runtime.exactGaveUp.push(e.meta.runtimeMs);
       if ((e.blockers || []).some(b => b.code === 'TIMEOUT')) report.exactTimeouts++;
       if (e.status === 'ok') {
         report.solved.exact++;
@@ -181,6 +186,7 @@ export function runSimulations(options) {
 
   report.runtime.heuristic = stats(report.runtime.heuristic);
   report.runtime.exact = stats(report.runtime.exact);
+  report.runtime.exactGaveUp = stats(report.runtime.exactGaveUp);
   const within = report.qualityGaps.filter(g => g <= 0.05).length;
   report.qualityWithin5pct = report.qualityGaps.length ? within / report.qualityGaps.length : 1;
 
@@ -209,9 +215,13 @@ export function runSimulations(options) {
     '  p90 ' + report.runtime.heuristic.p90 +
     '  p99 ' + report.runtime.heuristic.p99 +
     '  max ' + report.runtime.heuristic.max);
-  lines.push('Køretid B (ms)      median ' + report.runtime.exact.median +
+  lines.push('Køretid B, bevist   median ' + report.runtime.exact.median +
     '  p90 ' + report.runtime.exact.p90 +
-    '  max ' + report.runtime.exact.max);
+    '  max ' + report.runtime.exact.max +
+    '   (' + report.runtime.exact.n + ' kørsler)');
+  lines.push('Køretid B, opgav    median ' + report.runtime.exactGaveUp.median +
+    '  max ' + report.runtime.exactGaveUp.max +
+    '   (' + report.runtime.exactGaveUp.n + ' kørsler — brugte tidsbudgettet op)');
   lines.push('');
   lines.push('Score A (middel)    ' + meanScore(report.scores.heuristic));
   lines.push('Score B (middel)    ' + meanScore(report.scores.exact));
