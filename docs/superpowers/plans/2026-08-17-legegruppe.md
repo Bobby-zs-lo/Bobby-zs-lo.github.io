@@ -1752,11 +1752,13 @@ Create `legegruppe/js/solvers/rota.js`:
    Browser: window.LG.Rota   Node: require('./rota.js') */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory(require('../model.js'));
+    module.exports = factory(require('../model.js'), require('../constraints.js'));
   } else {
-    root.LG = Object.assign(root.LG || {}, { Rota: factory(root.LG.Model) });
+    root.LG = Object.assign(root.LG || {}, {
+      Rota: factory(root.LG.Model, root.LG.Constraints)
+    });
   }
-})(typeof self !== 'undefined' ? self : this, function (Model) {
+})(typeof self !== 'undefined' ? self : this, function (Model, Constraints) {
   'use strict';
 
   const DAY_NAMES = { 1: 'mandag', 2: 'tirsdag', 3: 'onsdag', 4: 'torsdag', 5: 'fredag' };
@@ -1822,18 +1824,16 @@ Create `legegruppe/js/solvers/rota.js`:
       });
       const host = eligible[0];
 
-      // A weekday the host can do, preferring one that most others can also do.
-      const dayScore = day => families.filter(f =>
-        f.availableWeekdays.indexOf(day) !== -1).length;
-      const days = host.availableWeekdays.slice().sort((a, b) => {
-        const d = dayScore(b) - dayScore(a);
-        return d !== 0 ? d : a - b;
-      });
-      const weekday = days.length ? days[0] : null;
-      if (weekday === null) {
-        warnings.push('Værten i uge ' + week + ' har ingen hverdage angivet.');
+      // The weekday must work for EVERY family in the group - a meeting needs all
+      // the children present. Constraints.viableDays is the single source of truth
+      // for that, so H4 and the published rota can never disagree.
+      const days = Constraints.viableDays(group.childIds, problem)
+        .filter(d => host.availableWeekdays.indexOf(d) !== -1);
+      if (days.length === 0) {
+        warnings.push('Ingen fælles hverdag for gruppe ' + group.id + ' i uge ' + week + '.');
         return;
       }
+      const weekday = days[0];
 
       // Fetchers: available that weekday, capacity > 0, least-used first.
       const needed = size - 1;
@@ -2502,9 +2502,16 @@ function weighted(rand, pairs) {
   return pairs[pairs.length - 1][0];
 }
 
-/** A random non-empty subset of the working week. */
+/**
+ * A random subset of the working week.
+ * Deliberately generous: H4 requires a weekday shared by EVERY family in a group,
+ * so if each of five families were free on only half the week, almost no group
+ * could ever meet and the simulation would measure nothing but its own generator.
+ * Real parents can usually do most weekdays; the hostile profiles below are where
+ * scarcity is tested on purpose.
+ */
 function someWeekdays(rand, minDays) {
-  const days = [1, 2, 3, 4, 5].filter(() => rand() < 0.5);
+  const days = [1, 2, 3, 4, 5].filter(() => rand() < 0.8);
   while (days.length < (minDays || 1)) {
     const d = 1 + Math.floor(rand() * 5);
     if (days.indexOf(d) === -1) days.push(d);
@@ -2520,7 +2527,7 @@ export const PROFILES = {
   realistic: (rand) => ({
     hostCapacity: weighted(rand, [[0, 15], [1, 30], [2, 40], [3, 15]]),
     maxChildrenAtHome: weighted(rand, [[0, 8], [2, 12], [3, 25], [4, 35], [5, 20]]),
-    availableWeekdays: someWeekdays(rand, 1),
+    availableWeekdays: someWeekdays(rand, 3),
     fetchCapacity: weighted(rand, [[0, 20], [1, 15], [2, 25], [3, 25], [4, 15]]),
     meetingPlace: weighted(rand, [['home', 70], ['both', 20], ['outdoor', 10]])
   }),
