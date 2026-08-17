@@ -2231,6 +2231,14 @@ assert.ok(bad.diagnosis && typeof bad.diagnosis.summary === 'string');
 assert.ok(bad.diagnosis.summary.length > 20);
 assert.equal(bad.rota, null);
 
+// --- a solver that merely ran out of time must NOT be diagnosed as an
+//     impossible class: that would tell the admin to loosen the wrong thing ---
+const tooBig = makeProblem(40);
+const refused = Solve.solve(tooBig, { solver: 'exact', seed: 1, timeBudgetMs: 500 });
+assert.equal(refused.status, 'infeasible');
+assert.equal(refused.diagnosis.needsRelaxation, false);
+assert.ok(/heuristik/i.test(refused.diagnosis.summary), refused.diagnosis.summary);
+
 // --- comparing the two solvers side by side ---
 const cmp = Solve.compare(p, { seed: 1, timeBudgetMs: 4000 });
 assert.ok(cmp.heuristic && cmp.exact);
@@ -2290,10 +2298,18 @@ Create `legegruppe/js/solvers/index.js`:
     });
 
     if (grouping.status !== 'ok') {
+      // A timeout or a size refusal is a statement about the *solver*, not about the
+      // class. Diagnosing relaxations there would tell the admin to loosen constraints
+      // that were never the problem, so pass the blocker through untouched.
+      const solverLimited = (grouping.blockers || [])
+        .some(b => b.code === 'TIMEOUT' || b.code === 'TOO_LARGE');
       return Object.assign({}, grouping, {
         rota: null,
         verification: null,
-        diagnosis: Infeasibility.diagnose(problem, { timeBudgetMs: 4000 }),
+        diagnosis: solverLimited
+          ? { needsRelaxation: false, relaxations: [],
+              summary: grouping.blockers.map(b => b.message).join(' ') }
+          : Infeasibility.diagnose(problem, { timeBudgetMs: 4000 }),
         meta: Object.assign({}, grouping.meta, { solver: name, runtimeMs: Date.now() - started })
       });
     }
@@ -2816,7 +2832,7 @@ export function runSimulations(options) {
     solved: { heuristic: 0, exact: 0 },
     infeasible: { heuristic: 0, exact: 0 },
     hardViolations: { heuristic: 0, exact: 0 },
-    unexplained: 0, nondeterministic: 0, capacityBreaches: 0,
+    unexplained: 0, nondeterministic: 0, capacityBreaches: 0, exactTimeouts: 0,
     runtime: { heuristic: [], exact: [] },
     scores: { heuristic: [], exact: [] },
     qualityGaps: [], qualityWithin5pct: 0,
@@ -2882,8 +2898,11 @@ export function runSimulations(options) {
     // --- solver B, on a subsample ---
     if (i % exactEvery === 0) {
       report.exactRuns++;
-      const e = Solve.solve(problem, { solver: 'exact', seed: 1, timeBudgetMs: 8000 });
+      // 15s: the exact solver proves a 24-child class in ~4s median, but a hard
+      // instance can take three or four times that. Timeouts are counted, not hidden.
+      const e = Solve.solve(problem, { solver: 'exact', seed: 1, timeBudgetMs: 15000 });
       report.runtime.exact.push(e.meta.runtimeMs);
+      if ((e.blockers || []).some(b => b.code === 'TIMEOUT')) report.exactTimeouts++;
       if (e.status === 'ok') {
         report.solved.exact++;
         report.scores.exact.push(e.score.total);
@@ -2933,6 +2952,8 @@ export function runSimulations(options) {
   lines.push('Uden forklaring     ' + report.unexplained + '   (krav: 0)');
   lines.push('Ikke-deterministisk ' + report.nondeterministic + '   (krav: 0)');
   lines.push('Kapacitetsbrud      ' + report.capacityBreaches + '   (krav: 0)');
+  lines.push('B løb tør for tid   ' + report.exactTimeouts + '/' + report.exactRuns +
+    '   (tilladt — rapporteres ærligt som timeout, ikke som uløselig klasse)');
   lines.push('');
   lines.push('Køretid A (ms)      median ' + report.runtime.heuristic.median +
     '  p90 ' + report.runtime.heuristic.p90 +
