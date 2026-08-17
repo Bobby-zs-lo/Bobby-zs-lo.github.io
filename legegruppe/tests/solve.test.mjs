@@ -91,4 +91,47 @@ assert.ok(typeof cmp.summary === 'string' && cmp.summary.length > 10);
   assert.ok(coverViolations.some(v => v.code === 'COVER'), 'verifySolution should catch double coverage');
 }
 
+// --- THE SAFETY GATE ITSELF, end to end. Registered through the exported
+//     SOLVERS map, so no solver internals are monkey-patched — a fake solver
+//     comes in through exactly the same door the real ones use. ---
+Solve.SOLVERS.brokenDuplicate = {
+  solve: function () {
+    return {
+      status: 'ok',
+      // k0 appears in both groups, and most of the class is missing entirely
+      groups: [
+        { id: 'A', childIds: ['k0', 'k1', 'k2', 'k3'], why: ['x'] },
+        { id: 'B', childIds: ['k0', 'k5', 'k6', 'k7'], why: ['x'] }
+      ],
+      score: { total: 0.9, perGroup: [] },
+      explanation: [], blockers: [],
+      meta: { solver: 'brokenDuplicate', runtimeMs: 0 }
+    };
+  }
+};
+const caught = Solve.solve(p, { solver: 'brokenDuplicate', seed: 1, timeBudgetMs: 100 });
+assert.equal(caught.status, 'invalid', 'a broken solution must never be reported as ok');
+assert.ok(caught.verification.length > 0, 'and the verifier must say what is wrong');
+assert.ok(caught.verification.some(v => v.code === 'COVER'));
+assert.equal(caught.rota, null, 'no rota may be built for an invalid solution');
+
+// A hard-requirement breach, rather than a coverage breach, is caught too.
+Solve.SOLVERS.brokenUndersized = {
+  solve: function () {
+    return {
+      status: 'ok',
+      groups: [{ id: 'A', childIds: ['k0', 'k1', 'k2'], why: ['x'] }],
+      score: { total: 1, perGroup: [] },
+      explanation: [], blockers: [],
+      meta: { solver: 'brokenUndersized', runtimeMs: 0 }
+    };
+  }
+};
+const caught2 = Solve.solve(p, { solver: 'brokenUndersized', seed: 1, timeBudgetMs: 100 });
+assert.equal(caught2.status, 'invalid');
+assert.ok(caught2.verification.some(v => v.code === 'H2'), 'undersized group must be caught');
+
+delete Solve.SOLVERS.brokenDuplicate;
+delete Solve.SOLVERS.brokenUndersized;
+
 console.log('ok - solve');
