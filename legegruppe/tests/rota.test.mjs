@@ -93,15 +93,31 @@ assert.equal(thinRota.groups[0].meetings.length, 1);
 assert.ok(thinRota.warnings.some(w => /1 af 6|kun 1/.test(w)),
   'must warn that the round is short of meetings: ' + JSON.stringify(thinRota.warnings));
 
-// --- transport falls back to "aftales" rather than inventing a fetcher ---
+// --- a group nobody can transport is not scheduled at all ---
+// KNOWN LIMITATION, deliberately pinned here so it cannot change unnoticed.
+// Constraints.viableDays already requires the group's fetch supply to cover
+// size - 1 before a weekday counts as viable, so H5 rejects such a group upstream
+// and the rota never sees it. The consequence is that the `transport: 'aftales'`
+// branch below is currently unreachable in practice: a group with no fetcher is
+// reported as infeasible rather than published with "aftal indbyrdes".
+// Whether that is the right product behaviour is an open question for the owner.
+// This test asserts what the code ACTUALLY does — an earlier version of it looped
+// over an empty array and passed while proving nothing.
 const noFetch = makeProblem([
   { hostCapacity: 6, fetchCapacity: 0 }, { fetchCapacity: 0 },
   { fetchCapacity: 0 }, { fetchCapacity: 0 }
 ]);
-R.buildRota(solution, noFetch, { seed: 6 }).groups[0].meetings.forEach(m => {
-  assert.equal(m.transport, 'aftales');
-  assert.ok(m.transportNote.length > 5);
-});
+const noFetchRota = R.buildRota(solution, noFetch, { seed: 6 });
+assert.equal(noFetchRota.groups[0].meetings.length, 0,
+  'a group with no fetch capacity produces no meetings');
+assert.ok(noFetchRota.warnings.length > 0, 'and it must say why');
+
+// The "aftales" wording still has to exist and be usable the moment the product
+// decision changes, so pin the shape of that branch directly.
+const settled = R.buildGroupRota(
+  { id: 'A', childIds: four }, makeProblem(new Array(4).fill({})), null);
+assert.ok(settled.meetings.every(m => ['dækket', 'aftales'].includes(m.transport)));
+assert.ok(settled.meetings.every(m => m.transportNote.length > 5));
 
 // --- fetch duty rotates too, when several families can fetch ---
 const spread = R.buildRota(solution, makeProblem(new Array(4).fill({})), { seed: 7 });
