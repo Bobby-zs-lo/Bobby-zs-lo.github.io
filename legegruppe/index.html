@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Legegruppe — jeres svar</title>
+<link rel="stylesheet" href="css/legegruppe.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="/" class="nav-brand">Bobby<span class="nav-brand-dot">.</span>Lo</a>
+    <ul class="nav-links">
+      <li><a href="/legegruppe/" class="active" aria-current="page">Legegruppe</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main class="lg-main">
+
+  <header class="lg-header">
+    <div class="eyebrow">Legegrupper</div>
+    <h1>Hvad kan I overkomme?</h1>
+    <p class="lg-lede">
+      Fire spørgsmål, under to minutter. Der findes ingen forkerte svar — vi laver
+      grupperne ud fra hvad familierne <em>faktisk</em> kan, ikke hvad de burde kunne.
+      Du kan altid rette dine svar bagefter med det samme link.
+    </p>
+  </header>
+
+  <div id="lg-status" class="lg-status" role="status" aria-live="polite" hidden></div>
+
+  <form id="lg-form" novalidate>
+
+    <div class="lg-field">
+      <label class="lg-label" for="parentName">Dit navn</label>
+      <p class="lg-help">Så de andre forældre ved hvem de skriver til.</p>
+      <input type="text" id="parentName" name="parentName" autocomplete="name">
+    </div>
+
+    <div class="lg-field">
+      <label class="lg-label" for="contact">Mail eller mobil</label>
+      <p class="lg-help">Deles kun med de forældre I ender i gruppe med.</p>
+      <input type="text" id="contact" name="contact" autocomplete="email">
+    </div>
+
+    <fieldset class="lg-field">
+      <legend>Hvor mange gange kan I lægge hus til?</legend>
+      <p class="lg-help">
+        En periode er cirka fire måneder med et møde eller to om måneden.
+        <strong>Nul er et helt normalt svar</strong> — der er altid nogen der kan.
+      </p>
+      <div class="lg-choices">
+        <input type="radio" id="host0" name="hostCapacity" value="0">
+        <label for="host0">Ingen gange</label>
+        <input type="radio" id="host1" name="hostCapacity" value="1">
+        <label for="host1">1 gang</label>
+        <input type="radio" id="host2" name="hostCapacity" value="2">
+        <label for="host2">2 gange</label>
+        <input type="radio" id="host3" name="hostCapacity" value="3">
+        <label for="host3">3 eller flere</label>
+      </div>
+    </fieldset>
+
+    <fieldset class="lg-field">
+      <legend>Hvor mange børn kan I have hjemme?</legend>
+      <p class="lg-help">Ud over jeres eget. Tænk plads og tålmodighed, ikke kvadratmeter.</p>
+      <div class="lg-choices">
+        <input type="radio" id="home0" name="maxChildrenAtHome" value="0">
+        <label for="home0">Vi kan ikke have besøg</label>
+        <input type="radio" id="home2" name="maxChildrenAtHome" value="2">
+        <label for="home2">2</label>
+        <input type="radio" id="home3" name="maxChildrenAtHome" value="3">
+        <label for="home3">3</label>
+        <input type="radio" id="home4" name="maxChildrenAtHome" value="4">
+        <label for="home4">4</label>
+        <input type="radio" id="home5" name="maxChildrenAtHome" value="5">
+        <label for="home5">5 eller flere</label>
+      </div>
+    </fieldset>
+
+    <fieldset class="lg-field">
+      <legend>Hvilke hverdage passer jer?</legend>
+      <p class="lg-help">
+        Vælg gerne flere. Gruppen skal finde en dag <em>alle</em> kan, så jo flere
+        I sætter kryds ved, jo lettere går det op.
+      </p>
+      <div class="lg-choices">
+        <input type="checkbox" id="day1" name="availableWeekdays" value="1">
+        <label for="day1">Mandag</label>
+        <input type="checkbox" id="day2" name="availableWeekdays" value="2">
+        <label for="day2">Tirsdag</label>
+        <input type="checkbox" id="day3" name="availableWeekdays" value="3">
+        <label for="day3">Onsdag</label>
+        <input type="checkbox" id="day4" name="availableWeekdays" value="4">
+        <label for="day4">Torsdag</label>
+        <input type="checkbox" id="day5" name="availableWeekdays" value="5">
+        <label for="day5">Fredag</label>
+      </div>
+    </fieldset>
+
+    <fieldset class="lg-field">
+      <legend>Hvor mange børn kan I hente fra skole?</legend>
+      <p class="lg-help">
+        Det er tit her det strander. Kan I ikke hente, er det helt i orden —
+        så finder vi en anden til det og I kan stadig lægge hus til.
+      </p>
+      <div class="lg-choices">
+        <input type="radio" id="fetch0" name="fetchCapacity" value="0">
+        <label for="fetch0">Vi kan ikke hente — børnene skal bringes til os</label>
+        <input type="radio" id="fetch2" name="fetchCapacity" value="2">
+        <label for="fetch2">1–2</label>
+        <input type="radio" id="fetch3" name="fetchCapacity" value="3">
+        <label for="fetch3">3</label>
+        <input type="radio" id="fetch4" name="fetchCapacity" value="4">
+        <label for="fetch4">4–5</label>
+      </div>
+    </fieldset>
+
+    <details class="lg-details">
+      <summary>Flere detaljer (frivilligt)</summary>
+
+      <fieldset>
+        <legend class="lg-label">Hvor kan I mødes?</legend>
+        <p class="lg-help">
+          Man behøver ikke et stort hjem for at bidrage — en tur på legepladsen tæller.
+        </p>
+        <div class="lg-choices">
+          <input type="radio" id="place-home" name="meetingPlace" value="home" checked>
+          <label for="place-home">Hjemme hos os</label>
+          <input type="radio" id="place-outdoor" name="meetingPlace" value="outdoor">
+          <label for="place-outdoor">Vi tager gruppen på legepladsen eller i parken</label>
+          <input type="radio" id="place-both" name="meetingPlace" value="both">
+          <label for="place-both">Begge dele</label>
+        </div>
+      </fieldset>
+
+      <div>
+        <label class="lg-label" for="blackoutWeeks">Uger I ikke kan</label>
+        <p class="lg-help">Ferie og andet. Skriv bare ugenumre, fx "42, 43".</p>
+        <input type="text" id="blackoutWeeks" name="blackoutWeeks" inputmode="numeric">
+      </div>
+
+      <div>
+        <label class="lg-label" for="note">Noget vi skal vide?</label>
+        <p class="lg-help">Husdyr, allergier, trapper, "vi kan kun hvis børnene bringes" — skriv frit.</p>
+        <textarea id="note" name="note" maxlength="500"></textarea>
+      </div>
+    </details>
+
+    <div class="lg-field">
+      <label class="lg-consent">
+        <input type="checkbox" name="consent" value="1">
+        <span>
+          Vi må gemme disse svar til at danne legegrupper i klassen. Der gemmes
+          fornavne, én kontaktoplysning og det I har svaret ovenfor — ingen adresser
+          og ingen CPR-numre. Alt slettes ved skoleårets slutning, og I kan bede om
+          at blive slettet før.
+        </span>
+      </label>
+    </div>
+
+    <div class="lg-actions">
+      <button type="submit" class="btn btn-primary" id="lg-submit">Gem svar</button>
+      <span id="lg-saved" class="lg-help" style="margin:0"></span>
+    </div>
+  </form>
+
+  <section id="lg-receipt" hidden>
+    <h2>Tak — det er noteret</h2>
+    <p class="lg-lede">
+      Gem dette link. Det er dit personlige link til at rette svarene senere,
+      og det er også der planen dukker op når grupperne er lavet.
+    </p>
+    <div class="lg-field">
+      <input type="text" id="lg-link" readonly>
+      <div class="lg-actions" style="position:static">
+        <button type="button" class="btn btn-outline" id="lg-copy">Kopiér link</button>
+        <a class="btn btn-outline" id="lg-edit" href="#">Ret mine svar igen</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script src="js/api.js"></script>
+<script src="js/ui/form.js"></script>
+<script>
+(function () {
+  'use strict';
+  var Form = window.LG.Form;
+  var api = window.LG.Api.createClient({});
+
+  var form = document.getElementById('lg-form');
+  var statusEl = document.getElementById('lg-status');
+  var submit = document.getElementById('lg-submit');
+  var savedEl = document.getElementById('lg-saved');
+  var receipt = document.getElementById('lg-receipt');
+
+  var token = new URLSearchParams(location.search).get('f') || '';
+
+  function show(kind, html) {
+    statusEl.className = 'lg-status' + (kind ? ' lg-status--' + kind : '');
+    statusEl.innerHTML = html;
+    statusEl.hidden = false;
+  }
+  function hide() { statusEl.hidden = true; }
+
+  function escape(s) {
+    return String(s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  if (!token) {
+    show('error', 'Du mangler dit personlige link. Bed administratoren om at sende det igen.');
+    form.hidden = true;
+    return;
+  }
+
+  // A save that failed on the bus goes through the moment the page is reopened.
+  api.flushDraft(token).catch(function () { /* still offline; the draft stays */ });
+
+  // Local draft first so nothing typed is ever lost, then the server's version.
+  var draft = api.loadDraft(token);
+  if (draft) {
+    Form.writeForm(form, Form.fromFamily(draft));
+    show('', 'Vi har gendannet svar du ikke nåede at gemme sidst.');
+  }
+
+  api.getFamily(token).then(function (data) {
+    if (!draft) Form.writeForm(form, Form.fromFamily(data.family));
+    if (data.family && data.family.updatedAt) {
+      savedEl.textContent = 'Sidst gemt ' + String(data.family.updatedAt).slice(0, 10);
+    }
+  }).catch(function (err) {
+    show('error', escape(err.message));
+  });
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    hide();
+    var values = Form.readForm(form);
+    var errors = Form.validate(values);
+
+    if (errors.length) {
+      show('error', '<strong>Der mangler lige et par ting:</strong><ul>' +
+        errors.map(function (x) { return '<li>' + escape(x.message) + '</li>'; }).join('') +
+        '</ul>');
+      var first = form.querySelector('[name="' + errors[0].field + '"]');
+      if (first) first.focus();
+      return;
+    }
+
+    submit.disabled = true;
+    submit.textContent = 'Gemmer…';
+
+    api.saveFamily(token, Form.toPayload(values)).then(function () {
+      form.hidden = true;
+      receipt.hidden = false;
+      var link = location.origin + location.pathname + '?f=' + token;
+      document.getElementById('lg-link').value = link;
+      document.getElementById('lg-edit').href = link;
+      window.scrollTo(0, 0);
+    }).catch(function (err) {
+      submit.disabled = false;
+      submit.textContent = 'Gem svar';
+      show('error', escape(err.message));
+    });
+  });
+
+  document.getElementById('lg-copy').addEventListener('click', function () {
+    var field = document.getElementById('lg-link');
+    field.select();
+    navigator.clipboard.writeText(field.value).then(function () {
+      show('ok', 'Linket er kopieret. Gem det et sted du kan finde det igen.');
+    }).catch(function () {
+      show('', 'Markér linket ovenfor og kopiér det manuelt.');
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
