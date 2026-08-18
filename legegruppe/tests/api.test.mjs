@@ -142,8 +142,15 @@ assert.equal(queued.loadDraft('t2'), null, 'a successful flush clears the draft'
 // --- flushing with nothing queued is a no-op, not an error ---
 assert.equal(await queued.flushDraft('never-saved'), null);
 
-// --- the endpoint placeholder must still be a placeholder in the repo ---
-assert.ok(/REPLACE_ME/.test(Api.ENDPOINT),
-  'a real deployment URL must not be committed to the repository');
+// --- the endpoint must be a real Apps Script deployment, not a leftover stub ---
+// An earlier version of this test demanded the URL stay a placeholder. That was
+// wrong: a static page cannot reach a backend whose address it does not carry.
+// The URL is a capability, not a credential — the passphrase and the per-family
+// tokens are what actually guard the data, and neither is in this repository.
+assert.ok(/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(Api.ENDPOINT),
+  'ENDPOINT must be a deployed /exec URL, got: ' + Api.ENDPOINT);
+
+// --- and no secret may ride along with it ---
+assert.ok(!/passphrase/i.test(Api.ENDPOINT), 'no secret belongs in the endpoint URL');
 
 console.log('ok - api');

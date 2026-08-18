@@ -6,8 +6,12 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  // Filled in during setup — see legegruppe/SETUP.md, step 4.
-  const ENDPOINT = 'https://script.google.com/macros/s/REPLACE_ME/exec';
+  // The deployed Apps Script endpoint — see legegruppe/SETUP.md, step 4.
+  // This lives in a public repository on purpose: a static page has to carry the
+  // address it talks to. It is a capability URL, not a credential. Without the
+  // admin passphrase or a valid family token the backend answers "Ikke autoriseret"
+  // or "Ukendt link" and nothing else. The passphrase never leaves Apps Script.
+  const ENDPOINT = 'https://script.google.com/macros/s/AKfycbwbvbC7dw-Kh7seCPrnq9a_dWMDr7YKkMP0zc-FRWJshrFmuA6c2rYapQofA46kP0mj/exec';
 
   const RETRIES = 3;
   const BASE_DELAY_MS = 400;
