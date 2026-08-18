@@ -97,4 +97,28 @@ r.groups.forEach(g => {
   assert.equal(typeof g.id, 'string');
 });
 
+// --- REGRESSION: determinism must not depend on machine speed ---
+// The first full acceptance run failed here. Annealing used to stop on the wall
+// clock, so a busier machine did fewer iterations and the same seed produced
+// different groups. Repeating the same call many times, with deliberate noise in
+// between, is what catches that; a single a-vs-b comparison did not.
+const sameSeedRuns = [];
+for (let i = 0; i < 25; i++) {
+  // Burn a varying amount of time so each call starts at a different clock offset.
+  let burn = 0;
+  for (let j = 0; j < i * 40000; j++) burn += j % 7;
+  if (burn < 0) throw new Error('unreachable');
+  const run = H.solve(easy, { seed: 99, timeBudgetMs: 120, weights: S.DEFAULT_WEIGHTS });
+  sameSeedRuns.push(JSON.stringify(run.groups.map(g => g.childIds)));
+}
+assert.equal(new Set(sameSeedRuns).size, 1,
+  "same seed gave " + new Set(sameSeedRuns).size + " different answers across 25 runs");
+
+// The iteration budget is what makes that true, so pin it.
+const pinned = H.solve(easy, { seed: 99, timeBudgetMs: 120, weights: S.DEFAULT_WEIGHTS });
+assert.equal(pinned.meta.iterations, pinned.meta.maxIterations,
+  'the run should end because it hit its iteration budget, not the clock');
+assert.equal(pinned.meta.deadlineHit, false,
+  'the wall-clock safety valve should not fire on an ordinary machine');
+
 console.log('ok - heuristic');

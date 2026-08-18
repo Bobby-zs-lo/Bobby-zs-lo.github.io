@@ -87,7 +87,7 @@
    * Simulated annealing over swaps and moves. Any state that would violate a hard
    * requirement is rejected, so the incumbent is always a valid solution.
    */
-  function anneal(groups, sizes, problem, weights, rand, deadline, locked) {
+  function anneal(groups, sizes, problem, weights, rand, deadline, locked, maxIterations) {
     let current = groups.map(g => g.slice());
     let currentScore = totalScore(current, problem, weights);
     let best = current.map(g => g.slice());
@@ -96,7 +96,14 @@
     let temperature = 0.15;
     let iterations = 0;
 
-    while (Date.now() < deadline) {
+    // Stop on a COUNT, not on the clock. A wall-clock bound makes the number of
+    // iterations depend on how busy the machine is, so the same seed produces
+    // different groups on different runs - which broke the determinism guarantee.
+    // The deadline survives only as a safety valve for a pathologically slow host,
+    // and when it fires we say so rather than quietly returning a different answer.
+    let deadlineHit = false;
+    while (iterations < maxIterations) {
+      if ((iterations & 255) === 0 && Date.now() >= deadline) { deadlineHit = true; break; }
       iterations++;
       if (iterations % 200 === 0) temperature *= 0.92;
 
@@ -129,7 +136,7 @@
         }
       }
     }
-    return { groups: best, score: bestScore, iterations };
+    return { groups: best, score: bestScore, iterations: iterations, deadlineHit: deadlineHit };
   }
 
   /** Why is this class unsolvable? Reported per child, deduplicated. */
@@ -184,7 +191,7 @@
 
     // Restart construction until every group is feasible or the budget runs out.
     let start = null;
-    for (let attempt = 0; attempt < 60 && Date.now() - started < budget; attempt++) {
+    for (let attempt = 0; attempt < 60; attempt++) {
       const candidate = construct(problem, sizes, lockMap, rand);
       if (candidate && candidate.every(g => feasible(g, problem))) { start = candidate; break; }
     }
@@ -196,7 +203,12 @@
 
     const initialScore = totalScore(start, problem, weights);
     const deadline = started + budget;
-    const result = anneal(start, sizes, problem, weights, rand, deadline, locked);
+    // ~88 iterations/ms measured on a 24-child class; 60 leaves comfortable headroom
+    // so the safety valve stays shut on an ordinary machine.
+    const maxIterations = typeof opts.maxIterations === 'number'
+      ? opts.maxIterations
+      : Math.max(1000, Math.round(budget * 60));
+    const result = anneal(start, sizes, problem, weights, rand, deadline, locked, maxIterations);
 
     const groups = result.groups.map((childIds, i) => ({
       id: GROUP_LETTERS[i] || String(i + 1),
@@ -212,7 +224,8 @@
       blockers: [],
       meta: {
         solver: 'heuristic', runtimeMs: Date.now() - started, seed: opts.seed,
-        iterations: result.iterations, initialScore: initialScore
+        iterations: result.iterations, initialScore: initialScore,
+        maxIterations: maxIterations, deadlineHit: result.deadlineHit
       }
     };
   }
