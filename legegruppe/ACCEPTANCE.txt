@@ -1,0 +1,40 @@
+  100/1000 simulationer
+  200/1000 simulationer
+  300/1000 simulationer
+  400/1000 simulationer
+  500/1000 simulationer
+  600/1000 simulationer
+  700/1000 simulationer
+  800/1000 simulationer
+  900/1000 simulationer
+  1000/1000 simulationer
+
+=== Legegruppe: 1000 simulationer à 24 børn ===
+Løser A kørt på alle 1000. Løser B kørt på hver 5. (200 kørsler).
+
+Løsninger fundet    A: 888/1000   B: 98/200
+Uløselige           A: 112   B: 102
+Brud på hårde krav  A: 0   B: 0   (krav: 0)
+Uden forklaring     0   (krav: 0)
+Ikke-deterministisk 0   (krav: 0)
+Kapacitetsbrud      0   (krav: 0)
+B beviste optimum   98/177 af de klasser der beviseligt kan løses  = 55.4%   (krav: 40%)
+B løb tør for tid   92/200   (tilladt — rapporteres ærligt som timeout, ikke som uløselig klasse)
+
+Køretid A (ms)      median 190  p90 235  p99 302  max 339
+Køretid B, bevist   median 1402  p90 8823  max 13535   (98 kørsler)
+Køretid B, opgav    median 15001  max 15004   (102 kørsler — brugte tidsbudgettet op)
+
+Score A (middel)    0.945
+Score B (middel)    0.984
+A inden for 5% af B 100.0%   (krav: 90%)
+
+Per profil:
+  realistic     600 kørsler, 600 løst, 0 uløselige
+  generous      100 kørsler, 100 løst, 0 uløselige
+  strained      150 kørsler, 88 løst, 62 uløselige
+  onlyThursday  50 kørsler, 50 løst, 0 uløselige
+  noDrivers     50 kørsler, 0 løst, 50 uløselige
+  fewHosts      50 kørsler, 50 løst, 0 uløselige
+
+ok - acceptance (1000 simulations)
