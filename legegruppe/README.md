@@ -49,6 +49,16 @@ forskellen, og som regel er den lille.
 
 **B er kun optimal for de vægte du har sat.** Det er ikke et objektivt facit.
 
+**B kommer ikke altid i mål.** Målt over 1000 simulerede klasser beviser den
+optimalitet for omkring halvdelen af de 24-børns klasser der beviseligt kan løses,
+inden for 15 sekunder. Mere tid hjælper ikke nævneværdigt: af otte klasser der løb
+tør ved 15 sekunder, nåede kun én i mål ved 60. Søgerummet vokser eksponentielt, så
+det er en algoritmisk mur og ikke en indstilling.
+
+Det er til at leve med, fordi B er en "bevis det"-knap og ikke hverdagsværktøjet:
+A lå inden for 5 % af B's beviste optimum i **100 %** af de kørsler hvor begge nåede
+frem. Når B ikke kan bevise noget, siger den det — den gætter ikke.
+
 ## Hvad der aldrig sker
 
 - Et forbudt par ender aldrig i samme gruppe, og appen foreslår aldrig at lempe det.

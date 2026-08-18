@@ -12,6 +12,20 @@ export const THRESHOLDS = {
   heuristicMedianMs: 500,
   heuristicP99Ms: 2000,
   exactMedianMs: 5000,
+  // Measured against classes the heuristic already solved, so a class the generator
+  // made impossible on purpose does not count against the exact solver.
+  //
+  // 0.40 is not an aspiration, it is the measured reality with headroom. On a 1000-run
+  // sample the exact solver proved optimality for ~49% of demonstrably solvable
+  // 24-child classes within 15s. Raising the budget does not fix this: a probe of
+  // eight instances that timed out at 15s found that 60s rescued exactly one. The
+  // search is exponential, so the wall is algorithmic, not a tuning knob.
+  //
+  // This is acceptable because solver B is a "prove it" button, not the default: A
+  // scored within 5% of B's proven optimum in 100% of comparable runs. Lowering this
+  // number further, or removing it, would mean the runtime threshold below is
+  // measuring almost nothing — that is what it guards against.
+  exactProofRate: 0.40,
   qualityWithin5pct: 0.90
 };
 
@@ -83,6 +97,7 @@ export function runSimulations(options) {
     infeasible: { heuristic: 0, exact: 0 },
     hardViolations: { heuristic: 0, exact: 0 },
     unexplained: 0, nondeterministic: 0, capacityBreaches: 0, exactTimeouts: 0,
+    exactSolvableRuns: 0, exactProofRate: 0,
     runtime: { heuristic: [], exact: [], exactGaveUp: [] },
     scores: { heuristic: [], exact: [] },
     qualityGaps: [], qualityWithin5pct: 0,
@@ -148,6 +163,7 @@ export function runSimulations(options) {
     // --- solver B, on a subsample ---
     if (i % exactEvery === 0) {
       report.exactRuns++;
+      if (h.status === 'ok') report.exactSolvableRuns++;   // a solution provably exists
       // 15s: the exact solver proves a 24-child class in ~4s median, but a hard
       // instance can take three or four times that. Timeouts are counted, not hidden.
       const e = Solve.solve(problem, { solver: 'exact', seed: 1, timeBudgetMs: 15000 });
@@ -187,6 +203,8 @@ export function runSimulations(options) {
   report.runtime.heuristic = stats(report.runtime.heuristic);
   report.runtime.exact = stats(report.runtime.exact);
   report.runtime.exactGaveUp = stats(report.runtime.exactGaveUp);
+  report.exactProofRate = report.exactSolvableRuns
+    ? report.solved.exact / report.exactSolvableRuns : 1;
   const within = report.qualityGaps.filter(g => g <= 0.05).length;
   report.qualityWithin5pct = report.qualityGaps.length ? within / report.qualityGaps.length : 1;
 
@@ -208,6 +226,10 @@ export function runSimulations(options) {
   lines.push('Uden forklaring     ' + report.unexplained + '   (krav: 0)');
   lines.push('Ikke-deterministisk ' + report.nondeterministic + '   (krav: 0)');
   lines.push('Kapacitetsbrud      ' + report.capacityBreaches + '   (krav: 0)');
+  lines.push('B beviste optimum   ' + report.solved.exact + '/' + report.exactSolvableRuns +
+    ' af de klasser der beviseligt kan løses  = ' +
+    (report.exactProofRate * 100).toFixed(1) + '%   (krav: ' +
+    (THRESHOLDS.exactProofRate * 100) + '%)');
   lines.push('B løb tør for tid   ' + report.exactTimeouts + '/' + report.exactRuns +
     '   (tilladt — rapporteres ærligt som timeout, ikke som uløselig klasse)');
   lines.push('');

@@ -5,6 +5,10 @@ import { runSimulations, THRESHOLDS } from './simulate.mjs';
 
 const report = runSimulations({ count: 1000, childCount: 24, exactEvery: 5, quiet: false });
 
+// Print the numbers FIRST. A gate that throws before showing its report hides the
+// evidence at the exact moment it is needed.
+console.log(report.text);
+
 // --- the run itself ---
 assert.equal(report.total, 1000);
 assert.ok(report.exactRuns >= 190 && report.exactRuns <= 210);
@@ -33,9 +37,10 @@ assert.ok(report.runtime.heuristic.p99 < THRESHOLDS.heuristicP99Ms,
 // means it would pass vacuously if every run gave up (n = 0, median = 0). So the
 // solver has to earn the metric first. Roughly a fifth of the generated classes are
 // infeasible by design, so the bar sits below that.
-assert.ok(report.solved.exact / report.exactRuns >= 0.5,
-  'exact proved an optimum in only ' + report.solved.exact + '/' + report.exactRuns +
-  ' runs — the runtime threshold below would be measuring almost nothing');
+assert.ok(report.exactProofRate >= THRESHOLDS.exactProofRate,
+  'exact proved an optimum in only ' + report.solved.exact + '/' + report.exactSolvableRuns +
+  ' of the runs where a solution demonstrably exists — the runtime threshold below ' +
+  'would then be measuring almost nothing');
 assert.ok(report.runtime.exact.n > 0, 'no exact run ever reached a proven optimum');
 assert.ok(report.runtime.exact.median < THRESHOLDS.exactMedianMs,
   'exact median (proven runs only) ' + report.runtime.exact.median + 'ms');
@@ -49,5 +54,4 @@ assert.ok(report.qualityWithin5pct >= THRESHOLDS.qualityWithin5pct,
 assert.equal(report.capacityBreaches, 0,
   'families scheduled to host more often than they said they could');
 
-console.log(report.text);
 console.log('ok - acceptance (1000 simulations)');
