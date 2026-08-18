@@ -687,7 +687,12 @@
       var head = el('div', 'lg-proposal-head');
       head.appendChild(el('h3', null, p.title));
       var meta = p.result.meta || {};
+      // Group COUNT can differ between the solvers - the exact one is free to pick
+      // any legal mix of 4s and 5s, the fast one commits to a size plan up front.
+      // That is a legitimate difference and a consequential one, so it leads.
+      var n = (p.result.groups || []).length;
       head.appendChild(el('span', 'lg-proposal-meta',
+        (n ? n + ' grupper · ' : '') +
         (meta.runtimeMs != null ? meta.runtimeMs + ' ms' : '') +
         (p.result.score ? ' · score ' + p.result.score.total.toFixed(3) : '') +
         (meta.provenOptimal ? ' · bevist' : '')));
@@ -704,9 +709,18 @@
         var other = proposals.filter(function (x) { return x !== p; })[0];
         if (other.result.status === 'ok' && p.result.status === 'ok') {
           var diff = countDiff(p.result, other.result);
-          wrap.appendChild(el('div', 'lg-verdict', diff === 0
-            ? 'Nøjagtig samme opdeling som det andet forslag.'
-            : diff + ' børn får andre gruppekammerater end i det andet forslag.'));
+          var mine = p.result.groups.length, theirs = other.result.groups.length;
+          var text;
+          if (diff === 0) {
+            text = 'Nøjagtig samme opdeling som det andet forslag.';
+          } else if (mine !== theirs) {
+            text = 'Deler klassen i ' + mine + ' grupper mod ' + theirs +
+              ' i det andet forslag, så alle 24 børn får andre kammerater. ' +
+              'Færre grupper betyder færre værtstjanser, men større grupper.';
+          } else {
+            text = diff + ' børn får andre gruppekammerater end i det andet forslag.';
+          }
+          wrap.appendChild(el('div', 'lg-verdict', text));
         }
       }
 
