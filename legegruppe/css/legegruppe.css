@@ -141,8 +141,13 @@ textarea { min-height: 88px; resize: vertical; }
 .lg-badge--mine { border-color: var(--ink); color: var(--ink); }
 
 /* ── Admin ─────────────────────────────────────────────────────────── */
+/* `display` on a class beats the `hidden` attribute, so the admin console rendered
+   in full before anyone had logged in. Nothing secret leaked — the data only
+   arrives after authentication — but it looked broken and invited clicking. */
+[hidden] { display: none !important; }
+
 .lg-admin-grid { display: grid; gap: 28px; grid-template-columns: 1fr; }
-@media (min-width: 900px) { .lg-admin-grid { grid-template-columns: 320px 1fr; } }
+@media (min-width: 900px) { .lg-admin-grid { grid-template-columns: 360px 1fr; } }
 .lg-panel {
   border: 1px solid var(--rule); border-radius: var(--lg-card-radius); padding: 20px;
 }
@@ -151,10 +156,11 @@ textarea { min-height: 88px; resize: vertical; }
 .lg-panel h3 { margin: 18px 0 8px; }
 .lg-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
 .lg-row label { font-size: 13px; color: var(--ink-2); }
-.lg-row input[type="number"], .lg-row input[type="text"] { width: auto; min-width: 90px; }
+.lg-row input[type="number"] { width: 74px; min-width: 0; }
+.lg-row input[type="text"] { width: auto; min-width: 120px; flex: 1; }
 
 .lg-slider {
-  display: grid; grid-template-columns: 1fr 52px; gap: 10px;
+  display: grid; grid-template-columns: 1fr 110px 34px; gap: 10px;
   align-items: center; margin-bottom: 12px; font-size: 13px;
 }
 .lg-slider output {

@@ -184,6 +184,7 @@
     novelty: 'Nye legekammerater',
     robustness: 'Robusthed',
     capacityAdequacy: 'Nok værter',
+    transportCoverage: 'Gruppen kan selv hente',
     weekdayBreadth: 'Fælles ugedage',
     capacityBalance: 'Jævn fordeling'
   };
@@ -198,8 +199,8 @@
     input.value = String(Scoring.DEFAULT_WEIGHTS[name]);
     var out = el('output', null, input.value);
     input.addEventListener('input', function () { out.textContent = input.value; });
-    row.appendChild(label); row.appendChild(input);
-    var wrap = el('div'); wrap.appendChild(row); wrap.appendChild(out);
+    row.appendChild(label);
+    row.appendChild(input);
     row.appendChild(out);
     weightsBox.appendChild(row);
   });
