@@ -1752,11 +1752,13 @@ Create `legegruppe/js/solvers/rota.js`:
    Browser: window.LG.Rota   Node: require('./rota.js') */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) {
-    module.exports = factory(require('../model.js'));
+    module.exports = factory(require('../model.js'), require('../constraints.js'));
   } else {
-    root.LG = Object.assign(root.LG || {}, { Rota: factory(root.LG.Model) });
+    root.LG = Object.assign(root.LG || {}, {
+      Rota: factory(root.LG.Model, root.LG.Constraints)
+    });
   }
-})(typeof self !== 'undefined' ? self : this, function (Model) {
+})(typeof self !== 'undefined' ? self : this, function (Model, Constraints) {
   'use strict';
 
   const DAY_NAMES = { 1: 'mandag', 2: 'tirsdag', 3: 'onsdag', 4: 'torsdag', 5: 'fredag' };
@@ -1822,18 +1824,16 @@ Create `legegruppe/js/solvers/rota.js`:
       });
       const host = eligible[0];
 
-      // A weekday the host can do, preferring one that most others can also do.
-      const dayScore = day => families.filter(f =>
-        f.availableWeekdays.indexOf(day) !== -1).length;
-      const days = host.availableWeekdays.slice().sort((a, b) => {
-        const d = dayScore(b) - dayScore(a);
-        return d !== 0 ? d : a - b;
-      });
-      const weekday = days.length ? days[0] : null;
-      if (weekday === null) {
-        warnings.push('Værten i uge ' + week + ' har ingen hverdage angivet.');
+      // The weekday must work for EVERY family in the group - a meeting needs all
+      // the children present. Constraints.viableDays is the single source of truth
+      // for that, so H4 and the published rota can never disagree.
+      const days = Constraints.viableDays(group.childIds, problem)
+        .filter(d => host.availableWeekdays.indexOf(d) !== -1);
+      if (days.length === 0) {
+        warnings.push('Ingen fælles hverdag for gruppe ' + group.id + ' i uge ' + week + '.');
         return;
       }
+      const weekday = days[0];
 
       // Fetchers: available that weekday, capacity > 0, least-used first.
       const needed = size - 1;
@@ -2231,6 +2231,14 @@ assert.ok(bad.diagnosis && typeof bad.diagnosis.summary === 'string');
 assert.ok(bad.diagnosis.summary.length > 20);
 assert.equal(bad.rota, null);
 
+// --- a solver that merely ran out of time must NOT be diagnosed as an
+//     impossible class: that would tell the admin to loosen the wrong thing ---
+const tooBig = makeProblem(40);
+const refused = Solve.solve(tooBig, { solver: 'exact', seed: 1, timeBudgetMs: 500 });
+assert.equal(refused.status, 'infeasible');
+assert.equal(refused.diagnosis.needsRelaxation, false);
+assert.ok(/heuristik/i.test(refused.diagnosis.summary), refused.diagnosis.summary);
+
 // --- comparing the two solvers side by side ---
 const cmp = Solve.compare(p, { seed: 1, timeBudgetMs: 4000 });
 assert.ok(cmp.heuristic && cmp.exact);
@@ -2290,10 +2298,18 @@ Create `legegruppe/js/solvers/index.js`:
     });
 
     if (grouping.status !== 'ok') {
+      // A timeout or a size refusal is a statement about the *solver*, not about the
+      // class. Diagnosing relaxations there would tell the admin to loosen constraints
+      // that were never the problem, so pass the blocker through untouched.
+      const solverLimited = (grouping.blockers || [])
+        .some(b => b.code === 'TIMEOUT' || b.code === 'TOO_LARGE');
       return Object.assign({}, grouping, {
         rota: null,
         verification: null,
-        diagnosis: Infeasibility.diagnose(problem, { timeBudgetMs: 4000 }),
+        diagnosis: solverLimited
+          ? { needsRelaxation: false, relaxations: [],
+              summary: grouping.blockers.map(b => b.message).join(' ') }
+          : Infeasibility.diagnose(problem, { timeBudgetMs: 4000 }),
         meta: Object.assign({}, grouping.meta, { solver: name, runtimeMs: Date.now() - started })
       });
     }
@@ -2502,9 +2518,16 @@ function weighted(rand, pairs) {
   return pairs[pairs.length - 1][0];
 }
 
-/** A random non-empty subset of the working week. */
+/**
+ * A random subset of the working week.
+ * Deliberately generous: H4 requires a weekday shared by EVERY family in a group,
+ * so if each of five families were free on only half the week, almost no group
+ * could ever meet and the simulation would measure nothing but its own generator.
+ * Real parents can usually do most weekdays; the hostile profiles below are where
+ * scarcity is tested on purpose.
+ */
 function someWeekdays(rand, minDays) {
-  const days = [1, 2, 3, 4, 5].filter(() => rand() < 0.5);
+  const days = [1, 2, 3, 4, 5].filter(() => rand() < 0.8);
   while (days.length < (minDays || 1)) {
     const d = 1 + Math.floor(rand() * 5);
     if (days.indexOf(d) === -1) days.push(d);
@@ -2520,7 +2543,7 @@ export const PROFILES = {
   realistic: (rand) => ({
     hostCapacity: weighted(rand, [[0, 15], [1, 30], [2, 40], [3, 15]]),
     maxChildrenAtHome: weighted(rand, [[0, 8], [2, 12], [3, 25], [4, 35], [5, 20]]),
-    availableWeekdays: someWeekdays(rand, 1),
+    availableWeekdays: someWeekdays(rand, 3),
     fetchCapacity: weighted(rand, [[0, 20], [1, 15], [2, 25], [3, 25], [4, 15]]),
     meetingPlace: weighted(rand, [['home', 70], ['both', 20], ['outdoor', 10]])
   }),
@@ -2809,7 +2832,7 @@ export function runSimulations(options) {
     solved: { heuristic: 0, exact: 0 },
     infeasible: { heuristic: 0, exact: 0 },
     hardViolations: { heuristic: 0, exact: 0 },
-    unexplained: 0, nondeterministic: 0, capacityBreaches: 0,
+    unexplained: 0, nondeterministic: 0, capacityBreaches: 0, exactTimeouts: 0,
     runtime: { heuristic: [], exact: [] },
     scores: { heuristic: [], exact: [] },
     qualityGaps: [], qualityWithin5pct: 0,
@@ -2875,8 +2898,11 @@ export function runSimulations(options) {
     // --- solver B, on a subsample ---
     if (i % exactEvery === 0) {
       report.exactRuns++;
-      const e = Solve.solve(problem, { solver: 'exact', seed: 1, timeBudgetMs: 8000 });
+      // 15s: the exact solver proves a 24-child class in ~4s median, but a hard
+      // instance can take three or four times that. Timeouts are counted, not hidden.
+      const e = Solve.solve(problem, { solver: 'exact', seed: 1, timeBudgetMs: 15000 });
       report.runtime.exact.push(e.meta.runtimeMs);
+      if ((e.blockers || []).some(b => b.code === 'TIMEOUT')) report.exactTimeouts++;
       if (e.status === 'ok') {
         report.solved.exact++;
         report.scores.exact.push(e.score.total);
@@ -2926,6 +2952,8 @@ export function runSimulations(options) {
   lines.push('Uden forklaring     ' + report.unexplained + '   (krav: 0)');
   lines.push('Ikke-deterministisk ' + report.nondeterministic + '   (krav: 0)');
   lines.push('Kapacitetsbrud      ' + report.capacityBreaches + '   (krav: 0)');
+  lines.push('B løb tør for tid   ' + report.exactTimeouts + '/' + report.exactRuns +
+    '   (tilladt — rapporteres ærligt som timeout, ikke som uløselig klasse)');
   lines.push('');
   lines.push('Køretid A (ms)      median ' + report.runtime.heuristic.median +
     '  p90 ' + report.runtime.heuristic.p90 +

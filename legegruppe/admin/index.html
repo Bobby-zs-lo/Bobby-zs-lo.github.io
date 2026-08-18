@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Legegruppe — administration</title>
+<link rel="stylesheet" href="../css/legegruppe.css">
+</head>
+<body>
+
+<nav class="nav lg-noprint">
+  <div class="container nav-inner">
+    <a href="/" class="nav-brand">Bobby<span class="nav-brand-dot">.</span>Lo</a>
+    <ul class="nav-links">
+      <li><a href="/legegruppe/admin/" class="active" aria-current="page">Administration</a></li>
+    </ul>
+  </div>
+</nav>
+
+<main class="lg-main lg-main--wide">
+
+  <header class="lg-header">
+    <div class="eyebrow">Legegrupper</div>
+    <h1>Administration</h1>
+  </header>
+
+  <div id="lg-status" class="lg-status" role="status" aria-live="polite" hidden></div>
+
+  <!-- Login -->
+  <section id="lg-login" class="lg-panel" style="max-width:460px">
+    <h2>Adgangskode</h2>
+    <p class="lg-help">Gemmes ikke — den holdes kun i denne fane, indtil du lukker den.</p>
+    <div class="lg-row">
+      <input type="password" id="lg-pass" autocomplete="current-password">
+      <button type="button" class="btn btn-primary" id="lg-login-btn">Log ind</button>
+    </div>
+  </section>
+
+  <div class="lg-admin-grid" id="lg-console" hidden>
+
+    <!-- Controls -->
+    <div>
+      <section class="lg-panel lg-panel--controls">
+        <h2>Kør en runde</h2>
+
+        <div class="lg-row">
+          <label for="weekFrom">Uge fra</label>
+          <input type="number" id="weekFrom" value="34" min="1" max="53">
+          <label for="weekTo">til</label>
+          <input type="number" id="weekTo" value="47" min="1" max="53">
+        </div>
+        <div class="lg-row">
+          <label for="meetings">Møder per gruppe</label>
+          <input type="number" id="meetings" value="6" min="1" max="24">
+        </div>
+        <div class="lg-row">
+          <label for="sizeMin">Gruppestørrelse</label>
+          <input type="number" id="sizeMin" value="4" min="2" max="8">
+          <span>–</span>
+          <input type="number" id="sizeMax" value="5" min="2" max="8">
+        </div>
+
+        <h3>Hvad vægter tungest?</h3>
+        <div id="lg-weights"></div>
+
+        <h3>Løser</h3>
+        <div class="lg-choices">
+          <input type="radio" id="s-h" name="solver" value="heuristic" checked>
+          <label for="s-h">Hurtig</label>
+          <input type="radio" id="s-e" name="solver" value="exact">
+          <label for="s-e">Bevist bedst</label>
+          <input type="radio" id="s-c" name="solver" value="compare">
+          <label for="s-c">Kør begge</label>
+        </div>
+        <p class="lg-help" style="margin-top:10px">
+          "Bevist bedst" gennemsøger alle muligheder og kan tage 5–20 sekunder.
+          Den er kun optimal <em>for de vægte du har sat</em> — ikke i absolut forstand.
+        </p>
+
+        <div class="lg-row" style="margin-top:16px">
+          <button type="button" class="btn btn-primary" id="lg-run">Dan grupper</button>
+          <button type="button" class="btn btn-outline" id="lg-rerun" hidden>Kør igen med mine låse</button>
+        </div>
+      </section>
+
+      <section class="lg-panel">
+        <h2>Forbudte par</h2>
+        <p class="lg-help">
+          Børn der ikke må være i samme gruppe. Vises aldrig for forældrene, og
+          algoritmen foreslår aldrig at lempe dem.
+        </p>
+        <div class="lg-row">
+          <select id="bp-a"></select>
+          <select id="bp-b"></select>
+          <button type="button" class="btn btn-outline" id="bp-add">Tilføj</button>
+        </div>
+        <ul class="lg-contacts" id="bp-list"></ul>
+      </section>
+
+      <section class="lg-panel lg-danger">
+        <h2>Slet alt</h2>
+        <p class="lg-help">Ved skoleårets slutning. Kan ikke fortrydes.</p>
+        <div class="lg-row">
+          <input type="text" id="lg-confirm" placeholder="Skriv SLET ALT">
+          <button type="button" class="btn btn-outline" id="lg-delete">Slet</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Results -->
+    <div>
+      <section class="lg-panel">
+        <h2>Status</h2>
+        <div id="lg-changed"></div>
+        <div class="lg-scroll">
+          <table class="lg-table" id="lg-families">
+            <thead><tr><th>Forælder</th><th>Barn</th><th>Svar</th><th>Link</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="lg-row" style="margin-top:14px">
+          <button type="button" class="btn btn-outline" id="lg-remind">Kopiér rykker</button>
+          <button type="button" class="btn btn-outline" id="lg-add-family">Tilføj familie</button>
+        </div>
+      </section>
+
+      <section class="lg-panel" id="lg-result-panel" hidden>
+        <h2>Forslag</h2>
+        <p class="lg-help" id="lg-meta"></p>
+        <div class="lg-groups" id="lg-result"></div>
+        <div class="lg-row" style="margin-top:20px">
+          <button type="button" class="btn btn-primary" id="lg-publish">Udgiv runden</button>
+          <span class="lg-help" id="lg-publish-why" style="margin:0"></span>
+        </div>
+      </section>
+    </div>
+  </div>
+
+</main>
+
+<script src="../js/model.js"></script>
+<script src="../js/constraints.js"></script>
+<script src="../js/scoring.js"></script>
+<script src="../js/solvers/heuristic.js"></script>
+<script src="../js/solvers/exact.js"></script>
+<script src="../js/solvers/rota.js"></script>
+<script src="../js/solvers/infeasibility.js"></script>
+<script src="../js/solvers/index.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/ui/plan.js"></script>
+<script src="../js/ui/admin.js"></script>
+<script>
+(function () {
+  'use strict';
+  var LG = window.LG;
+  var Admin = LG.Admin, Solve = LG.Solve, Scoring = LG.Scoring, Model = LG.Model;
+  var api = LG.Api.createClient({});
+
+  // Held in memory for this tab only. Never written to storage.
+  var pass = null;
+  var snapshot = null;
+  var problem = null;
+  var current = null;      // last solver result
+  var groups = null;       // possibly hand-edited
+  var locked = [];
+
+  var statusEl = document.getElementById('lg-status');
+
+  function show(kind, text) {
+    statusEl.className = 'lg-status' + (kind ? ' lg-status--' + kind : '');
+    statusEl.textContent = text;
+    statusEl.hidden = false;
+  }
+  function el(tag, className, text) {
+    var n = document.createElement(tag);
+    if (className) n.className = className;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  // ---- weights ----
+  var WEIGHT_LABELS = {
+    novelty: 'Nye legekammerater',
+    robustness: 'Robusthed',
+    capacityAdequacy: 'Nok værter',
+    weekdayBreadth: 'Fælles ugedage',
+    capacityBalance: 'Jævn fordeling'
+  };
+  var weightsBox = document.getElementById('lg-weights');
+  Object.keys(Scoring.DEFAULT_WEIGHTS).forEach(function (name) {
+    var row = el('div', 'lg-slider');
+    var label = el('label', null, WEIGHT_LABELS[name] || name);
+    label.setAttribute('for', 'w-' + name);
+    var input = document.createElement('input');
+    input.type = 'range'; input.id = 'w-' + name; input.name = name;
+    input.min = '0'; input.max = '1'; input.step = '0.05';
+    input.value = String(Scoring.DEFAULT_WEIGHTS[name]);
+    var out = el('output', null, input.value);
+    input.addEventListener('input', function () { out.textContent = input.value; });
+    row.appendChild(label); row.appendChild(input);
+    var wrap = el('div'); wrap.appendChild(row); wrap.appendChild(out);
+    row.appendChild(out);
+    weightsBox.appendChild(row);
+  });
+  function readWeights() {
+    var values = {};
+    Object.keys(Scoring.DEFAULT_WEIGHTS).forEach(function (name) {
+      values[name] = document.getElementById('w-' + name).value;
+    });
+    return Admin.readWeights(values);
+  }
+
+  // ---- login ----
+  document.getElementById('lg-login-btn').addEventListener('click', function () {
+    pass = document.getElementById('lg-pass').value;
+    api.adminSnapshot(pass).then(function (data) {
+      snapshot = data;
+      document.getElementById('lg-login').hidden = true;
+      document.getElementById('lg-console').hidden = false;
+      statusEl.hidden = true;
+      renderStatus();
+      renderBlockedPairs();
+    }).catch(function (err) { show('error', err.message); });
+  });
+
+  // ---- status table ----
+  function renderStatus() {
+    var tbody = document.querySelector('#lg-families tbody');
+    tbody.innerHTML = '';
+    var byFamily = {};
+    (snapshot.children || []).forEach(function (c) {
+      (byFamily[c.familyId] = byFamily[c.familyId] || []).push(c.name);
+    });
+    (snapshot.families || []).forEach(function (f) {
+      var tr = el('tr');
+      tr.appendChild(el('td', null, f.parentName || '—'));
+      tr.appendChild(el('td', null, (byFamily[f.familyId] || []).join(', ')));
+      var answered = Boolean(f.consentAt || f.updatedAt);
+      tr.appendChild(el('td', answered ? null : 'lg-missing', answered ? 'Ja' : 'Mangler'));
+      var td = el('td');
+      var a = el('a', null, 'link');
+      a.href = '../?f=' + encodeURIComponent(f.token);
+      td.appendChild(a);
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+    });
+
+    var changed = Admin.changedSincePublish(snapshot);
+    var box = document.getElementById('lg-changed');
+    box.innerHTML = '';
+    if (changed.length) {
+      var names = changed.map(function (f) { return f.parentName; }).join(', ');
+      box.appendChild(el('div', 'lg-status',
+        names + ' har ændret svar efter planen blev udgivet. ' +
+        'Planen er ikke ændret automatisk — kør en ny runde hvis det skal med.'));
+    }
+
+    var selA = document.getElementById('bp-a'), selB = document.getElementById('bp-b');
+    selA.innerHTML = ''; selB.innerHTML = '';
+    (snapshot.children || []).forEach(function (c) {
+      [selA, selB].forEach(function (sel) {
+        var o = document.createElement('option');
+        o.value = c.childId; o.textContent = c.name;
+        sel.appendChild(o);
+      });
+    });
+  }
+
+  document.getElementById('lg-remind').addEventListener('click', function () {
+    navigator.clipboard.writeText(Admin.reminderText(snapshot)).then(function () {
+      show('ok', 'Rykkerteksten er kopieret.');
+    });
+  });
+
+  document.getElementById('lg-add-family').addEventListener('click', function () {
+    var parentName = prompt('Forælderens navn?');
+    if (!parentName) return;
+    var contact = prompt('Mail eller mobil?') || '';
+    var childName = prompt('Barnets fornavn?');
+    if (!childName) return;
+    api.addFamily(pass, parentName, contact, [childName]).then(function (res) {
+      show('ok', 'Familien er oprettet. Link: ' +
+        location.origin + '/legegruppe/?f=' + res.token);
+      return api.adminSnapshot(pass);
+    }).then(function (data) { snapshot = data; renderStatus(); })
+      .catch(function (err) { show('error', err.message); });
+  });
+
+  // ---- blocked pairs ----
+  function renderBlockedPairs() {
+    var list = document.getElementById('bp-list');
+    list.innerHTML = '';
+    var names = {};
+    (snapshot.children || []).forEach(function (c) { names[c.childId] = c.name; });
+    (snapshot.blockedPairs || []).forEach(function (p, i) {
+      var li = el('li', null, (names[p[0]] || p[0]) + ' + ' + (names[p[1]] || p[1]) + '  ');
+      var btn = el('button', 'btn btn-outline', 'Fjern');
+      btn.type = 'button';
+      btn.addEventListener('click', function () {
+        var next = snapshot.blockedPairs.filter(function (_, j) { return j !== i; });
+        saveBlocked(next);
+      });
+      li.appendChild(btn);
+      list.appendChild(li);
+    });
+  }
+  function saveBlocked(pairs) {
+    api.setBlockedPairs(pass, pairs).then(function () {
+      snapshot.blockedPairs = pairs;
+      renderBlockedPairs();
+      show('ok', 'Forbudte par gemt.');
+    }).catch(function (err) { show('error', err.message); });
+  }
+  document.getElementById('bp-add').addEventListener('click', function () {
+    var a = document.getElementById('bp-a').value;
+    var b = document.getElementById('bp-b').value;
+    if (!a || !b || a === b) { show('error', 'Vælg to forskellige børn.'); return; }
+    saveBlocked((snapshot.blockedPairs || []).concat([[a, b]]));
+  });
+
+  // ---- running a round ----
+  function buildProblem() {
+    return Model.buildProblem({
+      classId: snapshot.classId,
+      children: snapshot.children,
+      families: snapshot.families,
+      blockedPairs: snapshot.blockedPairs,
+      history: snapshot.history,
+      groupSizeMin: parseInt(document.getElementById('sizeMin').value, 10),
+      groupSizeMax: parseInt(document.getElementById('sizeMax').value, 10),
+      weeks: Admin.weekRange(
+        parseInt(document.getElementById('weekFrom').value, 10),
+        parseInt(document.getElementById('weekTo').value, 10)),
+      meetingsPerGroup: parseInt(document.getElementById('meetings').value, 10)
+    });
+  }
+
+  function run(useLocks) {
+    var solver = document.querySelector('input[name="solver"]:checked').value;
+    var btn = document.getElementById('lg-run');
+    btn.disabled = true; btn.textContent = 'Regner…';
+    statusEl.hidden = true;
+
+    // Yield first so the button repaints before the solver blocks the thread.
+    setTimeout(function () {
+      try {
+        problem = buildProblem();
+        var opts = {
+          seed: 1,
+          timeBudgetMs: solver === 'heuristic' ? 400 : 20000,
+          weights: readWeights(),
+          locks: useLocks && groups ? Admin.locksFrom(groups, locked) : []
+        };
+        if (solver === 'compare') {
+          var cmp = Solve.compare(problem, opts);
+          current = cmp.exact.status === 'ok' ? cmp.exact : cmp.heuristic;
+          show('', cmp.summary);
+        } else {
+          current = Solve.solve(problem, Object.assign({ solver: solver }, opts));
+        }
+        groups = current.groups ? current.groups.map(function (g) {
+          return { id: g.id, childIds: g.childIds.slice(), why: g.why };
+        }) : null;
+        renderResult();
+      } catch (err) {
+        show('error', 'Beregningen fejlede: ' + err.message);
+      } finally {
+        btn.disabled = false; btn.textContent = 'Dan grupper';
+      }
+    }, 0);
+  }
+  document.getElementById('lg-run').addEventListener('click', function () { run(false); });
+  document.getElementById('lg-rerun').addEventListener('click', function () { run(true); });
+
+  /** Re-verify after a manual move. The admin is allowed to break things — but
+      never silently, and never all the way to publication. */
+  function reverify() {
+    var solution = { groups: groups };
+    var violations = LG.Constraints.verifySolution(solution, problem);
+    current = Object.assign({}, current, {
+      groups: groups,
+      verification: violations,
+      status: violations.length ? 'invalid' : 'ok',
+      rota: violations.length ? null : LG.Rota.buildRota(solution, problem, { seed: 1 })
+    });
+    renderResult();
+  }
+
+  function renderResult() {
+    var panel = document.getElementById('lg-result-panel');
+    var box = document.getElementById('lg-result');
+    panel.hidden = false;
+    box.innerHTML = '';
+    document.getElementById('lg-rerun').hidden = !groups;
+
+    var meta = document.getElementById('lg-meta');
+    if (current.status !== 'ok' && current.status !== 'invalid') {
+      meta.textContent = (current.diagnosis && current.diagnosis.summary) || '';
+      document.getElementById('lg-publish').disabled = true;
+      document.getElementById('lg-publish-why').textContent =
+        Admin.publishBlockReason(current);
+      return;
+    }
+
+    meta.textContent = 'Løser: ' + current.meta.solver +
+      ' · ' + current.meta.runtimeMs + ' ms' +
+      (current.score ? ' · score ' + current.score.total.toFixed(3) : '') +
+      (current.meta.provenOptimal ? ' · bevist optimal for disse vægte' : '');
+
+    var names = {};
+    (snapshot.children || []).forEach(function (c) { names[c.childId] = c.name; });
+
+    groups.forEach(function (g, gi) {
+      var card = el('article', 'lg-group');
+      card.appendChild(el('div', 'lg-group-tag', 'Gruppe ' + g.id));
+      g.childIds.forEach(function (id) {
+        var row = el('div', 'lg-row');
+        row.appendChild(el('span', null, names[id] || id));
+
+        var sel = document.createElement('select');
+        groups.forEach(function (other, oi) {
+          var o = document.createElement('option');
+          o.value = String(oi); o.textContent = other.id;
+          if (oi === gi) o.selected = true;
+          sel.appendChild(o);
+        });
+        sel.addEventListener('change', function () {
+          groups = Admin.moveChild(groups, id, parseInt(sel.value, 10));
+          reverify();
+        });
+        row.appendChild(sel);
+
+        var lockLabel = el('label', null, ' lås');
+        var lock = document.createElement('input');
+        lock.type = 'checkbox';
+        lock.checked = locked.indexOf(id) !== -1;
+        lock.addEventListener('change', function () {
+          locked = lock.checked
+            ? locked.concat([id])
+            : locked.filter(function (x) { return x !== id; });
+        });
+        lockLabel.insertBefore(lock, lockLabel.firstChild);
+        row.appendChild(lockLabel);
+        card.appendChild(row);
+      });
+
+      if (g.why) card.appendChild(el('p', 'lg-why', g.why.join(' ')));
+
+      var rota = current.rota &&
+        current.rota.groups.filter(function (r) { return r.id === g.id; })[0];
+      if (rota) {
+        var list = el('ul', 'lg-weeks');
+        rota.meetings.forEach(function (m) {
+          var who = (snapshot.families.filter(function (f) {
+            return f.familyId === m.hostFamilyId;
+          })[0] || {}).parentName || m.hostFamilyId;
+          var row = el('li', 'lg-week');
+          row.appendChild(el('span', 'lg-week-no', 'Uge ' + m.week));
+          var what = el('span', 'lg-week-what',
+            m.weekdayName + ' — ' + (m.place === 'ude' ? 'ude med ' : 'hos ') + who);
+          if (m.transport === 'aftales') {
+            what.appendChild(el('span', 'lg-badge lg-badge--aftales', 'aftales'));
+          }
+          row.appendChild(what);
+          list.appendChild(row);
+        });
+        card.appendChild(list);
+      }
+      box.appendChild(card);
+    });
+
+    var canPublish = Admin.canPublish(current);
+    document.getElementById('lg-publish').disabled = !canPublish;
+    document.getElementById('lg-publish-why').textContent =
+      canPublish ? '' : Admin.publishBlockReason(current);
+  }
+
+  document.getElementById('lg-publish').addEventListener('click', function () {
+    if (!Admin.canPublish(current)) return;
+    var payload = Admin.publishPayload({
+      result: { groups: current.groups, rota: current.rota,
+        score: current.score, meta: current.meta },
+      weeks: problem.weeks,
+      meetingsPerGroup: problem.meetingsPerGroup,
+      groupSizeMin: problem.groupSizeMin,
+      groupSizeMax: problem.groupSizeMax,
+      solver: current.meta.solver,
+      weights: readWeights()
+    });
+    api.publishRound(pass, payload).then(function () {
+      show('ok', 'Runden er udgivet. Forældrene ser den nu på deres eget link.');
+      return api.adminSnapshot(pass);
+    }).then(function (data) { snapshot = data; renderStatus(); })
+      .catch(function (err) { show('error', err.message); });
+  });
+
+  document.getElementById('lg-delete').addEventListener('click', function () {
+    var confirmText = document.getElementById('lg-confirm').value;
+    api.deleteAll(pass, confirmText).then(function () {
+      show('ok', 'Alt er slettet.');
+      return api.adminSnapshot(pass);
+    }).then(function (data) { snapshot = data; renderStatus(); renderBlockedPairs(); })
+      .catch(function (err) { show('error', err.message); });
+  });
+})();
+</script>
+
+</body>
+</html>
