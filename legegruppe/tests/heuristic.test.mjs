@@ -118,7 +118,10 @@ assert.equal(new Set(sameSeedRuns).size, 1,
 const pinned = H.solve(easy, { seed: 99, timeBudgetMs: 120, weights: S.DEFAULT_WEIGHTS });
 assert.equal(pinned.meta.iterations, pinned.meta.maxIterations,
   'the run should end because it hit its iteration budget, not the clock');
-assert.equal(pinned.meta.deadlineHit, false,
-  'the wall-clock safety valve should not fire on an ordinary machine');
+// There is deliberately no wall-clock escape hatch: one was tried and removed,
+// because it only ever fired on a loaded machine — exactly when a stable answer
+// matters most.
+assert.equal(pinned.meta.deadlineHit, undefined,
+  'annealing must not be bounded by the clock in any form');
 
 console.log('ok - heuristic');

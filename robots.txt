@@ -3,6 +3,7 @@ Allow: /
 Disallow: /receipts.html
 Disallow: /receipts.js
 Disallow: /Apps-Script-Setup.md
+Disallow: /legegruppe/
 Disallow: /.superpowers/
 Disallow: /docs/
 Disallow: /old%20files/

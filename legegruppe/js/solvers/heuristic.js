@@ -87,7 +87,7 @@
    * Simulated annealing over swaps and moves. Any state that would violate a hard
    * requirement is rejected, so the incumbent is always a valid solution.
    */
-  function anneal(groups, sizes, problem, weights, rand, deadline, locked, maxIterations) {
+  function anneal(groups, sizes, problem, weights, rand, locked, maxIterations) {
     let current = groups.map(g => g.slice());
     let currentScore = totalScore(current, problem, weights);
     let best = current.map(g => g.slice());
@@ -96,14 +96,17 @@
     let temperature = 0.15;
     let iterations = 0;
 
-    // Stop on a COUNT, not on the clock. A wall-clock bound makes the number of
+    // Stop on a COUNT, and only on a count. A wall-clock bound makes the number of
     // iterations depend on how busy the machine is, so the same seed produces
-    // different groups on different runs - which broke the determinism guarantee.
-    // The deadline survives only as a safety valve for a pathologically slow host,
-    // and when it fires we say so rather than quietly returning a different answer.
-    let deadlineHit = false;
+    // different groups on different runs - which is what broke the determinism
+    // guarantee in the first full acceptance run.
+    //
+    // An earlier attempt kept the clock as a "safety valve" alongside the count.
+    // That was worse than useless: the valve fires exactly when the machine is
+    // loaded, so determinism held right up until the moment it mattered. The work
+    // here is already bounded - maxIterations of cheap swaps - so there is nothing
+    // for a valve to protect against. A slow run is fine; a different answer is not.
     while (iterations < maxIterations) {
-      if ((iterations & 255) === 0 && Date.now() >= deadline) { deadlineHit = true; break; }
       iterations++;
       if (iterations % 200 === 0) temperature *= 0.92;
 
@@ -136,7 +139,7 @@
         }
       }
     }
-    return { groups: best, score: bestScore, iterations: iterations, deadlineHit: deadlineHit };
+    return { groups: best, score: bestScore, iterations: iterations };
   }
 
   /** Why is this class unsolvable? Reported per child, deduplicated. */
@@ -202,13 +205,12 @@
     }
 
     const initialScore = totalScore(start, problem, weights);
-    const deadline = started + budget;
     // ~88 iterations/ms measured on a 24-child class; 60 leaves comfortable headroom
     // so the safety valve stays shut on an ordinary machine.
     const maxIterations = typeof opts.maxIterations === 'number'
       ? opts.maxIterations
       : Math.max(1000, Math.round(budget * 60));
-    const result = anneal(start, sizes, problem, weights, rand, deadline, locked, maxIterations);
+    const result = anneal(start, sizes, problem, weights, rand, locked, maxIterations);
 
     const groups = result.groups.map((childIds, i) => ({
       id: GROUP_LETTERS[i] || String(i + 1),
@@ -225,7 +227,7 @@
       meta: {
         solver: 'heuristic', runtimeMs: Date.now() - started, seed: opts.seed,
         iterations: result.iterations, initialScore: initialScore,
-        maxIterations: maxIterations, deadlineHit: result.deadlineHit
+        maxIterations: maxIterations
       }
     };
   }
