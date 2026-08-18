@@ -128,19 +128,60 @@
       <div>
         <section class="lg-panel">
           <div class="lg-panel-head">
-            <span class="eyebrow">Klassen</span>
-            <h2>Forældrenes svar</h2>
-            <p class="lg-panel-note">Klik på en familie for at se hele svaret.</p>
+            <div class="lg-headrow">
+              <div>
+                <span class="eyebrow">Klassen</span>
+                <h2>Forældrenes svar</h2>
+                <p class="lg-panel-note">Klik på en familie for at se hele svaret.</p>
+              </div>
+              <button type="button" class="lg-qbtn" id="lg-help-answers"
+                      aria-expanded="false" aria-controls="lg-legend-answers"
+                      aria-label="Hvad betyder kolonnerne?" title="Hvad betyder kolonnerne?">?</button>
+            </div>
+            <div class="lg-legend" id="lg-legend-answers" hidden>
+              <dl>
+                <div>
+                  <dt>Lægger hus til</dt>
+                  <dd>Hvor mange gange familien selv har sagt de kan afholde et møde i
+                      løbet af en periode på cirka fire måneder. Skalaen går til 3.</dd>
+                </div>
+                <div>
+                  <dt>Plads hjemme</dt>
+                  <dd>Hvor mange <em>gæster</em> der er plads til, ud over deres eget barn.
+                      Skalaen går til 5.</dd>
+                </div>
+                <div>
+                  <dt>Henter</dt>
+                  <dd>Hvor mange børn familien kan hente fra skole på en gang.
+                      Skalaen går til 5.</dd>
+                </div>
+                <div>
+                  <dt>Hverdage</dt>
+                  <dd><code>M T O T F</code> - de fyldte felter er de dage familien kan.
+                      En gruppe skal finde en dag <em>alle</em> kan.</dd>
+                </div>
+                <div class="lg-legend-row">
+                  <span class="lg-cell"><span class="lg-dots" aria-hidden="true"><span class="lg-dot is-on"></span><span class="lg-dot is-on"></span><span class="lg-dot"></span></span><span class="lg-dotnum">2</span></span>
+                  <span>Fyldte prikker er det familien har svaret, tomme er resten af
+                        skalaen. Tallet ved siden af er svaret.</span>
+                </div>
+                <div class="lg-legend-row">
+                  <span class="lg-cell"><span class="lg-dots is-zero" aria-hidden="true"><span class="lg-dot"></span><span class="lg-dot"></span><span class="lg-dot"></span></span><span class="lg-dotnum is-zero">0</span></span>
+                  <span>Rødt betyder <strong>nul</strong> - familien kan ikke det her. Det er
+                        et helt gyldigt svar, og algoritmen arbejder uden om det.</span>
+                </div>
+              </dl>
+            </div>
           </div>
           <div id="lg-changed"></div>
           <div class="lg-scroll">
             <table class="lg-table" id="lg-families">
               <thead><tr>
                 <th scope="col">Familie</th>
-                <th scope="col">Vært</th>
-                <th scope="col">Hjemme</th>
-                <th scope="col">Henter</th>
-                <th scope="col">Dage</th>
+                <th scope="col">Lægger hus til<span class="lg-th-sub">gange per periode, 0–3</span></th>
+                <th scope="col">Plads hjemme<span class="lg-th-sub">børn på besøg, 0–5</span></th>
+                <th scope="col">Henter<span class="lg-th-sub">børn fra skole, 0–5</span></th>
+                <th scope="col">Hverdage<span class="lg-th-sub">man – fre</span></th>
                 <th scope="col">Link</th>
               </tr></thead>
               <tbody></tbody>
@@ -154,8 +195,43 @@
 
         <section id="lg-result-panel" hidden style="margin-top:20px">
           <div class="lg-panel-head">
-            <span class="eyebrow">Trin 2</span>
-            <h2>Forslag</h2>
+            <div class="lg-headrow">
+              <div>
+                <span class="eyebrow">Trin 2</span>
+                <h2>Forslag</h2>
+              </div>
+              <button type="button" class="lg-qbtn" id="lg-help-groups"
+                      aria-expanded="false" aria-controls="lg-legend-groups"
+                      aria-label="Hvad betyder tallene på grupperne?"
+                      title="Hvad betyder tallene på grupperne?">?</button>
+            </div>
+            <div class="lg-legend" id="lg-legend-groups" hidden>
+              <dl>
+                <div>
+                  <dt>Kan være vært</dt>
+                  <dd>Hvor mange af gruppens familier der faktisk kan afholde et møde -
+                      altså har plads nok hjemme, eller kan tage gruppen med ud. Er tallet
+                      1, vælter hele gruppen hvis den ene familie bliver syg.</dd>
+                </div>
+                <div>
+                  <dt>Fælles hverdage</dt>
+                  <dd>Hvor mange hverdage <em>alle</em> familier i gruppen kan. Der skal
+                      mindst være en, ellers kan gruppen aldrig mødes.</dd>
+                </div>
+                <div>
+                  <dt>Kan hente / skal hentes</dt>
+                  <dd>Til venstre hvor mange børn gruppen tilsammen kan hente fra skole,
+                      til højre hvor mange der skal hentes. Er det første tal mindst lige
+                      så stort, går transporten op af sig selv. Ellers står der
+                      <em>aftales</em> ved de møder det gælder.</dd>
+                </div>
+                <div>
+                  <dt>Røde tal</dt>
+                  <dd>Gruppen er på kanten på det punkt. Den er stadig lovlig - ellers var
+                      den ikke blevet foreslået - men den har ingen reserve.</dd>
+                </div>
+              </dl>
+            </div>
           </div>
           <div id="lg-proposals" class="lg-proposals"></div>
 
@@ -299,15 +375,23 @@
   }
 
   // ── the parents' answers ─────────────────────────────────────────
-  function dots(value, max, zeroIsNotable) {
-    var wrap = el('span', 'lg-dots' + (value === 0 && zeroIsNotable ? ' is-zero' : ''));
-    wrap.setAttribute('role', 'img');
-    wrap.setAttribute('aria-label', value + ' ud af ' + max);
-    wrap.title = value + ' ud af ' + max;
+  /**
+   * Dots give the scan pattern down a column; the number beside them is the
+   * actual answer. Dots on their own were unreadable without a key.
+   */
+  function dots(value, max, unit) {
+    var cell = el('span', 'lg-cell');
+    var wrap = el('span', 'lg-dots' + (value === 0 ? ' is-zero' : ''));
+    wrap.setAttribute('aria-hidden', 'true');
     for (var i = 1; i <= max; i++) {
       wrap.appendChild(el('span', 'lg-dot' + (i <= value ? ' is-on' : '')));
     }
-    return wrap;
+    cell.appendChild(wrap);
+    var num = el('span', 'lg-dotnum' + (value === 0 ? ' is-zero' : ''), String(value));
+    cell.appendChild(num);
+    cell.title = value + ' af højst ' + max + ' ' + unit;
+    cell.setAttribute('aria-label', value + ' af højst ' + max + ' ' + unit);
+    return cell;
   }
   function dayStrip(days) {
     var set = (days || []).map(Number);
@@ -331,9 +415,13 @@
     var td = document.createElement('td');
     td.colSpan = colspan;
     var dl = el('dl', 'lg-detail-inner');
-    function pair(term, value) {
-      dl.appendChild(el('dt', null, term));
-      dl.appendChild(el('dd', null, value));
+    // Each pair is wrapped, so the term and its value stay in the same grid cell.
+    // Loose dt/dd elements flowed independently and landed beside the wrong answers.
+    function pair(term, value, wide) {
+      var box = el('div', 'lg-pair' + (wide ? ' lg-pair--wide' : ''));
+      box.appendChild(el('dt', null, term));
+      box.appendChild(el('dd', null, value));
+      dl.appendChild(box);
     }
     pair('Barn', kids.join(', ') || '—');
     pair('Kontakt', f.contact || '—');
@@ -349,7 +437,7 @@
       : 'ingen valgt');
     pair('Ferieuger', String(f.blackoutWeeks || '').length ? 'uge ' + f.blackoutWeeks : 'ingen');
     pair('Sidst opdateret', f.updatedAt ? String(f.updatedAt).slice(0, 10) : 'aldrig');
-    if (f.note) dl.appendChild(el('dd', 'lg-quote', '“' + f.note + '”'));
+    if (f.note) pair('Skrevet af forælderen', '“' + f.note + '”', true);
     td.appendChild(dl);
     tr.appendChild(td);
     return tr;
@@ -388,11 +476,11 @@
         tr.appendChild(td);
       } else {
         var c1 = document.createElement('td');
-        c1.appendChild(dots(Number(f.hostCapacity), 3, true)); tr.appendChild(c1);
+        c1.appendChild(dots(Number(f.hostCapacity), 3, 'gange')); tr.appendChild(c1);
         var c2 = document.createElement('td');
-        c2.appendChild(dots(Number(f.maxChildrenAtHome), 5, true)); tr.appendChild(c2);
+        c2.appendChild(dots(Number(f.maxChildrenAtHome), 5, 'børn hjemme')); tr.appendChild(c2);
         var c3 = document.createElement('td');
-        c3.appendChild(dots(Number(f.fetchCapacity), 5, true)); tr.appendChild(c3);
+        c3.appendChild(dots(Number(f.fetchCapacity), 5, 'børn hentet')); tr.appendChild(c3);
         var c4 = document.createElement('td');
         c4.appendChild(dayStrip(f.availableWeekdays)); tr.appendChild(c4);
       }
@@ -435,6 +523,19 @@
       });
     });
   }
+
+  // Help panels: a real toggle rather than a hover tooltip, because hover does
+  // not exist on a phone and this gets read on phones.
+  function wireHelp(btnId, panelId) {
+    var btn = document.getElementById(btnId), panel = document.getElementById(panelId);
+    btn.addEventListener('click', function () {
+      var open = btn.getAttribute('aria-expanded') === 'true';
+      btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+      panel.hidden = open;
+    });
+  }
+  wireHelp('lg-help-answers', 'lg-legend-answers');
+  wireHelp('lg-help-groups', 'lg-legend-groups');
 
   document.getElementById('lg-remind').addEventListener('click', function () {
     navigator.clipboard.writeText(Admin.reminderText(snapshot)).then(function () {
@@ -580,10 +681,13 @@
     var sharedDays = counts.filter(function (n) { return n === fams.length; }).length;
     var fetchSupply = fams.reduce(function (s, f) { return s + f.fetchCapacity; }, 0);
 
+    // The label has to carry the meaning on its own - "13/4 hentekapacitet"
+    // told nobody anything.
     var stats = el('div', 'lg-groupstats');
-    [[String(hosts), 'mulige værter', hosts < 2],
-     [String(sharedDays), 'fælles dage', sharedDays < 2],
-     [fetchSupply + '/' + (size - 1), 'hentekapacitet', fetchSupply < size - 1]
+    [[hosts + ' af ' + fams.length, 'kan være vært', hosts < 2],
+     [String(sharedDays), sharedDays === 1 ? 'fælles hverdag' : 'fælles hverdage',
+      sharedDays < 2],
+     [fetchSupply + ' / ' + (size - 1), 'kan hente / skal hentes', fetchSupply < size - 1]
     ].forEach(function (s) {
       var box = el('div', 'lg-groupstat' + (s[2] ? ' is-warn' : ''));
       box.appendChild(el('b', null, s[0]));

@@ -381,3 +381,73 @@ textarea { min-height: 88px; resize: vertical; }
   padding: 40px 24px; text-align: center; color: var(--ink-3); font-size: 14px;
   border: 1px dashed var(--rule); border-radius: var(--lg-card-radius);
 }
+
+/* ── Detail pairs ───────────────────────────────────────────────────
+   Each term+value is ONE grid cell. Letting dt and dd flow as separate
+   items scattered them across the columns, so "Barn" ended up beside
+   someone else's answer. Unreadable, and the first thing anyone noticed. */
+.lg-detail-inner {
+  padding: 18px; display: grid; gap: 16px 28px;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+.lg-pair { min-width: 0; }
+.lg-detail dt {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.2px;
+  text-transform: uppercase; color: var(--ink-3); margin: 0 0 3px;
+}
+.lg-detail dd { margin: 0; color: var(--ink); font-size: 13.5px; line-height: 1.45; }
+.lg-pair--wide { grid-column: 1 / -1; }
+.lg-detail .lg-quote {
+  grid-column: 1 / -1; font-style: italic; color: var(--ink-2);
+  border-left: 2px solid var(--rule); padding-left: 12px; font-size: 13.5px;
+}
+
+/* ── Numbers beside the dots ────────────────────────────────────────
+   The dots give the scan pattern; the number is the actual answer.
+   Dots alone were a puzzle. */
+.lg-cell { display: inline-flex; align-items: center; gap: 8px; }
+.lg-dotnum {
+  font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums;
+  font-size: 12.5px; color: var(--ink-2); min-width: 12px;
+}
+.lg-dotnum.is-zero { color: var(--accent); font-weight: 600; }
+
+.lg-table th { font-size: 10px; letter-spacing: 1.2px; line-height: 1.4; }
+.lg-th-sub {
+  display: block; font-size: 9px; letter-spacing: .6px;
+  color: var(--ink-3); text-transform: none; font-weight: 400; opacity: .8;
+}
+
+/* ── Help toggle and legend ─────────────────────────────────────────
+   A hover tooltip is useless on a phone, so the explanation is a real
+   toggle that stays open. */
+.lg-headrow { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.lg-qbtn {
+  flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+  border: 1.5px solid var(--rule); background: transparent; cursor: pointer;
+  font-family: 'Fraunces', serif; font-size: 14px; color: var(--ink-2);
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: border-color .2s ease, color .2s ease;
+}
+.lg-qbtn:hover, .lg-qbtn[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); }
+
+.lg-legend {
+  margin: 14px 0 4px; padding: 16px 18px; font-size: 13px; line-height: 1.55;
+  background: var(--paper-2); border-radius: var(--lg-card-radius);
+  border-left: 3px solid var(--ochre);
+}
+.lg-legend[hidden] { display: none; }
+.lg-legend dl { display: grid; gap: 10px 20px; grid-template-columns: 1fr; margin: 0; }
+@media (min-width: 620px) { .lg-legend dl { grid-template-columns: 1fr 1fr; } }
+.lg-legend dt { font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+.lg-legend dd { margin: 0; color: var(--ink-2); }
+.lg-legend .lg-legend-row { display: flex; align-items: baseline; gap: 10px; }
+.lg-legend code {
+  font-family: 'JetBrains Mono', monospace; font-size: 11.5px;
+  background: var(--paper); padding: 1px 5px; border-radius: 3px;
+  border: 1px solid var(--rule);
+}
+
+/* Group stats: the label carries the meaning, not a hover tooltip. */
+.lg-groupstat { font-size: 10.5px; letter-spacing: .2px; }
+.lg-groupstat b { font-size: 16px; }
