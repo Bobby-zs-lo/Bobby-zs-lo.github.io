@@ -2,7 +2,7 @@
 # Run every legegruppe test. Usage: bash legegruppe/tests/run-all.sh [--full]
 set -e
 cd "$(dirname "$0")/../.."
-for t in model constraints scoring heuristic exact rota infeasibility solve generate; do
+for t in model constraints scoring heuristic exact rota infeasibility solve generate api; do
   node "legegruppe/tests/$t.test.mjs"
 done
 if [ "$1" = "--full" ]; then
