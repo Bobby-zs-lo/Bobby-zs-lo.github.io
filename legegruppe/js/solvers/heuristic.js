@@ -156,11 +156,6 @@
         seen.set('H3', { code: 'H3', message: 'Der er for få familier der kan afholde et møde.' });
       }
     });
-    const totalFetch = problem.families.reduce((s, f) => s + f.fetchCapacity, 0);
-    if (totalFetch < problem.children.length) {
-      seen.set('H5', { code: 'H5', message: 'Klassens samlede hentekapacitet er ' + totalFetch +
-        ', men der er ' + problem.children.length + ' børn der skal transporteres.' });
-    }
     const dayCoverage = [0, 0, 0, 0, 0, 0];
     problem.families.forEach(f => f.availableWeekdays.forEach(d => { dayCoverage[d]++; }));
     if (dayCoverage.every(n => n < problem.groupSizeMin)) {

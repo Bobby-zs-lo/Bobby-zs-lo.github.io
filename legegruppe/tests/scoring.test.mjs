@@ -59,6 +59,23 @@ const scarce = makeProblem([{ hostCapacity: 1 }, { hostCapacity: 0 },
 assert.equal(S.capacityAdequacy(g, plenty), 1);
 assert.ok(S.capacityAdequacy(g, scarce) < 0.3);
 
+// --- S6 transport coverage: a soft preference, never a veto ---
+const canFetch = makeProblem(new Array(4).fill({ fetchCapacity: 4 }));
+const cannotFetch = makeProblem(new Array(4).fill({ fetchCapacity: 0 }));
+assert.equal(S.transportCoverage(g, canFetch), 1);
+assert.equal(S.transportCoverage(g, cannotFetch), 0);
+// partial coverage lands in between rather than snapping to an extreme
+const halfFetch = makeProblem([{ fetchCapacity: 1 }, { fetchCapacity: 0 },
+  { fetchCapacity: 0 }, { fetchCapacity: 0 }]);
+const half = S.transportCoverage(g, halfFetch);
+assert.ok(half > 0 && half < 1, 'partial transport should score between 0 and 1');
+// a group that cannot fetch still scores above zero overall — it is allowed to exist
+assert.ok(S.scoreGroup(g, cannotFetch, S.DEFAULT_WEIGHTS).total > 0.3,
+  'no fetcher is a drawback, not a disqualification');
+assert.ok(S.scoreGroup(g, canFetch, S.DEFAULT_WEIGHTS).total >
+  S.scoreGroup(g, cannotFetch, S.DEFAULT_WEIGHTS).total,
+  'but covering your own transport must still be preferred');
+
 // --- S4 weekday breadth ---
 const oneDay = makeProblem(new Array(4).fill({ availableWeekdays: [3] }));
 assert.ok(S.weekdayBreadth(g, oneDay) < S.weekdayBreadth(g, fresh));

@@ -26,12 +26,18 @@ const okDiag = I.diagnose(fine, { timeBudgetMs: 2000 });
 assert.equal(okDiag.needsRelaxation, false);
 assert.deepEqual(okDiag.relaxations, []);
 
-// --- nobody can fetch: the fetch requirement is identified ---
+// --- nobody can fetch: that is no longer a problem to be solved ---
+// Transport stopped being a hard requirement, so a class where nobody can collect
+// the children goes up perfectly well. The parents arrange the lifts themselves and
+// the rota marks those meetings 'aftales'. Nothing needs relaxing.
 const noFetch = makeProblem(8, { fetchCapacity: 0 });
 const d1 = I.diagnose(noFetch, { timeBudgetMs: 3000 });
-assert.equal(d1.needsRelaxation, true);
-assert.ok(d1.relaxations.length > 0);
-assert.ok(d1.relaxations.some(r => r.code === 'H5'), JSON.stringify(d1.relaxations));
+assert.equal(d1.needsRelaxation, false,
+  'a class that cannot fetch is still a workable class: ' + JSON.stringify(d1.relaxations));
+
+// --- and transport is never offered as something to loosen, since it is not binding ---
+[d1].concat([I.diagnose(makeProblem(8, { maxChildrenAtHome: 1 }), { timeBudgetMs: 3000 })])
+  .forEach(d => d.relaxations.forEach(r => assert.notEqual(r.code, 'H5')));
 
 // --- nobody has room at home, but going outdoors would fix it ---
 const noRoom = makeProblem(8, { maxChildrenAtHome: 1 });
@@ -55,7 +61,7 @@ d4.relaxations.forEach(r => assert.notEqual(r.code, 'H1'));
 assert.ok(d4.summary.length > 20);
 
 // --- every relaxation comes with actionable Danish prose ---
-[d1, d2, d3].forEach(d => {
+[d2, d3].forEach(d => {
   assert.ok(typeof d.summary === 'string' && d.summary.length > 20, d.summary);
   d.relaxations.forEach(r => {
     assert.ok(typeof r.message === 'string' && r.message.length > 15);

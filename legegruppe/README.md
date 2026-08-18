@@ -65,6 +65,7 @@ frem. Når B ikke kan bevise noget, siger den det — den gætter ikke.
 - En familie sættes aldrig på som vært flere gange end den selv har sagt.
 - En plan der bryder et hårdt krav kan ikke udgives — en uafhængig kontrol står
   imellem, og den deler ikke kode med løserne.
+- En gruppe uden vært dannes aldrig. Uden henter er derimod tilladt — det aftales.
 - Ingen rangliste over hvem der bidrager mest. Byrden fordeles, den måles ikke.
 
 ## Test
@@ -110,12 +111,18 @@ beholde historikken så børnene ikke havner sammen igen næste år, så slet i 
 kun `families` og `children` i regnearket og lad `pairs_history` stå — den
 indeholder kun barne-ID'er.
 
-## Kendt begrænsning
+## Værtskab er kravet, transport er en aftale
 
-En gruppe hvor ingen kan hente børnene bliver i dag afvist som umulig, i stedet for
-at blive udgivet med "aftal indbyrdes". Kravet om fælles hentekapacitet fanger den
-først. Om det er den rigtige opførsel er en beslutning, ikke en fejl — se
-`tests/rota.test.mjs`, hvor den er skrevet ned som det den er.
+Det eneste gruppen *skal* kunne, er at blive afholdt: mindst én familie skal kunne
+lægge hus til eller tage gruppen med ud, og der skal findes en hverdag alle kan.
+
+Hentning fra skole er derimod ikke et krav. Kan ingen i gruppen hente, bliver mødet
+alligevel lagt i planen, bare med **"transport aftales indbyrdes, eller børnene
+mødes på skolens legeplads"**. Det var oprindeligt et hårdt krav, og det afviste
+grupper der i praksis ville have fungeret fint — forældre løser den slags selv.
+
+Algoritmen foretrækker stadig grupper der kan klare deres egen hentning; det er
+bare en præference nu, ikke et veto.
 
 ## Skalering til flere klasser
 

@@ -10,6 +10,7 @@
     novelty: 1.00,
     robustness: 0.70,
     capacityAdequacy: 0.70,
+    transportCoverage: 0.60,
     weekdayBreadth: 0.40,
     capacityBalance: 0.40
   };
@@ -54,6 +55,20 @@
     return clamp01(supply / needed);
   }
 
+  /**
+   * S6 - can the group cover its own transport, or must the parents negotiate it?
+   *
+   * This used to be a hard requirement, which rejected workable groups outright.
+   * As a soft objective it still steers the solver towards groups where the lifts
+   * fall into place, while allowing "aftal indbyrdes" where they do not.
+   */
+  function transportCoverage(childIds, problem) {
+    const size = childIds.length;
+    if (size <= 1) return 1;
+    const supply = familiesOf(childIds, problem).reduce((s, f) => s + f.fetchCapacity, 0);
+    return clamp01(supply / (size - 1));
+  }
+
   /** S4 - how many weekdays does the whole group share? */
   function weekdayBreadth(childIds, problem) {
     const fams = familiesOf(childIds, problem);
@@ -87,7 +102,8 @@
     return clamp01(1 - Math.abs(mine - target) / target);
   }
 
-  const OBJECTIVES = { novelty, robustness, capacityAdequacy, weekdayBreadth, capacityBalance };
+  const OBJECTIVES = { novelty, robustness, capacityAdequacy, transportCoverage,
+    weekdayBreadth, capacityBalance };
 
   /** Weighted mean of all objectives -> { total, parts }. */
   function scoreGroup(childIds, problem, weights) {
@@ -124,6 +140,7 @@
     novelty: 'børnene har ikke leget sammen før',
     robustness: 'flere familier kan lægge hus til',
     capacityAdequacy: 'der er værter nok til alle møderne',
+    transportCoverage: 'gruppen kan selv hente børnene fra skole',
     weekdayBreadth: 'gruppen deler flere hverdage',
     capacityBalance: 'gruppen har en jævn fordeling af overskud'
   };
@@ -146,7 +163,8 @@
 
   return {
     DEFAULT_WEIGHTS: DEFAULT_WEIGHTS, OBJECTIVES: OBJECTIVES, LABELS: LABELS,
-    novelty, robustness, capacityAdequacy, weekdayBreadth, capacityBalance,
+    novelty, robustness, capacityAdequacy, transportCoverage,
+    weekdayBreadth, capacityBalance,
     scoreGroup, groupCost, scoreSolution, explainGroup
   };
 });

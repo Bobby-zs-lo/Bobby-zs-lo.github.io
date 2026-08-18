@@ -1,4 +1,5 @@
-/* Hard requirements H1–H5 plus an independent whole-solution verifier.
+/* Hard requirements H1-H4 plus an independent whole-solution verifier.
+   Transport is NOT a hard requirement - see viableDays for why.
    Browser: window.LG.Constraints   Node: require('./constraints.js') */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
@@ -26,8 +27,15 @@
   }
 
   /**
-   * Is there a weekday on which some host can host AND the remaining children
-   * can be fetched by families available that same day? Returns the viable days.
+   * Is there a weekday on which every family can take part and at least one of
+   * them can host? Returns the viable days.
+   *
+   * Transport is deliberately NOT part of this test. A group where nobody can
+   * collect the children from school is still a workable group - the parents
+   * arrange the lifts between themselves, or meet at the school playground.
+   * Making it a hard requirement rejected groups that would have been fine.
+   * The rota marks such meetings 'aftales', and scoring still prefers groups
+   * where the transport falls into place on its own.
    */
   function viableDays(childIds, problem) {
     const fams = familiesOf(childIds, problem);
@@ -40,15 +48,12 @@
       if (!fams.every(f => daysOf(f).has(d))) continue;
       const hosts = fams.filter(f => canHost(f, size));
       if (hosts.length === 0) continue;
-      // The host covers its own child. Everyone else needs transport unless
-      // their own family fetches them.
-      const fetchSupply = fams.reduce((sum, f) => sum + f.fetchCapacity, 0);
-      if (fetchSupply >= size - 1) days.push(d);
+      days.push(d);
     }
     return days;
   }
 
-  /** Check one candidate group against H1–H5. Pure; no side effects. */
+  /** Check one candidate group against H1-H4. Pure; no side effects. */
   function groupFeasibility(childIds, problem) {
     const violations = [];
     const size = childIds.length;
@@ -78,17 +83,10 @@
       violations.push(v('H3', 'Ingen familie i gruppen kan afholde et møde — hverken hjemme eller ude.'));
     }
 
-    // H5 — enough fetch capacity in the group at all
-    const totalFetch = fams.reduce((sum, f) => sum + f.fetchCapacity, 0);
-    if (totalFetch < size - 1) {
-      violations.push(v('H5', 'Gruppen kan tilsammen hente ' + totalFetch + ' børn, men der skal hentes ' +
-        (size - 1) + '.'));
-    }
-
     // H4 — a weekday that works for a host and the fetchers at the same time
     const days = viableDays(childIds, problem);
-    if (days.length === 0 && hosts.length > 0 && totalFetch >= size - 1) {
-      violations.push(v('H4', 'Der er ingen hverdag hvor både en vært og nok hentere kan.'));
+    if (days.length === 0 && hosts.length > 0) {
+      violations.push(v('H4', 'Der er ingen hverdag hvor alle familier i gruppen kan.'));
     }
 
     return { ok: violations.length === 0, violations, viableDays: days, possibleHosts: hosts.length };

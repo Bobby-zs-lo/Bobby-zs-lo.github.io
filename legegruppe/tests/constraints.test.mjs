@@ -62,17 +62,24 @@ const noDay = makeProblem([
 ]);
 assert.ok(C.groupFeasibility(all, noDay).violations.some(v => v.code === 'H4'));
 
-// --- H5: fetch capacity must cover the children who need transport ---
+// --- transport is NOT a hard requirement ---
+// A group where nobody can collect the children is still a workable group: the
+// parents arrange the lifts between themselves, or meet at the school playground.
+// Requiring it up front rejected groups that would have been perfectly fine.
+// Scoring still prefers groups that cover their own transport (see scoring.js).
 const noFetch = makeProblem([
   { fetchCapacity: 0 }, { fetchCapacity: 0 }, { fetchCapacity: 0 }, { fetchCapacity: 0 }
 ]);
-assert.ok(C.groupFeasibility(all, noFetch).violations.some(v => v.code === 'H5'));
+assert.deepEqual(C.groupFeasibility(all, noFetch).violations, [],
+  'a group that cannot fetch must still be allowed to exist');
+assert.ok(C.groupFeasibility(all, noFetch).viableDays.length > 0);
 
-// one strong fetcher covers the other three
-const oneFetcher = makeProblem([
-  { fetchCapacity: 4 }, { fetchCapacity: 0 }, { fetchCapacity: 0 }, { fetchCapacity: 0 }
+// but a group nobody can HOST is still rejected — that is the real requirement
+const noHostAtAll = makeProblem([
+  { hostCapacity: 0, fetchCapacity: 4 }, { hostCapacity: 0, fetchCapacity: 4 },
+  { hostCapacity: 0, fetchCapacity: 4 }, { hostCapacity: 0, fetchCapacity: 4 }
 ]);
-assert.ok(C.groupFeasibility(all, oneFetcher).violations.every(v => v.code !== 'H5'));
+assert.ok(C.groupFeasibility(all, noHostAtAll).violations.some(v => v.code === 'H3'));
 
 // --- every violation carries Danish, human-readable text ---
 h1.violations.forEach(v => {

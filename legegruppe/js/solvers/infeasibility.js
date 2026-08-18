@@ -14,6 +14,8 @@
   /**
    * Each relaxation rewrites the raw input. H1 is deliberately absent: forbidden
    * pairs are a social decision, not a logistics dial, and must never be suggested.
+   * Transport is absent too, for a different reason - it stopped being a hard
+   * requirement, so it can no longer be what blocks a class.
    */
   const RELAXATIONS = [
     {
@@ -26,16 +28,6 @@
             meetingPlace: 'both',
             hostCapacity: Math.max(1, parseInt(f.hostCapacity, 10) || 0)
           }))
-        });
-      }
-    },
-    {
-      code: 'H5',
-      message: 'Der er ikke nok hentekapacitet til at få børnene fra skole.',
-      action: 'Spørg om én familie kan hente et barn mere, eller lad børnene blive på skolens legeplads til forældrene kommer.',
-      apply: function (input) {
-        return Object.assign({}, input, {
-          families: input.families.map(f => Object.assign({}, f, { fetchCapacity: 5 }))
         });
       }
     },
