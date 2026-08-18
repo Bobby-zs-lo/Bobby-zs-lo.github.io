@@ -63,20 +63,45 @@ assert.equal(F.toPayload({ ...complete, parentName: '  Anne  ' }).parentName, 'A
 const restored = F.fromFamily({
   parentName: 'Anne', contact: 'anne@example.dk', hostCapacity: 2,
   maxChildrenAtHome: 3, availableWeekdays: ['1', '5'], fetchCapacity: 0,
-  meetingPlace: 'both', blackoutWeeks: '42,43', note: 'hund'
+  meetingPlace: 'both', blackoutWeeks: '42,43', note: 'hund',
+  consentAt: '2026-08-01T10:00:00Z'
 });
 assert.equal(restored.hostCapacity, '2');
 assert.deepEqual(restored.availableWeekdays, ['1', '5']);
 assert.equal(restored.consent, true, 'an existing answer implies prior consent');
 assert.equal(restored.blackoutWeeks, '42,43');
 
-// --- a stored zero must survive the round trip, not become an empty field ---
-const zeroed = F.fromFamily({ hostCapacity: 0, maxChildrenAtHome: 0, fetchCapacity: 0 });
+// --- a stored zero from a family that ANSWERED survives the round trip ---
+const zeroed = F.fromFamily({ hostCapacity: 0, maxChildrenAtHome: 0, fetchCapacity: 0,
+  consentAt: '2026-08-01' });
 assert.equal(zeroed.hostCapacity, '0', 'zero is an answer, not a missing value');
 assert.equal(zeroed.fetchCapacity, '0');
+assert.equal(zeroed.consent, true);
 
-// --- round trip is lossless ---
-assert.deepEqual(F.toPayload(F.fromFamily(F.toPayload(complete))).availableWeekdays, [2, 3]);
-assert.equal(F.toPayload(F.fromFamily(F.toPayload(complete))).hostCapacity, 1);
+// --- but a family that has NEVER answered must get a blank form ---
+// The backend returns zeroes for an untouched row. Rendering those pre-selected
+// "we can host nobody and fetch nobody" before the parent had read the question,
+// and a single press of save would have submitted it as their answer.
+const untouched = F.fromFamily({ parentName: 'Anne', contact: 'anne@example.dk',
+  hostCapacity: 0, maxChildrenAtHome: 0, fetchCapacity: 0,
+  availableWeekdays: [], consentAt: '', updatedAt: '' });
+assert.equal(untouched.hostCapacity, '', 'an unanswered form must not pre-answer');
+assert.equal(untouched.maxChildrenAtHome, '');
+assert.equal(untouched.fetchCapacity, '');
+assert.deepEqual(untouched.availableWeekdays, []);
+assert.equal(untouched.consent, false, 'consent must never be implied for a blank form');
+// the name and contact the admin typed in are still useful, so they stay
+assert.equal(untouched.parentName, 'Anne');
+assert.equal(untouched.contact, 'anne@example.dk');
+// and such a form must not validate until the parent actually answers
+assert.ok(F.validate({ ...untouched, consent: true }).length > 0,
+  'a blank form must not pass validation');
+
+// --- round trip is lossless, once the answer exists ---
+// toPayload deliberately carries no consentAt (the backend owns that), so a stored
+// answer has to be marked as answered before it can be read back into the form.
+const stored = { ...F.toPayload(complete), consentAt: '2026-08-01T10:00:00Z' };
+assert.deepEqual(F.toPayload(F.fromFamily(stored)).availableWeekdays, [2, 3]);
+assert.equal(F.toPayload(F.fromFamily(stored)).hostCapacity, 1);
 
 console.log('ok - form');

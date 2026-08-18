@@ -71,22 +71,34 @@
     };
   }
 
-  /** Stored family → form values, for the "update my answers" case. */
+  /**
+   * Stored family → form values, for the "update my answers" case.
+   *
+   * A family that has never answered comes back from the backend with zeroes in
+   * every capacity field. Feeding those straight into the form pre-selected
+   * "Ingen gange" and "Vi kan ikke have besøg" — the app answering on the parent's
+   * behalf that they can do nothing, before they had read the question. Anyone who
+   * just pressed save would have submitted that. So an unanswered family yields an
+   * empty form, and validation then requires a real choice.
+   */
   function fromFamily(family) {
     const f = family || {};
+    const answered = Boolean(f.consentAt || f.updatedAt);
+    const capacity = value => (answered && value != null && value !== '')
+      ? String(value) : '';
     return {
       parentName: String(f.parentName || ''),
       contact: String(f.contact || ''),
-      hostCapacity: String(f.hostCapacity == null ? '' : f.hostCapacity),
-      maxChildrenAtHome: String(f.maxChildrenAtHome == null ? '' : f.maxChildrenAtHome),
-      availableWeekdays: (f.availableWeekdays || []).map(String),
-      fetchCapacity: String(f.fetchCapacity == null ? '' : f.fetchCapacity),
+      hostCapacity: capacity(f.hostCapacity),
+      maxChildrenAtHome: capacity(f.maxChildrenAtHome),
+      availableWeekdays: answered ? (f.availableWeekdays || []).map(String) : [],
+      fetchCapacity: capacity(f.fetchCapacity),
       meetingPlace: f.meetingPlace || 'home',
       blackoutWeeks: Array.isArray(f.blackoutWeeks)
         ? f.blackoutWeeks.join(',') : String(f.blackoutWeeks || ''),
       note: String(f.note || ''),
-      // An answer that already exists was consented to when it was first given.
-      consent: true
+      // Consent is only implied by an answer that actually exists.
+      consent: answered
     };
   }
 
