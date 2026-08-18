@@ -195,3 +195,186 @@ textarea { min-height: 88px; resize: vertical; }
   .lg-details[open] > summary { display: none; }
   a[href]::after { content: ''; }
 }
+
+/* ════════════════════════════════════════════════════════════════════
+   Admin console — editorial layout on the site's own tokens.
+   Numbers are tabular so columns do not dance as values change.
+   ════════════════════════════════════════════════════════════════════ */
+
+.lg-num, .lg-table td.lg-num, .lg-stat-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Summary strip ─────────────────────────────────────────────────── */
+.lg-bar {
+  display: flex; flex-wrap: wrap; gap: 0;
+  border: 1px solid var(--rule); border-radius: var(--lg-card-radius);
+  background: var(--paper-2); margin-bottom: 28px; overflow: hidden;
+}
+.lg-stat { flex: 1 1 120px; padding: 16px 20px; border-right: 1px solid var(--rule); }
+.lg-stat:last-child { border-right: none; }
+.lg-stat-value { display: block; font-size: 26px; line-height: 1.1; color: var(--ink); }
+.lg-stat-value.is-warn { color: var(--accent); }
+.lg-stat-label {
+  display: block; margin-top: 4px; font-size: 11px; letter-spacing: 1.4px;
+  text-transform: uppercase; color: var(--ink-3);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── Panels ────────────────────────────────────────────────────────── */
+.lg-panel { padding: 24px; }
+.lg-panel-head { margin-bottom: 18px; }
+.lg-panel-head .eyebrow { display: block; margin-bottom: 6px; }
+.lg-panel h2 { font-size: 21px; margin: 0; }
+.lg-panel-note { font-size: 13px; color: var(--ink-3); margin-top: 6px; line-height: 1.5; }
+
+.lg-fieldrow {
+  display: flex; align-items: baseline; gap: 10px;
+  padding: 9px 0; border-bottom: 1px solid var(--rule);
+}
+.lg-fieldrow:last-of-type { border-bottom: none; }
+.lg-fieldrow > label:first-child { flex: 1 1 auto; font-size: 13.5px; color: var(--ink-2); }
+.lg-fieldrow input[type="number"] {
+  width: 68px; min-height: 38px; padding: 6px 10px; text-align: right;
+  font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums;
+}
+.lg-fieldrow .lg-sep { color: var(--ink-3); }
+
+/* ── Weight sliders ────────────────────────────────────────────────── */
+.lg-slider {
+  display: grid; grid-template-columns: 1fr 96px 30px;
+  gap: 12px; align-items: center; padding: 7px 0; font-size: 13.5px;
+}
+.lg-slider label { color: var(--ink-2); }
+.lg-slider output {
+  font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums;
+  font-size: 12px; color: var(--ink-3); text-align: right;
+}
+.lg-slider input[type="range"] {
+  width: 100%; min-height: auto; height: 22px; padding: 0;
+  border: none; background: transparent; accent-color: var(--accent);
+}
+
+/* ── Family table ──────────────────────────────────────────────────── */
+.lg-table th { position: sticky; top: 0; background: var(--paper); z-index: 1; }
+.lg-table tbody tr { transition: background .15s ease; }
+.lg-table tbody tr:hover { background: var(--paper-2); }
+.lg-table td { vertical-align: middle; }
+.lg-table .lg-name { font-weight: 500; color: var(--ink); }
+.lg-table .lg-sub { display: block; font-size: 11.5px; color: var(--ink-3); }
+
+.lg-rowbtn {
+  background: none; border: none; padding: 0; font: inherit; cursor: pointer;
+  color: var(--ink); text-align: left; display: flex; align-items: center; gap: 8px;
+  min-height: 34px; width: 100%;
+}
+.lg-rowbtn:hover { color: var(--accent); }
+.lg-caret {
+  display: inline-block; width: 8px; height: 8px; flex-shrink: 0;
+  border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg); transition: transform .2s ease;
+}
+.lg-rowbtn[aria-expanded="true"] .lg-caret { transform: rotate(45deg); }
+
+/* Capacity read as dots: filled = what they declared, hollow = the rest of the scale. */
+.lg-dots { display: inline-flex; gap: 3px; align-items: center; }
+.lg-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  border: 1px solid var(--ink-3); background: transparent;
+}
+.lg-dot.is-on { background: var(--ink); border-color: var(--ink); }
+.lg-dots.is-zero .lg-dot { border-color: var(--accent); }
+
+/* Weekdays as five fixed slots, so every row reads at the same position. */
+.lg-days { display: inline-flex; gap: 2px; }
+.lg-day {
+  width: 17px; height: 19px; display: inline-flex; align-items: center;
+  justify-content: center; font-size: 10px; border-radius: 2px;
+  font-family: 'JetBrains Mono', monospace;
+  border: 1px solid var(--rule); color: var(--ink-3);
+}
+.lg-day.is-on { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+
+.lg-detail td { background: var(--paper-2); padding: 0; }
+.lg-detail-inner {
+  padding: 16px 18px; display: grid; gap: 14px 28px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); font-size: 13px;
+}
+.lg-detail dt {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 1.2px;
+  text-transform: uppercase; color: var(--ink-3); margin-bottom: 3px;
+}
+.lg-detail dd { margin: 0; color: var(--ink); }
+.lg-detail .lg-quote {
+  grid-column: 1 / -1; font-style: italic; color: var(--ink-2);
+  border-left: 2px solid var(--rule); padding-left: 12px;
+}
+
+/* ── Proposals ─────────────────────────────────────────────────────── */
+.lg-proposals { display: grid; gap: 20px; grid-template-columns: 1fr; }
+@media (min-width: 1100px) { .lg-proposals.is-two { grid-template-columns: 1fr 1fr; } }
+
+.lg-proposal {
+  border: 1px solid var(--rule); border-radius: var(--lg-card-radius);
+  padding: 20px; background: var(--paper);
+}
+.lg-proposal.is-chosen { border-color: var(--accent); border-width: 1.5px; }
+.lg-proposal-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: 12px; margin-bottom: 4px;
+}
+.lg-proposal-head h3 { font-size: 19px; }
+.lg-proposal-meta {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--ink-3); letter-spacing: .5px; white-space: nowrap;
+}
+.lg-verdict {
+  font-size: 13px; color: var(--ink-2); line-height: 1.5;
+  padding: 12px 14px; background: var(--paper-2);
+  border-radius: var(--lg-card-radius); margin: 14px 0 18px;
+}
+
+/* ── Group cards ───────────────────────────────────────────────────── */
+.lg-group { padding: 20px; }
+.lg-group-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.lg-badge-letter {
+  width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--ink); color: var(--paper);
+  font-family: 'Fraunces', serif; font-size: 17px; font-weight: 500;
+}
+.lg-group--mine .lg-badge-letter { background: var(--accent); }
+.lg-group-head h3 { font-size: 15px; font-weight: 600; font-family: 'Inter', sans-serif; }
+
+.lg-groupstats {
+  display: flex; gap: 18px; flex-wrap: wrap;
+  padding: 10px 0; margin: 4px 0 6px;
+  border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+}
+.lg-groupstat { font-size: 12px; color: var(--ink-3); }
+.lg-groupstat b {
+  display: block; font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums; font-size: 15px; color: var(--ink); font-weight: 500;
+}
+.lg-groupstat.is-warn b { color: var(--accent); }
+
+.lg-move {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; padding: 5px 0; font-size: 13.5px;
+}
+.lg-move select {
+  width: auto; min-width: 56px; min-height: 34px; padding: 4px 8px; font-size: 12px;
+}
+.lg-move-actions { display: flex; align-items: center; gap: 8px; }
+.lg-lock {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; color: var(--ink-3); cursor: pointer;
+  font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: .8px;
+}
+.lg-lock input { width: 15px; height: 15px; margin: 0; }
+
+.lg-empty {
+  padding: 40px 24px; text-align: center; color: var(--ink-3); font-size: 14px;
+  border: 1px dashed var(--rule); border-radius: var(--lg-card-radius);
+}
