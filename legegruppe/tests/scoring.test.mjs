@@ -64,6 +64,15 @@ const canFetch = makeProblem(new Array(4).fill({ fetchCapacity: 4 }));
 const cannotFetch = makeProblem(new Array(4).fill({ fetchCapacity: 0 }));
 assert.equal(S.transportCoverage(g, canFetch), 1);
 assert.equal(S.transportCoverage(g, cannotFetch), 0);
+// the count includes the host's own child: four children need four places
+const justEnough = makeProblem([{ fetchCapacity: 4 }, { fetchCapacity: 0 },
+  { fetchCapacity: 0 }, { fetchCapacity: 0 }]);
+assert.equal(S.transportCoverage(g, justEnough), 1);
+const oneShort = makeProblem([{ fetchCapacity: 3 }, { fetchCapacity: 0 },
+  { fetchCapacity: 0 }, { fetchCapacity: 0 }]);
+assert.ok(S.transportCoverage(g, oneShort) < 1,
+  'three places for four children is not full coverage');
+
 // partial coverage lands in between rather than snapping to an extreme
 const halfFetch = makeProblem([{ fetchCapacity: 1 }, { fetchCapacity: 0 },
   { fetchCapacity: 0 }, { fetchCapacity: 0 }]);

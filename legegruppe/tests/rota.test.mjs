@@ -117,6 +117,29 @@ settled.groups[0].meetings.forEach(m => {
   assert.ok(m.transportNote.length > 5);
 });
 
+// --- EVERY child needs collecting, the host's own included ---
+// This was wrong: the rota asked for size - 1 fetch places on the reasoning that
+// the host's child was already home. But the child is at the school gate like the
+// others, and the host collects their own alongside the guests. A group of four
+// therefore needs four places, not three.
+const justShort = makeProblem([
+  { hostCapacity: 6, fetchCapacity: 3 },   // three places for four children
+  { fetchCapacity: 0 }, { fetchCapacity: 0 }, { fetchCapacity: 0 }
+]);
+R.buildRota(solution, justShort, { seed: 9 }).groups[0].meetings.forEach(m => {
+  assert.equal(m.transport, 'aftales',
+    'three fetch places cannot cover four children');
+});
+
+const exactlyEnough = makeProblem([
+  { hostCapacity: 6, fetchCapacity: 4 },   // four places for four children
+  { fetchCapacity: 0 }, { fetchCapacity: 0 }, { fetchCapacity: 0 }
+]);
+R.buildRota(solution, exactlyEnough, { seed: 9 }).groups[0].meetings.forEach(m => {
+  assert.equal(m.transport, 'dækket', 'four places cover four children');
+  assert.deepEqual(m.fetchers, ['f0']);
+});
+
 // --- fetch duty rotates too, when several families can fetch ---
 const spread = R.buildRota(solution, makeProblem(new Array(4).fill({})), { seed: 7 });
 const fetchCounts = {};

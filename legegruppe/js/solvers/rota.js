@@ -86,7 +86,12 @@
       const weekday = days[0];
 
       // Fetchers: available that weekday, capacity > 0, least-used first.
-      const needed = size - 1;
+      //
+      // Every child in the group has to get from school to the meeting - including
+      // the host's own. This used to ask for size - 1 on the reasoning that the
+      // host's child was already home, but the child is standing at the school gate
+      // like everyone else, and the host collects their own alongside the guests.
+      const needed = size;
       const pool = families.filter(f =>
         f.fetchCapacity > 0 && f.availableWeekdays.indexOf(weekday) !== -1);
       pool.sort((a, b) => {

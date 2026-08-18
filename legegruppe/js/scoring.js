@@ -64,9 +64,10 @@
    */
   function transportCoverage(childIds, problem) {
     const size = childIds.length;
-    if (size <= 1) return 1;
+    if (size <= 0) return 1;
     const supply = familiesOf(childIds, problem).reduce((s, f) => s + f.fetchCapacity, 0);
-    return clamp01(supply / (size - 1));
+    // Every child needs collecting, the host's own included.
+    return clamp01(supply / size);
   }
 
   /** S4 - how many weekdays does the whole group share? */
