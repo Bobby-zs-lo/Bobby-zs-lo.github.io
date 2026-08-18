@@ -219,11 +219,11 @@
                       mindst være en, ellers kan gruppen aldrig mødes.</dd>
                 </div>
                 <div>
-                  <dt>Kan hente / skal hentes</dt>
-                  <dd>Til venstre hvor mange børn gruppen tilsammen kan hente fra skole,
-                      til højre hvor mange der skal hentes. Er det første tal mindst lige
-                      så stort, går transporten op af sig selv. Ellers står der
-                      <em>aftales</em> ved de møder det gælder.</dd>
+                  <dt>Møder med henter</dt>
+                  <dd>Hvor mange af gruppens møder der har nogen til at hente børnene fra
+                      skole. Står der <code>4 af 6</code>, skal de to sidste møder aftales
+                      indbyrdes mellem forældrene, eller børnene mødes på skolens legeplads.
+                      De møder er også mærket <em>aftales</em> i listen nedenunder.</dd>
                 </div>
                 <div>
                   <dt>Røde tal</dt>
@@ -679,7 +679,18 @@
     var counts = [0, 0, 0, 0, 0, 0];
     fams.forEach(function (f) { f.availableWeekdays.forEach(function (d) { counts[d]++; }); });
     var sharedDays = counts.filter(function (n) { return n === fams.length; }).length;
-    var fetchSupply = fams.reduce(function (s, f) { return s + f.fetchCapacity; }, 0);
+
+    // Transport, answered as the question it actually is: of the meetings that were
+    // scheduled, how many have someone to collect the children?
+    //
+    // This used to display the group's total fetch capacity - the sum across every
+    // family, as if all five turned up at once. For a group of five that produced
+    // numbers like "13 / 4", which compares a figure nobody will ever see against a
+    // real need. The rota already works this out meeting by meeting; use that.
+    var rotaForStats = p.result.rota &&
+      p.result.rota.groups.filter(function (r) { return r.id === g.id; })[0];
+    var meetings = rotaForStats ? rotaForStats.meetings : [];
+    var covered = meetings.filter(function (m) { return m.transport === 'dækket'; }).length;
 
     // The label has to carry the meaning on its own - "13/4 hentekapacitet"
     // told nobody anything.
@@ -687,7 +698,9 @@
     [[hosts + ' af ' + fams.length, 'kan være vært', hosts < 2],
      [String(sharedDays), sharedDays === 1 ? 'fælles hverdag' : 'fælles hverdage',
       sharedDays < 2],
-     [fetchSupply + ' / ' + (size - 1), 'kan hente / skal hentes', fetchSupply < size - 1]
+     [meetings.length ? covered + ' af ' + meetings.length : '—',
+      meetings.length ? 'møder med henter' : 'ingen møder lagt',
+      meetings.length > 0 && covered < meetings.length]
     ].forEach(function (s) {
       var box = el('div', 'lg-groupstat' + (s[2] ? ' is-warn' : ''));
       box.appendChild(el('b', null, s[0]));
