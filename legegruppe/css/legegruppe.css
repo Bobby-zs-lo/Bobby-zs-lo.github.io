@@ -66,11 +66,10 @@ textarea { min-height: 88px; resize: vertical; }
 .lg-consent input { width: 20px; height: 20px; margin-top: 2px; flex-shrink: 0; }
 
 .lg-details { border-top: 1px solid var(--rule); padding-top: 20px; margin-top: 8px; }
-.lg-details summary {
-  cursor: pointer; font-size: 14px; font-weight: 600;
-  min-height: var(--lg-touch); display: flex; align-items: center;
+.lg-details summary { font-size: 14.5px; font-weight: 600; }
+.lg-details summary .lg-summary-hint {
+  font-weight: 400; color: var(--ink-3); font-size: 13px;
 }
-.lg-details summary:hover { color: var(--accent); }
 .lg-details > *:not(summary) { margin-top: 20px; }
 
 .lg-actions {
@@ -583,17 +582,8 @@ textarea { min-height: 88px; resize: vertical; }
 /* ── Other groups ───────────────────────────────────────────────────── */
 .lg-others summary {
   font-family: 'Fraunces', serif; font-size: 19px; font-weight: 500;
-  cursor: pointer; padding: 14px 0; border-top: 1px solid var(--rule);
-  list-style: none; display: flex; align-items: center; gap: 10px;
+  padding: 14px 0; border-top: 1px solid var(--rule);
 }
-.lg-others summary::-webkit-details-marker { display: none; }
-.lg-others summary::before {
-  content: ''; width: 8px; height: 8px; flex-shrink: 0;
-  border-right: 1.5px solid var(--ink-3); border-bottom: 1.5px solid var(--ink-3);
-  transform: rotate(-45deg); transition: transform .2s ease;
-}
-.lg-others[open] summary::before { transform: rotate(45deg); }
-.lg-others summary:hover { color: var(--accent); }
 
 .lg-other-group { padding: 18px 0; border-top: 1px solid var(--rule); }
 .lg-other-group h3 {
@@ -620,4 +610,40 @@ textarea { min-height: 88px; resize: vertical; }
   .lg-next { border-color: #999; }
   .lg-others { display: none; }
   .lg-tl--past { opacity: 1; }
+}
+
+/* ── Disclosures ─────────────────────────────────────────────────────
+   Every <summary> in this app carries a chevron, applied once here rather
+   than per component.
+
+   Setting display:flex on a <summary> silently removes Chrome's native
+   triangle, so three collapsible sections looked like plain bold headings
+   and nobody could tell they opened. The affordance has to be drawn back
+   in deliberately. Anything added later inherits it by default. */
+.lg-main summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--lg-touch);
+  transition: color .2s ease;
+}
+.lg-main summary::-webkit-details-marker { display: none; }
+.lg-main summary::before {
+  content: '';
+  width: 8px; height: 8px; flex-shrink: 0;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform .2s ease;
+  opacity: .55;
+}
+.lg-main details[open] > summary::before { transform: rotate(45deg); }
+.lg-main summary:hover { color: var(--accent); }
+.lg-main summary:hover::before { opacity: 1; }
+.lg-main summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lg-main summary::before { transition: none; }
 }
