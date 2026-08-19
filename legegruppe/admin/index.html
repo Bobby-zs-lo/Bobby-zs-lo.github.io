@@ -235,11 +235,18 @@
           </div>
           <div id="lg-proposals" class="lg-proposals"></div>
 
-          <div class="lg-panel" style="margin-top:20px">
+          <div class="lg-panel" style="margin-top:20px" id="lg-publish-panel">
+            <div class="lg-panel-head">
+              <span class="eyebrow">Trin 3</span>
+              <h2>Udgiv</h2>
+              <p class="lg-panel-note" id="lg-publish-what"></p>
+            </div>
             <div class="lg-row">
               <button type="button" class="btn btn-primary" id="lg-publish">Udgiv runden</button>
+              <button type="button" class="btn btn-outline" id="lg-publish-cancel" hidden>Fortryd</button>
               <span class="lg-help" id="lg-publish-why" style="margin:0"></span>
             </div>
+            <div class="lg-published" id="lg-published" hidden></div>
           </div>
         </section>
       </div>
@@ -867,21 +874,100 @@
     document.getElementById('lg-publish').disabled = !can;
     document.getElementById('lg-publish-why').textContent =
       can ? '' : Admin.publishBlockReason(chosen && chosen.result);
+    document.getElementById('lg-publish-what').textContent = can ? describeRound() : '';
+    document.getElementById('lg-published').hidden = true;
+    if (typeof disarm === 'function') disarm();
   }
 
   // ── publish / delete ─────────────────────────────────────────────
-  document.getElementById('lg-publish').addEventListener('click', function () {
+  // Publishing is irreversible and outward-facing: it freezes the round, writes the
+  // pairings to history, and changes what every parent sees. It used to fire on a
+  // single click and report success at the top of the page, far above the button -
+  // so it looked like nothing had happened, and it was easy to publish repeatedly
+  // without noticing. Now it asks first, and answers where you are standing.
+  var publishBtn = document.getElementById('lg-publish');
+  var cancelBtn = document.getElementById('lg-publish-cancel');
+  var armed = false, armTimer = null;
+
+  function disarm() {
+    armed = false;
+    clearTimeout(armTimer);
+    publishBtn.textContent = 'Udgiv runden';
+    publishBtn.className = 'btn btn-primary';
+    cancelBtn.hidden = true;
+  }
+  cancelBtn.addEventListener('click', disarm);
+
+  function describeRound() {
+    if (!chosen || chosen.result.status !== 'ok') return '';
+    var meetings = 0;
+    (chosen.result.rota ? chosen.result.rota.groups : []).forEach(function (g) {
+      meetings += g.meetings.length;
+    });
+    var weeks = problem.weeks;
+    var already = (snapshot.rounds || []).filter(function (r) {
+      return r.status === 'published'; }).length;
+    return chosen.result.groups.length + ' grupper · ' + meetings + ' møder · uge ' +
+      weeks[0] + '–' + weeks[weeks.length - 1] +
+      (already ? ' · erstatter den runde forældrene ser nu' : '');
+  }
+
+  publishBtn.addEventListener('click', function () {
     if (!chosen || !Admin.canPublish(chosen.result)) return;
+
+    if (!armed) {
+      armed = true;
+      publishBtn.textContent = 'Bekræft — send til forældrene';
+      publishBtn.className = 'btn btn-primary';
+      cancelBtn.hidden = false;
+      armTimer = setTimeout(disarm, 10000);
+      return;
+    }
+
+    clearTimeout(armTimer);
+    cancelBtn.hidden = true;
+    publishBtn.disabled = true;
+    publishBtn.textContent = 'Udgiver…';
+
     var r = chosen.result;
     api.publishRound(pass, Admin.publishPayload({
       result: { groups: r.groups, rota: r.rota, score: r.score, meta: r.meta },
       weeks: problem.weeks, meetingsPerGroup: problem.meetingsPerGroup,
       groupSizeMin: problem.groupSizeMin, groupSizeMax: problem.groupSizeMax,
       solver: r.meta.solver, weights: readWeights()
-    })).then(function () {
-      show('ok', 'Runden er udgivet. Forældrene ser den nu på deres eget link.');
+    })).then(function (res) {
+      var box = document.getElementById('lg-published');
+      box.innerHTML = '';
+      box.hidden = false;
+      box.appendChild(el('strong', null, 'Runden er udgivet.'));
+      box.appendChild(el('p', null,
+        'Forældrene ser den nu på deres eget link. ' + describeRound().split(' · erstatter')[0] +
+        '. Parrene er skrevet til historikken, så næste runde blander på ny.'));
+      var when = el('p', 'lg-help', 'Udgivet ' + new Date().toLocaleString('da-DK'));
+      box.appendChild(when);
+      var link = (snapshot.families || [])[0];
+      if (link) {
+        var a = el('a', 'btn btn-outline', 'Se planen som en forælder');
+        a.href = 'plan/?f=' + encodeURIComponent(link.token);
+        a.target = '_blank'; a.rel = 'noopener';
+        box.appendChild(a);
+      }
+      publishBtn.textContent = 'Udgiv igen';
+      publishBtn.className = 'btn btn-outline';
+      publishBtn.disabled = false;
+      armed = false;
+      show('ok', 'Runden er udgivet.');
       return api.adminSnapshot(pass);
-    }).then(indexSnapshot).catch(function (err) { show('error', err.message); });
+    }).then(indexSnapshot).catch(function (err) {
+      publishBtn.disabled = false;
+      disarm();
+      show('error', err.message);
+      var box = document.getElementById('lg-published');
+      box.hidden = false;
+      box.innerHTML = '';
+      box.appendChild(el('strong', null, 'Runden blev ikke udgivet.'));
+      box.appendChild(el('p', null, err.message));
+    });
   });
 
   document.getElementById('lg-delete').addEventListener('click', function () {

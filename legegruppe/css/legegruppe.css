@@ -451,3 +451,17 @@ textarea { min-height: 88px; resize: vertical; }
 /* Group stats: the label carries the meaning, not a hover tooltip. */
 .lg-groupstat { font-size: 10.5px; letter-spacing: .2px; }
 .lg-groupstat b { font-size: 16px; }
+
+/* Publishing answers where the button is, not at the top of a long page. */
+.lg-published {
+  margin-top: 18px; padding: 18px 20px;
+  background: var(--paper-2); border-left: 3px solid var(--ochre);
+  border-radius: var(--lg-card-radius);
+}
+.lg-published[hidden] { display: none; }
+.lg-published strong {
+  display: block; font-family: 'Fraunces', serif; font-size: 18px;
+  font-weight: 500; margin-bottom: 6px;
+}
+.lg-published p { font-size: 13.5px; margin-bottom: 10px; }
+.lg-published .lg-help { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
