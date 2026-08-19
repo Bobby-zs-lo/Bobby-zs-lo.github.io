@@ -465,3 +465,8 @@ textarea { min-height: 88px; resize: vertical; }
 }
 .lg-published p { font-size: 13.5px; margin-bottom: 10px; }
 .lg-published .lg-help { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+
+/* The contact list sits outside the group card, so it needs its own air —
+   it was butting straight up against the card's bottom border. */
+.lg-contacts-block { margin-top: 30px; }
+.lg-contacts-block h3 { margin-bottom: 4px; }
