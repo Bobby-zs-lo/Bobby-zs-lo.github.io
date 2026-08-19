@@ -18,33 +18,16 @@
   </div>
 </nav>
 
-<main class="lg-main lg-main--wide">
+<main class="lg-main lg-plan-main">
 
   <header class="lg-header">
-    <div class="eyebrow">Legegrupper</div>
+    <div class="eyebrow" id="lg-eyebrow">Legegrupper</div>
     <h1 id="lg-title">Planen</h1>
-    <p class="lg-lede" id="lg-lede"></p>
   </header>
 
   <div id="lg-status" class="lg-status" role="status" aria-live="polite" hidden></div>
 
-  <section id="lg-mine" hidden>
-    <h2>Din gruppe</h2>
-    <div id="lg-mine-card"></div>
-  </section>
-
-  <section id="lg-all" hidden style="margin-top:44px">
-    <details class="lg-details">
-      <summary>Hele klassens plan</summary>
-      <div class="lg-groups" id="lg-all-groups" style="margin-top:20px"></div>
-    </details>
-  </section>
-
-  <div class="lg-actions lg-noprint" id="lg-tools" hidden>
-    <button type="button" class="btn btn-outline" id="lg-print">Print</button>
-    <button type="button" class="btn btn-outline" id="lg-copy">Kopiér som tekst</button>
-    <a class="btn btn-outline" id="lg-edit" href="#">Ret mine svar</a>
-  </div>
+  <div id="lg-content"></div>
 
 </main>
 
@@ -57,6 +40,7 @@
   var api = window.LG.Api.createClient({});
 
   var statusEl = document.getElementById('lg-status');
+  var content = document.getElementById('lg-content');
   var token = new URLSearchParams(location.search).get('f') || '';
 
   function show(kind, text) {
@@ -64,136 +48,248 @@
     statusEl.textContent = text;
     statusEl.hidden = false;
   }
-
   function el(tag, className, text) {
-    var node = document.createElement(tag);
-    if (className) node.className = className;
-    if (text != null) node.textContent = text;
-    return node;
+    var n = document.createElement(tag);
+    if (className) n.className = className;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function section(title, note) {
+    var s = el('section', 'lg-section');
+    s.appendChild(el('h2', null, title));
+    if (note) s.appendChild(el('p', 'lg-section-note', note));
+    return s;
   }
 
   if (!token) {
     show('error', 'Du mangler dit personlige link. Bed administratoren om at sende det igen.');
     return;
   }
-  document.getElementById('lg-edit').href = '../?f=' + encodeURIComponent(token);
 
-  /** One group as a card. `mine` highlights the reader's own child and weeks. */
-  function groupCard(ctx, group, myFamilyId) {
-    var card = el('article', 'lg-group' + (myFamilyId ? ' lg-group--mine' : ''));
-    card.appendChild(el('div', 'lg-group-tag', 'Gruppe ' + group.id));
-    card.appendChild(el('h3', null, Plan.childNames(ctx, group.childIds).join(', ')));
+  /** "om 3 dage", "i morgen", "i dag" — a date alone does not tell you how soon. */
+  function countdown(date) {
+    var today = new Date();
+    var days = Math.round((date.getTime() -
+      Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())) / 86400000);
+    if (days <= 0) return 'i dag';
+    if (days === 1) return 'i morgen';
+    if (days < 7) return 'om ' + days + ' dage';
+    if (days < 14) return 'om en uge';
+    return 'om ' + Math.round(days / 7) + ' uger';
+  }
 
-    var kids = el('div', 'lg-kids');
-    var index = new Map(ctx.children.map(function (c) { return [c.childId, c]; }));
-    group.childIds.forEach(function (id) {
-      var child = index.get(id) || {};
-      var isMine = myFamilyId && child.familyId === myFamilyId;
-      kids.appendChild(el('span', 'lg-kid' + (isMine ? ' lg-kid--mine' : ''),
-        child.name || id));
-    });
-    card.appendChild(kids);
-
-    var rota = Plan.rotaFor(ctx, group.id);
-    if (rota && rota.meetings.length) {
-      var list = el('ul', 'lg-weeks');
-      rota.meetings.forEach(function (m) {
-        var d = Plan.describeMeeting(ctx, m);
-        var isMine = myFamilyId && m.hostFamilyId === myFamilyId;
-        var row = el('li', 'lg-week' + (isMine ? ' lg-week--mine' : ''));
-        row.appendChild(el('span', 'lg-week-no', 'Uge ' + d.week));
-
-        var what = el('span', 'lg-week-what');
-        what.appendChild(document.createTextNode(
-          d.when.replace('Uge ' + d.week + ', ', '') + ' — ' + d.host));
-        if (isMine) what.appendChild(el('span', 'lg-badge lg-badge--mine', 'jeres tur'));
-        if (d.needsAgreement) {
-          what.appendChild(el('span', 'lg-badge lg-badge--aftales', 'aftales'));
-        }
-        what.appendChild(el('span', 'lg-week-transport', d.transport));
-        row.appendChild(what);
-        list.appendChild(row);
-      });
-      card.appendChild(list);
-    } else {
-      card.appendChild(el('p', 'lg-why', 'Der er endnu ingen møder lagt ind for denne gruppe.'));
+  /** The whole point of the page: what is happening next, at size. */
+  function nextCard(ctx, familyId) {
+    var next = Plan.nextMeeting(ctx, familyId);
+    if (!next) {
+      var done = el('div', 'lg-next');
+      done.appendChild(el('span', 'lg-next-eyebrow', 'Runden er slut'));
+      done.appendChild(el('p', 'lg-next-when', 'Ikke flere møder'));
+      done.appendChild(el('p', 'lg-next-transport',
+        'Der kommer nye grupper når næste runde lægges.'));
+      return done;
     }
+
+    var card = el('div', 'lg-next' + (next.isMine ? ' lg-next--mine' : ''));
+    card.appendChild(el('span', 'lg-next-eyebrow',
+      next.isMine ? 'Næste gang — og det er jeres tur' : 'Næste gang'));
+    card.appendChild(el('p', 'lg-next-when',
+      next.weekday.charAt(0).toUpperCase() + next.weekday.slice(1) + ' ' + next.dateText));
+    card.appendChild(el('span', 'lg-next-week', 'Uge ' + next.week));
+
+    var where = el('p', 'lg-next-where');
+    if (next.outdoors) {
+      where.appendChild(document.createTextNode('Ude — legeplads eller park, med '));
+      where.appendChild(el('strong', null, next.hostName));
+    } else {
+      where.appendChild(document.createTextNode('Hjemme hos '));
+      where.appendChild(el('strong', null, next.hostName));
+    }
+    card.appendChild(where);
+    card.appendChild(el('p', 'lg-next-transport', next.transport));
+    card.appendChild(el('span', 'lg-next-countdown', countdown(next.date)));
     return card;
   }
 
-  function contactList(ctx, group, myFamilyId) {
-    var wrap = el('div', 'lg-contacts-block');
-    wrap.appendChild(el('h3', null, 'Forældrene i gruppen'));
-    var list = el('ul', 'lg-contacts');
-    var seen = {};
+  function timeline(ctx, familyId) {
+    var list = el('ul', 'lg-timeline');
+    Plan.myMeetings(ctx, familyId).forEach(function (m) {
+      var li = el('li', 'lg-tl' +
+        (m.isPast ? ' lg-tl--past' : '') + (m.isMine ? ' lg-tl--mine' : ''));
+
+      var when = el('div', 'lg-tl-date');
+      var parts = m.dateText.split('. ');
+      when.appendChild(el('span', 'lg-tl-day', parts[0]));
+      when.appendChild(el('span', 'lg-tl-month', parts[1]));
+      when.appendChild(el('span', 'lg-tl-week', 'uge ' + m.week));
+      li.appendChild(when);
+
+      var body = el('div', 'lg-tl-body');
+      var what = el('p', 'lg-tl-what');
+      what.appendChild(document.createTextNode(
+        m.weekday.charAt(0).toUpperCase() + m.weekday.slice(1) + ' — '));
+      what.appendChild(document.createTextNode(m.outdoors ? 'ude med ' : 'hjemme hos '));
+      what.appendChild(el('strong', null, m.hostName));
+      body.appendChild(what);
+      body.appendChild(el('span', 'lg-tl-transport', m.transport));
+
+      if (m.isMine || m.needsAgreement) {
+        var tags = el('div', 'lg-tl-tags');
+        if (m.isMine) tags.appendChild(el('span', 'lg-badge lg-badge--mine', 'jeres tur'));
+        if (m.needsAgreement) {
+          tags.appendChild(el('span', 'lg-badge lg-badge--aftales', 'transport aftales'));
+        }
+        body.appendChild(tags);
+      }
+      li.appendChild(body);
+      list.appendChild(li);
+    });
+    return list;
+  }
+
+  function people(ctx, group, familyId) {
+    var list = el('ul', 'lg-people');
     var index = new Map(ctx.children.map(function (c) { return [c.childId, c]; }));
+    var seen = {};
     group.childIds.forEach(function (id) {
       var child = index.get(id) || {};
       if (!child.familyId || seen[child.familyId]) return;
       seen[child.familyId] = true;
       var info = (ctx.contacts || {})[child.familyId] || {};
-      var li = el('li');
-      li.appendChild(document.createTextNode(
-        (info.parentName || 'Forælder') + ' (' + (child.name || '') + ')'));
-      if (info.contact) {
-        li.appendChild(document.createTextNode(' — '));
-        var href = /@/.test(info.contact)
+
+      var li = el('li', 'lg-person');
+      var who = el('span', 'lg-person-who');
+      who.appendChild(document.createTextNode(info.parentName || 'Forælder'));
+      who.appendChild(el('span', 'lg-person-child', '  ·  ' + (child.name || '')));
+      li.appendChild(who);
+
+      if (child.familyId === familyId) {
+        li.appendChild(el('span', 'lg-person-quiet', 'det er jer'));
+      } else if (info.contact) {
+        var a = el('a', null, info.contact);
+        a.href = /@/.test(info.contact)
           ? 'mailto:' + info.contact
           : 'tel:' + String(info.contact).replace(/\s/g, '');
-        var a = el('a', null, info.contact);
-        a.href = href;
         li.appendChild(a);
+      } else {
+        li.appendChild(el('span', 'lg-person-quiet', 'ingen kontakt oplyst'));
       }
       list.appendChild(li);
     });
-    wrap.appendChild(list);
+    return list;
+  }
+
+  function otherGroups(ctx, myGroup) {
+    var wrap = el('details', 'lg-others');
+    var count = ctx.round.groups.length - (myGroup ? 1 : 0);
+    wrap.appendChild(el('summary', null,
+      'De andre ' + count + ' grupper i klassen'));
+    ctx.round.groups.forEach(function (g) {
+      if (g === myGroup) return;
+      var box = el('div', 'lg-other-group');
+      box.appendChild(el('h3', null, 'Gruppe ' + g.id));
+      box.appendChild(el('p', 'lg-other-kids', Plan.childNames(ctx, g.childIds).join(', ')));
+      var rota = Plan.rotaFor(ctx, g.id);
+      if (rota && rota.meetings.length) {
+        box.appendChild(el('span', 'lg-other-meta',
+          rota.meetings.length + ' møder · uge ' + rota.meetings[0].week + '–' +
+          rota.meetings[rota.meetings.length - 1].week));
+      }
+      wrap.appendChild(box);
+    });
     return wrap;
   }
 
+  // ── load ───────────────────────────────────────────────────────────
   api.getPlan(token).then(function (data) {
-    var ctx = { round: data.round, children: data.children || [], contacts: data.contacts || {} };
+    var ctx = { round: data.round, children: data.children || [],
+                contacts: data.contacts || {} };
 
     if (!ctx.round || !ctx.round.groups || !ctx.round.groups.length) {
-      document.getElementById('lg-lede').textContent = Plan.NO_PLAN +
-        ' Du får besked når grupperne er lavet.';
+      var wait = el('div', 'lg-waiting');
+      wait.appendChild(el('h2', null, 'Grupperne er ikke lavet endnu'));
+      wait.appendChild(el('p', null,
+        'Så snart legegrupperne er sat, dukker jeres op her — på det samme link. ' +
+        'Du behøver ikke gøre noget.'));
+      var edit = el('a', 'btn btn-outline', 'Ret jeres svar imens');
+      edit.href = '../?f=' + encodeURIComponent(token);
+      edit.style.marginTop = '22px';
+      wait.appendChild(edit);
+      content.appendChild(wait);
       return;
     }
 
     var myGroup = Plan.groupForFamily(ctx, data.familyId);
-    var mine = document.getElementById('lg-mine');
-    var mineCard = document.getElementById('lg-mine-card');
 
-    if (myGroup) {
-      mineCard.appendChild(groupCard(ctx, myGroup, data.familyId));
-      mineCard.appendChild(contactList(ctx, myGroup, data.familyId));
-      mine.hidden = false;
-
-      var weeks = Plan.myHostWeeks(ctx, data.familyId);
-      document.getElementById('lg-lede').textContent = weeks.length
-        ? 'I lægger hus til i uge ' + weeks.join(' og ') + '.'
-        : 'I er ikke sat på som vært denne gang.';
-    } else {
-      document.getElementById('lg-lede').textContent =
-        'Vi kunne ikke finde jeres barn i denne runde. Sig til, så kigger vi på det.';
+    if (!myGroup) {
+      show('error', 'Vi kunne ikke finde jeres barn i denne runde. ' +
+        'Sig til administratoren, så kigger vi på det.');
+      content.appendChild(otherGroups(ctx, null));
+      return;
     }
 
-    var all = document.getElementById('lg-all-groups');
-    ctx.round.groups.forEach(function (g) {
-      all.appendChild(groupCard(ctx, g, g === myGroup ? data.familyId : null));
-    });
-    document.getElementById('lg-all').hidden = false;
-    document.getElementById('lg-tools').hidden = false;
+    var myKids = ctx.children.filter(function (c) { return c.familyId === data.familyId; })
+      .map(function (c) { return c.name; });
+    document.getElementById('lg-eyebrow').textContent =
+      'Gruppe ' + myGroup.id + (myKids.length ? ' · ' + myKids.join(' og ') : '');
+    document.getElementById('lg-title').textContent = 'Jeres legegruppe';
 
-    document.getElementById('lg-print').addEventListener('click', function () {
-      window.print();
+    content.appendChild(nextCard(ctx, data.familyId));
+
+    var duty = Plan.hostingSummary(ctx, data.familyId);
+    content.appendChild(el('p',
+      'lg-duty' + (/ikke sat på/.test(duty) ? ' lg-duty--none' : ''), duty));
+
+    var groupSection = section('Børnene i gruppen');
+    var roster = el('div', 'lg-roster');
+    var index = new Map(ctx.children.map(function (c) { return [c.childId, c]; }));
+    myGroup.childIds.forEach(function (id) {
+      var child = index.get(id) || {};
+      roster.appendChild(el('span',
+        'lg-kid' + (child.familyId === data.familyId ? ' lg-kid--mine' : ''),
+        child.name || id));
     });
-    document.getElementById('lg-copy').addEventListener('click', function () {
+    groupSection.appendChild(roster);
+    content.appendChild(groupSection);
+
+    var when = section('Hele runden',
+      'Møderne er markeret med jeres egne værtsuger. Er transporten ikke på plads, ' +
+      'aftaler I den indbyrdes — eller mødes på skolens legeplads.');
+    when.appendChild(timeline(ctx, data.familyId));
+    content.appendChild(when);
+
+    var contactSection = section('Forældrene i gruppen',
+      'Kontaktoplysninger deles kun med de familier I er sat sammen med.');
+    contactSection.appendChild(people(ctx, myGroup, data.familyId));
+    content.appendChild(contactSection);
+
+    if (ctx.round.groups.length > 1) {
+      var others = section('Resten af klassen');
+      others.appendChild(otherGroups(ctx, myGroup));
+      content.appendChild(others);
+    }
+
+    var actions = el('div', 'lg-plan-actions lg-noprint');
+    var printBtn = el('button', 'btn btn-outline', 'Print');
+    printBtn.type = 'button';
+    printBtn.addEventListener('click', function () { window.print(); });
+    actions.appendChild(printBtn);
+
+    var copyBtn = el('button', 'btn btn-outline', 'Kopiér som tekst');
+    copyBtn.type = 'button';
+    copyBtn.addEventListener('click', function () {
       navigator.clipboard.writeText(Plan.toPlainText(ctx)).then(function () {
-        show('ok', 'Planen er kopieret som tekst. Sæt den ind i Aula.');
+        show('ok', 'Hele planen er kopieret som tekst. Sæt den ind i Aula.');
       }).catch(function () {
         show('error', 'Kunne ikke kopiere automatisk. Brug Print i stedet.');
       });
     });
+    actions.appendChild(copyBtn);
+
+    var editLink = el('a', 'btn btn-outline', 'Ret jeres svar');
+    editLink.href = '../?f=' + encodeURIComponent(token);
+    actions.appendChild(editLink);
+    content.appendChild(actions);
   }).catch(function (err) {
     show('error', err.message);
   });

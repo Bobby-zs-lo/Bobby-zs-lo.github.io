@@ -470,3 +470,154 @@ textarea { min-height: 88px; resize: vertical; }
    it was butting straight up against the card's bottom border. */
 .lg-contacts-block { margin-top: 30px; }
 .lg-contacts-block h3 { margin-bottom: 4px; }
+
+/* ════════════════════════════════════════════════════════════════════
+   The parent's plan.
+   Opened on a phone, usually to settle one question: when is it, where,
+   and is it our turn. So that answer comes first, at size, and the rest
+   of the term sits under it.
+   ════════════════════════════════════════════════════════════════════ */
+
+.lg-plan-main { max-width: 760px; }
+
+/* ── The next meeting ───────────────────────────────────────────────── */
+.lg-next {
+  position: relative; overflow: hidden;
+  border: 1.5px solid var(--ink); border-radius: var(--lg-card-radius);
+  padding: 30px 28px 26px; margin-bottom: 14px; background: var(--paper);
+}
+.lg-next--mine { border-color: var(--accent); }
+.lg-next-eyebrow {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 2.4px;
+  text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 12px;
+}
+.lg-next-when {
+  font-family: 'Fraunces', Georgia, serif; font-weight: 500;
+  font-size: clamp(30px, 7vw, 46px); line-height: 1.02; letter-spacing: -1px;
+  color: var(--ink); margin: 0 0 4px;
+}
+.lg-next-week {
+  font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums;
+  font-size: 12px; letter-spacing: 1.4px; text-transform: uppercase;
+  color: var(--ink-3); display: block; margin-bottom: 18px;
+}
+.lg-next-where { font-size: 17px; color: var(--ink); line-height: 1.5; margin-bottom: 6px; }
+.lg-next-where strong { font-weight: 600; }
+.lg-next-transport { font-size: 14.5px; color: var(--ink-2); line-height: 1.5; }
+.lg-next-countdown {
+  display: inline-block; margin-top: 16px; padding: 6px 14px; border-radius: 999px;
+  background: var(--paper-2); border: 1px solid var(--rule);
+  font-family: 'JetBrains Mono', monospace; font-size: 11.5px;
+  letter-spacing: 1px; text-transform: uppercase; color: var(--ink-2);
+}
+.lg-next--mine .lg-next-countdown {
+  background: var(--accent); border-color: var(--accent); color: var(--paper);
+}
+
+/* ── Your own duty ──────────────────────────────────────────────────── */
+.lg-duty {
+  padding: 18px 22px; margin-bottom: 40px;
+  background: var(--paper-2); border-radius: var(--lg-card-radius);
+  border-left: 3px solid var(--ochre);
+  font-size: 15px; line-height: 1.55; color: var(--ink);
+}
+.lg-duty--none { border-left-color: var(--rule); color: var(--ink-2); }
+
+/* ── Section rhythm ─────────────────────────────────────────────────── */
+.lg-section { margin-bottom: 44px; }
+.lg-section > h2 {
+  font-size: 24px; margin-bottom: 4px;
+  padding-bottom: 10px; border-bottom: 1px solid var(--rule);
+}
+.lg-section-note { font-size: 13.5px; color: var(--ink-3); margin: 10px 0 18px; }
+
+/* ── The children ───────────────────────────────────────────────────── */
+.lg-roster { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 6px; }
+.lg-roster .lg-kid { font-size: 14px; padding: 7px 15px; }
+
+/* ── Term timeline ──────────────────────────────────────────────────── */
+.lg-timeline { list-style: none; margin: 0; padding: 0; }
+.lg-tl {
+  display: grid; grid-template-columns: 74px 1fr; gap: 18px;
+  padding: 16px 0; border-top: 1px solid var(--rule); align-items: start;
+}
+.lg-tl:last-child { border-bottom: 1px solid var(--rule); }
+.lg-tl--past { opacity: .42; }
+.lg-tl--mine { background:
+  linear-gradient(to right, rgba(196,48,43,.05), transparent 60%); }
+
+.lg-tl-date { text-align: left; }
+.lg-tl-day {
+  display: block; font-family: 'Fraunces', serif; font-size: 21px;
+  line-height: 1; color: var(--ink); font-variant-numeric: tabular-nums;
+}
+.lg-tl--mine .lg-tl-day { color: var(--accent); }
+.lg-tl-month {
+  display: block; font-family: 'JetBrains Mono', monospace; font-size: 10.5px;
+  letter-spacing: 1.4px; text-transform: uppercase; color: var(--ink-3); margin-top: 3px;
+}
+.lg-tl-week {
+  display: block; font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  letter-spacing: .8px; color: var(--ink-3); margin-top: 5px; opacity: .75;
+}
+.lg-tl-body { min-width: 0; }
+.lg-tl-what { font-size: 15.5px; color: var(--ink); line-height: 1.45; }
+.lg-tl-what strong { font-weight: 600; }
+.lg-tl-transport {
+  display: block; font-size: 13px; color: var(--ink-3); margin-top: 5px; line-height: 1.45;
+}
+.lg-tl-tags { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* ── Contacts ───────────────────────────────────────────────────────── */
+.lg-people { list-style: none; margin: 0; padding: 0; }
+.lg-person {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 14px; padding: 13px 0; border-top: 1px solid var(--rule); flex-wrap: wrap;
+}
+.lg-person:last-child { border-bottom: 1px solid var(--rule); }
+.lg-person-who { font-size: 15px; color: var(--ink); }
+.lg-person-child { color: var(--ink-3); font-size: 13px; }
+.lg-person a { font-size: 14px; }
+.lg-person-quiet { font-size: 12.5px; color: var(--ink-3); font-style: italic; }
+
+/* ── Other groups ───────────────────────────────────────────────────── */
+.lg-others summary {
+  font-family: 'Fraunces', serif; font-size: 19px; font-weight: 500;
+  cursor: pointer; padding: 14px 0; border-top: 1px solid var(--rule);
+  list-style: none; display: flex; align-items: center; gap: 10px;
+}
+.lg-others summary::-webkit-details-marker { display: none; }
+.lg-others summary::before {
+  content: ''; width: 8px; height: 8px; flex-shrink: 0;
+  border-right: 1.5px solid var(--ink-3); border-bottom: 1.5px solid var(--ink-3);
+  transform: rotate(-45deg); transition: transform .2s ease;
+}
+.lg-others[open] summary::before { transform: rotate(45deg); }
+.lg-others summary:hover { color: var(--accent); }
+
+.lg-other-group { padding: 18px 0; border-top: 1px solid var(--rule); }
+.lg-other-group h3 {
+  font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; margin-bottom: 8px;
+}
+.lg-other-kids { font-size: 14px; color: var(--ink-2); line-height: 1.55; }
+.lg-other-meta {
+  display: block; margin-top: 6px; font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px; letter-spacing: .8px; color: var(--ink-3);
+}
+
+/* ── Empty state ────────────────────────────────────────────────────── */
+.lg-waiting { padding: 60px 24px; text-align: center; }
+.lg-waiting h2 { font-size: 26px; margin-bottom: 10px; }
+.lg-waiting p { font-size: 15px; max-width: 40ch; margin: 0 auto; }
+
+/* ── Actions ────────────────────────────────────────────────────────── */
+.lg-plan-actions {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  padding-top: 26px; border-top: 1px solid var(--rule); margin-top: 8px;
+}
+
+@media print {
+  .lg-next { border-color: #999; }
+  .lg-others { display: none; }
+  .lg-tl--past { opacity: 1; }
+}
