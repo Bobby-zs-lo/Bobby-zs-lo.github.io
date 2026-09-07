@@ -15,6 +15,14 @@
     - { date: "2021", title: "AI in Inflammatory Bowel Disease" }
   aux: "Also: oral presenter / chair at Digestive Disease Week, UEGW, and the ECCO Conference."
 
+- title: "Teaching"
+  type: talks
+  items:
+    - { date: "2023–24", title: "AI in the Clinic — BRIDGE Translational Excellence Programme, University of Copenhagen" }
+  aux: >-
+    Taught within the BRIDGE course "Big Data Analytics and Machine Learning —
+    Computational Biology in Translational Medicine".
+
 - title: "Advisory boards"
   type: boards
   items:
