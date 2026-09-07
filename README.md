@@ -9,7 +9,7 @@ This is a premium, static portfolio designed to showcase Dr. Lo's professional p
 ## Features
 
 *   **Responsive Portfolio:** Beautiful, structured UI utilizing CSS Grid, designed to look perfect on desktops, tablets, and mobile devices.
-*   **Publications Page:** A complete list of publications automatically generated from OpenAlex.
+*   **Publications Page:** A complete list of publications automatically generated from OpenAlex. Note that this is everything OpenAlex returns — congress abstracts and duplicate records included — and so is not a CV publication list. See `EDITING.md` § 15 for the screening rules and the current curated count.
 *   **Automated Highlights:** The publications generator automatically surfaces high-impact papers (e.g., published in Nature, Gastroenterology) and highly cited papers into a dedicated "Highlights" section, abbreviating the author list to focus on Dr. Lo.
 *   **Live Rolling Banner:** An animated marquee actively showcasing the latest publications across the site.
 *   **Aggressive SEO:** Advanced JSON-LD markup, expanded Open Graph tags, and crawler-friendly structural blocks ensure high visibility on Google for IBD research in Denmark and GAIN.

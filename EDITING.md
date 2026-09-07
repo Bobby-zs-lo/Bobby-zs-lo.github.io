@@ -126,16 +126,21 @@ Each course is:
 
 Add a new `<li>` at the top of the list with the year and course title. Also update the summary line:
 ```html
-<span class="courses-toggle-text">17 courses, 2017 — 2026</span>
+<span class="courses-toggle-text">18 courses, 2017 — 2026</span>
 ```
-…to say `18 courses` (or whatever the new count is).
+…to say `19 courses` (or whatever the new count is). **The count is not computed** — if you
+add a course and forget this line, the summary silently lies.
+
+Courses you *attended* go here. Courses you *taught* go in `data/activity.yaml` under the
+Teaching block instead — see § 12.
 
 ---
 
 ## Recipe 5 — You gave a talk, joined an advisory board, or did media
 
-Find `<section class="section" id="speaking">`. Inside it there are five `.sso-block` sub-sections:
+Find `<section class="section" id="speaking">`. Inside it there are six `.sso-block` sub-sections:
 - Invited talks
+- Teaching
 - Advisory boards
 - Peer review
 - Supervision & mentorship
@@ -317,10 +322,10 @@ Fonts are loaded near the top via `@import`. To swap the serif (currently Fraunc
 | `#currently` | 3 role cards | 2 |
 | `#experience` | Clinical + Research two-column timeline | 2 |
 | `#education` | Degrees + Awards two-column | 3 |
-| `#expertise` | 3 competency cards + 17-course collapsible | 4 |
+| `#expertise` | 3 competency cards + 18-course collapsible | 4 |
 | `#research` | 5 pinned research project cards | 6 |
 | `#latest-publications` | Live OpenAlex top 5 by date | (auto) |
-| `#speaking` | Talks + Advisory + Peer review + Supervision + Media | 5 |
+| `#speaking` | Talks + Teaching + Advisory + Peer review + Supervision + Media | 5, 12 |
 | `#contact` | Email + LinkedIn + Affiliations + Footer | 7, 8 |
 
 ---
@@ -339,12 +344,23 @@ To change a card:
 
 When `openalex_id` (or `doi`) resolves to a cached summary, that summary is used and `fallback_description` is ignored.
 
-## 12. Editing talks, advisory boards, peer review, supervision, media
+## 12. Editing talks, teaching, advisory boards, peer review, supervision, media
 
 These live in `data/activity.yaml`. Blocks are typed:
 
 - `type: talks` and `type: boards` → list with `date` and `title`, optional `aux` paragraph.
+  Used by **Invited talks** and **Teaching** (the type name is about the markup, not the content).
 - `type: text` → free `body` field, supports `<strong>` and `<em>`.
+
+Block order in the file is the order on the page. The three list blocks are kept above the
+three text blocks — if you add a new list block, put it with the others.
+
+**The date column is 80px wide.** At 11px JetBrains Mono that is about seven characters, so
+`2023–24` fits and `2023 & 2024` does not. Use the site's conventions: `2025` for a single
+year, `2023–24` for a completed span, `2025 →` for ongoing.
+
+`title` and `aux` are HTML-escaped by the generator, so straight quotes are safe there; only
+`body` on a `type: text` block accepts markup.
 
 After editing:
 
@@ -373,5 +389,32 @@ python generate_publications.py --max-new 10
 ```
 
 Re-run until you see `Enrichment: 0 new summaries`. Commit the cache file when you're happy with quality.
+
+## 15. `publications.html` is not a CV publication list
+
+`generate_publications.py` renders **everything** OpenAlex returns for author `A5078664290`.
+That is deliberate for the website, but it is not what belongs on a CV. Screened in
+September 2026, the 65 OpenAlex records broke down as:
+
+| | count |
+|---|---|
+| Peer-reviewed journal articles | **37** (13 first-author) |
+| Congress abstracts (ECCO, DDW, UEG Week, EMJ) | 22 |
+| Duplicates (2 preprints, 1 dataset deposit, 1 repository copy, 1 issue-level artefact) | 5 |
+| Not his paper — a 2008 MIT thesis by a different Bobby Lo | 1 |
+
+Two things follow from this.
+
+**Do not trust `type` alone.** OpenAlex types six of those congress abstracts as `article`
+or `review`. The reliable tells are the DOI shape (`jjab232.532`, `s0016-5085(21)01694-2`),
+a poster/session prefix in the title (`P405`, `DOP43`, `Sa081`, `Tu1715`, `49:`), and, for
+EMJ, a DOI that resolves to an `/abstract/` URL.
+
+**Cross-check against ORCID.** `0000-0002-0252-9341` is hand-curated and contains no
+abstracts. Taking the year from Crossref `published-print` (falling back to `issued`)
+reproduces the ORCID years exactly — a useful signal that a record is right.
+
+The 2008 MIT thesis is also inflating `works_count` in the live homepage metrics. Fixing it
+means correcting the author disambiguation on OpenAlex itself.
 
 > **Deprecated:** Recipes that asked you to hand-edit the "Major Research Projects" or "Speaking, Service & Outreach" sections directly in `index.html` no longer apply. Edit the YAML files instead.
