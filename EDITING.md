@@ -231,6 +231,8 @@ Same `contact` section. Find:
 ```
 Add, remove, or reword `<span>` entries.
 
+**Naming:** the Copenhagen Center for Inflammatory Bowel Disease is abbreviated **CPH-IBD**, not CCIBD. Write the full name in the affiliation strip and the role cards. Use CPH-IBD where space is short, as in the Experience timeline.
+
 ---
 
 ## Recipe 9 — New profile photo
@@ -416,5 +418,25 @@ reproduces the ORCID years exactly — a useful signal that a record is right.
 
 The 2008 MIT thesis is also inflating `works_count` in the live homepage metrics. Fixing it
 means correcting the author disambiguation on OpenAlex itself.
+
+## 16. The hidden CV export
+
+The small **BL** monogram in the home-page footer, just before "© 2026 Bobby Zhao Sheng Lo.", opens a
+hidden CV exporter. Choose sections with the toggles and press **Generate PDF →**. The PDF is built from
+the text on the home page, so change `index.html` first and the export follows. Your hero sentence
+becomes the CV subtitle, for example.
+
+The CV made on 11 September 2026 had Introduction, Research projects and Publications **off**, and
+Expertise on with **Courses only**. Everything else was on. One copy was made with the photo and one without.
+
+Things to know:
+
+- **Danish letters get flattened.** æ, ø and å come out as ae, o and aa ("Køge" becomes "Koge"). The
+  PDF font can print them. The `sanitize()` function in `easter-egg.js` swaps them.
+- **Advisory boards are always included** with Speaking & Service. There is no toggle for that block alone.
+- **The Research Dissemination section on that CV is not part of the site.** Its figures bar (publications,
+  first-author vs co-author split, h-index) and the missing advisory boards came from a one-off export:
+  a patched copy of `easter-egg.js` run in a headless browser. For another one like it, ask Claude. It
+  keeps the recipe and the approved design.
 
 > **Deprecated:** Recipes that asked you to hand-edit the "Major Research Projects" or "Speaking, Service & Outreach" sections directly in `index.html` no longer apply. Edit the YAML files instead.
