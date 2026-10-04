@@ -95,7 +95,9 @@ export async function render(el, ctx) {
         <button type="button" class="btn${strava.connected ? '' : ' btn--primary'}" id="strava-connect">${strava.connected ? 'Reconnect Strava' : 'Connect Strava'}</button>
         <button type="button" class="btn" id="strava-webhook"${strava.connected ? '' : raw(' disabled')}>Register Strava webhook</button>
       </div>
-      <p class="help">Register the webhook once after connecting, so new activities arrive within a minute.</p>
+      <p class="help" id="strava-webhook-status">${strava.webhook
+        ? 'Webhook registered. New activities arrive within a minute.'
+        : 'Register the webhook once after connecting, so new activities arrive within a minute.'}</p>
     </section>
 
     <section class="card">
@@ -186,7 +188,11 @@ export async function render(el, ctx) {
   $('#strava-webhook').addEventListener('click', e => busy(e.currentTarget, async () => {
     try {
       const r = await api.post('/api/strava/register-webhook');
-      toast(`Webhook registered${r && r.id ? ` (id ${r.id})` : ''}`, { kind: 'ok' });
+      toast(`${r && r.adopted ? 'Webhook already registered' : 'Webhook registered'}${r && r.id ? ` (id ${r.id})` : ''}`, { kind: 'ok' });
+      strava.webhook = true;
+      patchState({ strava: { ...strava } });
+      const line = $('#strava-webhook-status');
+      if (line) line.textContent = 'Webhook registered. New activities arrive within a minute.';
     } catch (ex) { toast(ex.message, { kind: 'error' }); }
   }));
   el.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', async () => {

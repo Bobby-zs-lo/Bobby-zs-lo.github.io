@@ -15,4 +15,4 @@ export const FIREBASE_CONFIG = {
 };
 
 // Bump on every deploy: it names the service-worker shell cache.
-export const APP_VERSION = '0.3.1';
+export const APP_VERSION = '0.4.0';
