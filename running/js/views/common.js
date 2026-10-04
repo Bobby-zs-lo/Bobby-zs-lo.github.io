@@ -13,11 +13,11 @@ export function activityLine(a) {
 }
 
 export function activityRow(a) {
-  return html`<div class="activity">
+  return html`<a class="activity" href="#/activity/${encodeURIComponent(a.id)}">
     <span class="activity-src">Strava</span>
     <span class="activity-name">${a.name || a.sportType}${a.commute ? html` <span class="tag">Commute</span>` : ''}</span>
     <span class="activity-stats num">${activityLine(a)}</span>
-  </div>`;
+  </a>`;
 }
 
 /** '20 s', '8 min', '1:30 h' — the clock side of a segment. */

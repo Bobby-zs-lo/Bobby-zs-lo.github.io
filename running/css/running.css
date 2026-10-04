@@ -256,6 +256,12 @@ body[data-route="boot"] .tabs, body[data-route="boot"] .gear { display: none; }
 @media (prefers-color-scheme: dark) { .activity-src { color: #FF7A3D; } }
 .activity-name { font-weight: 500; color: var(--ink); min-width: 0; overflow-wrap: anywhere; }
 .activity-stats { font-size: 14px; color: var(--ink-2); }
+a.activity { text-decoration: none; color: inherit; }
+a.activity:hover .activity-name { color: var(--accent); }
+.split--fast { color: var(--ride); font-weight: 600; }
+.split--slow { color: var(--warn); font-weight: 600; }
+.split--on { color: var(--ok); font-weight: 600; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* ── buttons ──────────────────────────────────────────────────────────── */
 .actions { display: flex; flex-wrap: wrap; gap: 8px; }

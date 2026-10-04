@@ -1,6 +1,6 @@
 // Hash router: '#/settings?strava=ok' → { path: 'settings', params: { strava: 'ok' } }
 
-export const ROUTES = ['login', 'today', 'week', 'plan', 'health', 'reviews', 'settings', 'workout'];
+export const ROUTES = ['login', 'today', 'week', 'plan', 'health', 'reviews', 'settings', 'workout', 'activity'];
 export const DEFAULT_ROUTE = 'today';
 
 export function parseHash(hash) {

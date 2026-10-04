@@ -17,9 +17,10 @@ const VIEWS = {
   reviews: () => import('./views/reviews.js'),
   settings: () => import('./views/settings.js'),
   workout: () => import('./views/workout.js'),
+  activity: () => import('./views/activity.js'),
 };
 const TABS = [['today', 'Today'], ['week', 'Week'], ['plan', 'Plan'], ['health', 'Health'], ['reviews', 'Reviews']];
-const TITLES = { login: 'Sign in', today: 'Today', week: 'Week', plan: 'Plan', health: 'Health', reviews: 'Reviews', settings: 'Settings', workout: 'Session' };
+const TITLES = { login: 'Sign in', today: 'Today', week: 'Week', plan: 'Plan', health: 'Health', reviews: 'Reviews', settings: 'Settings', workout: 'Session', activity: 'Activity' };
 
 const root = document.getElementById('app');
 mount(root, html`
