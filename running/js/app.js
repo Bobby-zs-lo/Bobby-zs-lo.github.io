@@ -1,9 +1,11 @@
 // App shell: header, bottom tabs, offline badge, toasts, hash routing.
 import { parseHash, navigate } from './router.js';
-import { getToken, netStatus } from './api.js';
+import { netStatus, clearApiCache } from './api.js';
+import { initAuth, onUser, currentUser } from './auth.js';
+import { invalidate } from './store.js';
 import { ICONS } from './icons.js';
 import { html, raw, mount } from './dom.js';
-import { errorState } from './ui.js';
+import { errorState, loading } from './ui.js';
 import { formatTimestamp } from './format.js';
 
 const VIEWS = {
@@ -48,9 +50,31 @@ window.addEventListener('api:net', updateOffline);
 window.addEventListener('online', updateOffline);
 window.addEventListener('offline', updateOffline);
 
+// Router guard: nothing renders until Firebase has restored (or not) the saved session.
+let authReady = null, authResolved = false;
+function waitForAuth() {
+  if (!authReady) {
+    authReady = Promise.resolve(initAuth()).then(
+      () => { authResolved = true; },
+      e => { authReady = null; throw e; },
+    );
+  }
+  return authReady;
+}
+
 async function route() {
   const r = parseHash(location.hash);
-  const authed = !!getToken();
+  if (!authResolved) {
+    const seq = ++renderSeq;
+    document.body.dataset.route = 'boot';
+    loading(view, 'Checking sign-in');
+    try { await waitForAuth(); } catch {
+      if (seq === renderSeq) errorState(view, new Error('Couldn’t load sign-in. Check your connection and try again.'), route);
+      return;
+    }
+    if (seq !== renderSeq) return; // a newer route() call took over
+  }
+  const authed = !!currentUser();
   if (!authed && r.path !== 'login') return navigate('login');
   if (authed && r.path === 'login') return navigate('today');
   if (!r.known) return navigate('today');
@@ -79,6 +103,18 @@ async function route() {
 
 window.addEventListener('hashchange', route);
 route();
+
+// Sign-in / sign-out (here or in another tab): leave or return to the login screen.
+let lastUid = undefined;
+onUser(user => {
+  const uid = user ? user.uid : null;
+  if (lastUid !== undefined && uid !== lastUid) invalidate();
+  lastUid = uid;
+  if (!authResolved) return; // the first route() is still waiting and will decide
+  const { path } = parseHash(location.hash);
+  if (!user && path !== 'login') { clearApiCache(); navigate('login'); }
+  else if (user && path === 'login') navigate('today');
+});
 updateOffline();
 
 // sw.js asks an open window to switch view after a notification tap.

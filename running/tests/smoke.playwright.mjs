@@ -1,4 +1,6 @@
-// Playwright smoke test for the Running PWA against a mocked API.
+// Playwright smoke test for the Running PWA against a mocked API and a fake
+// Firebase Auth (globalThis.__RUNNING_TEST_AUTH__, injected with addInitScript,
+// so the real Firebase SDK is never loaded).
 //
 //   node running/tests/smoke.playwright.mjs
 //
@@ -19,6 +21,8 @@ import { API_BASE } from '../js/config.js';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = join(HERE, '..', '..');
 const SHOTS = process.env.SHOTS_DIR || '/tmp/running-shots';
+const API_PREFIX = new URL(API_BASE).pathname.replace(/\/+$/, ''); // Cloud Function path, e.g. '/api'
+const TOKENS = { owner: 'test-token', stranger: 'stranger-token', expired: 'expired-token' };
 const fx = name => JSON.parse(readFileSync(join(HERE, 'fixtures', name), 'utf8'));
 
 async function loadPlaywright() {
@@ -60,9 +64,12 @@ function mockApi(log) {
     const body = req.postData() ? JSON.parse(req.postData()) : null;
     log.push({ method, path: url.pathname, search: url.search, body, auth: req.headers().authorization || null });
     const json = (data, status = 200) => route.fulfill({ status, headers: { ...cors, 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-    const p = url.pathname;
-    if (p !== '/api/login' && req.headers().authorization !== 'Bearer test-token') return json({ error: 'Unauthorized' }, 401);
-    if (method === 'POST' && p === '/api/login') return body.passphrase === 'correct horse' ? json({ token: 'test-token' }) : json({ error: 'Wrong passphrase' }, 401);
+    if (!url.pathname.startsWith(API_PREFIX + '/')) return json({ error: 'outside the API prefix' }, 404);
+    const p = url.pathname.slice(API_PREFIX.length);
+    log[log.length - 1].path = p;
+    const authz = req.headers().authorization;
+    if (authz === `Bearer ${TOKENS.stranger}`) return json({ error: 'not the owner' }, 403);
+    if (authz !== `Bearer ${TOKENS.owner}`) return json({ error: 'Unauthorized' }, 401);
     if (p === '/api/state') return json(state);
     if (p === '/api/plan') return json(plan);
     if (p === '/api/week') {
@@ -91,6 +98,29 @@ function mockApi(log) {
     if (method === 'PUT' && p === '/api/settings') return json({ ...state.settings, ...body });
     if (method === 'POST') return json({ ok: true, sent: 1 });
     return json({ error: `no mock for ${method} ${p}` }, 404);
+  };
+}
+
+// ── fake Firebase Auth (runs in the page before any app code) ──────────────
+function fakeAuth(cfg) {
+  const TOKENS = cfg.tokens;
+  const mk = kind => ({ uid: `uid-${kind}`, email: `${kind}@example.com`, displayName: kind, kind });
+  let user = cfg.user ? mk(cfg.user) : null;
+  let fails = cfg.signInFails || 0;
+  const listeners = new Set();
+  const emit = () => listeners.forEach(cb => cb(user));
+  const calls = window.__authCalls = [];
+  globalThis.__RUNNING_TEST_AUTH__ = {
+    initAuth: () => new Promise(r => setTimeout(() => r(user), cfg.delay || 0)),
+    onUser: cb => { listeners.add(cb); return () => listeners.delete(cb); },
+    signIn: async () => {
+      calls.push('signIn');
+      if (fails-- > 0) throw Object.assign(new Error('Firebase: Error (auth/popup-blocked).'), { code: 'auth/popup-blocked' });
+      user = mk(cfg.signInAs || 'owner'); emit(); return user;
+    },
+    signOut: async () => { calls.push('signOut'); user = null; emit(); },
+    getIdToken: async () => (user ? TOKENS[user.kind] : null),
+    currentUser: () => user,
   };
 }
 
@@ -126,7 +156,7 @@ const ORIGIN = `http://127.0.0.1:${srv.address().port}`;
 const APP = `${ORIGIN}/running/`;
 await mkdir(SHOTS, { recursive: true });
 
-async function newPage({ token = true, scheme = 'light', sw = 'block' } = {}) {
+async function newPage({ user = 'owner', signInFails = 0, delay = 0, scheme = 'light', sw = 'block' } = {}) {
   const ctx = await browser.newContext({
     viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
     colorScheme: scheme, serviceWorkers: sw, timezoneId: 'Europe/Copenhagen', locale: 'en-GB',
@@ -138,9 +168,13 @@ async function newPage({ token = true, scheme = 'light', sw = 'block' } = {}) {
     return r.fulfill({ status: 200, contentType: 'text/css', body: '' });
   });
   const log = [];
-  await ctx.route(`${API_BASE}/**`, mockApi(log));
-  if (token) await ctx.addInitScript(() => { try { localStorage.setItem('running.token', 'test-token'); } catch {} });
+  await ctx.route(`${new URL(API_BASE).origin}/**`, mockApi(log));
+  // Test mode must never load the real SDK; count any attempt.
+  const sdkRequests = [];
+  await ctx.route(/www\.gstatic\.com\/firebasejs\//, r => { sdkRequests.push(r.request().url()); return r.abort(); });
+  await ctx.addInitScript(fakeAuth, { user, signInFails, delay, tokens: TOKENS });
   const page = await ctx.newPage();
+  page.sdkRequests = sdkRequests;
   const errors = [];
   page.on('pageerror', e => errors.push(String(e)));
   page.on('console', m => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
@@ -153,32 +187,56 @@ async function go(page, route) {
 }
 
 try {
-  await step('login screen renders when no token', async () => {
-    const { ctx, page, errors, log } = await newPage({ token: false });
+  await step('login screen (Google sign-in) when signed out; popup blocked, then sign in', async () => {
+    const { ctx, page, errors, log } = await newPage({ user: null, signInFails: 1 });
     await page.goto(APP);
-    await page.waitForSelector('#login-form');
+    await page.waitForSelector('#google-signin');
     assert.equal(new URL(page.url()).hash, '#/login');
-    assert.ok(await page.isVisible('#passphrase'));
+    assert.match(await page.textContent('#google-signin'), /Sign in with Google/);
+    assert.match(await page.textContent('.login'), /Only Bobby’s Google account can open this app\./);
+    assert.equal(await page.$$eval('input', e => e.length), 0, 'no passphrase or device-name fields');
     assert.ok(!(await page.isVisible('#tabs')), 'tab bar hidden on login');
-    assert.notEqual(await page.inputValue('#deviceName'), '');
     assert.equal(await page.getAttribute('meta[name=robots]', 'content'), 'noindex,nofollow');
-    // wrong, then right passphrase
-    await page.fill('#passphrase', 'nope');
-    await page.click('button[type=submit]');
-    await page.waitForSelector('#login-error:not([hidden])');
-    await page.fill('#passphrase', 'correct horse');
-    await page.click('button[type=submit]');
+    // popup blocked → error toast suggesting another try
+    await page.click('#google-signin');
+    await page.waitForSelector('.toast--error');
+    assert.match(await page.textContent('.toast--error'), /blocked.*try again/i);
+    assert.equal(new URL(page.url()).hash, '#/login');
+    // second try succeeds → Today
+    await page.click('#google-signin');
     await page.waitForSelector('.workout-title');
-    assert.equal(await page.evaluate(() => localStorage.getItem('running.token')), 'test-token');
-    assert.ok(log.some(l => l.path === '/api/login' && l.body.deviceName));
+    assert.equal(new URL(page.url()).hash, '#/today');
+    assert.deepEqual(await page.evaluate(() => window.__authCalls), ['signIn', 'signIn']);
+    assert.ok(log.length && log.every(l => l.auth === 'Bearer test-token'));
+    assert.ok(!log.some(l => l.path === '/api/login'), 'no passphrase login call');
+    assert.deepEqual(page.sdkRequests, [], 'fake auth: Firebase SDK not loaded');
     assert.deepEqual(errors, []);
     await ctx.close();
   });
 
+  await step('router waits for auth state (loading), then decides', async () => {
+    const { ctx, page, errors } = await newPage({ user: null, delay: 600 });
+    await page.goto(`${APP}#/today`);
+    await page.waitForSelector('.state--loading');
+    assert.match(await page.textContent('.state--loading'), /Checking sign-in/);
+    assert.ok(!(await page.isVisible('#tabs')), 'tab bar hidden while auth resolves');
+    assert.equal(new URL(page.url()).hash, '#/today', 'no redirect before auth resolves');
+    await page.waitForSelector('#google-signin');
+    assert.equal(new URL(page.url()).hash, '#/login');
+    assert.deepEqual(errors, []);
+    await ctx.close();
+    // signed in + slow auth on #/login → ends on Today
+    const b = await newPage({ delay: 600 });
+    await b.page.goto(`${APP}#/login`);
+    await b.page.waitForSelector('.workout-title');
+    assert.equal(new URL(b.page.url()).hash, '#/today');
+    await b.ctx.close();
+  });
+
   await step('login screenshots', async () => {
     for (const scheme of ['light', 'dark']) {
-      const { ctx, page } = await newPage({ token: false, scheme });
-      await page.goto(APP); await page.waitForSelector('#login-form');
+      const { ctx, page } = await newPage({ user: null, scheme });
+      await page.goto(APP); await page.waitForSelector('#google-signin');
       await page.screenshot({ path: join(SHOTS, `login-${scheme}.png`) });
       await ctx.close();
     }
@@ -270,13 +328,45 @@ try {
     await ctx.close();
   });
 
-  await step('401 sends you to login', async () => {
-    const { ctx, page } = await newPage({ token: false });
-    await ctx.addInitScript(() => { try { localStorage.setItem('running.token', 'expired'); } catch {} });
+  await step('401 signs out of Firebase and sends you to login', async () => {
+    const { ctx, page, log } = await newPage({ user: 'expired' });
     await page.goto(`${APP}#/today`);
-    await page.waitForSelector('#login-form');
-    assert.equal(await page.evaluate(() => localStorage.getItem('running.token')), null);
+    await page.waitForSelector('#google-signin');
+    assert.ok(log.some(l => l.auth === `Bearer ${TOKENS.expired}`));
+    assert.ok((await page.evaluate(() => window.__authCalls)).includes('signOut'));
+    assert.equal(await page.evaluate(() => globalThis.__RUNNING_TEST_AUTH__.currentUser()), null);
     await ctx.close();
+  });
+
+  await step('403 "not the owner" shows a toast and signs out', async () => {
+    const { ctx, page } = await newPage({ user: 'stranger' });
+    await page.goto(`${APP}#/today`);
+    await page.waitForSelector('#google-signin');
+    await page.waitForSelector('.toast--error');
+    assert.match(await page.textContent('.toasts'), /This account isn’t allowed/);
+    assert.ok((await page.evaluate(() => window.__authCalls)).includes('signOut'));
+    await ctx.close();
+  });
+
+  await step('Settings: Sign out (Firebase only) and Sign out everywhere (POST /api/logout-all)', async () => {
+    const a = await newPage();
+    await go(a.page, 'settings');
+    assert.equal(await a.page.$$eval('#settings-form ~ section .actions button', b => b.length) >= 2, true);
+    await a.page.click('#logout');
+    await a.page.waitForSelector('#google-signin');
+    assert.deepEqual(await a.page.evaluate(() => window.__authCalls), ['signOut']);
+    assert.ok(!a.log.some(l => l.method === 'POST' && /logout/.test(l.path)), 'plain sign-out makes no server call');
+    await a.ctx.close();
+
+    const b = await newPage();
+    await go(b.page, 'settings');
+    b.page.once('dialog', d => d.accept());
+    await b.page.click('#logout-all');
+    await b.page.waitForSelector('#google-signin');
+    const call = b.log.find(l => l.method === 'POST' && l.path === '/api/logout-all');
+    assert.ok(call && call.auth === 'Bearer test-token', 'logout-all sent with the ID token');
+    assert.deepEqual(await b.page.evaluate(() => window.__authCalls), ['signOut']);
+    await b.ctx.close();
   });
 
   for (const scheme of ['light', 'dark']) {
@@ -302,16 +392,31 @@ try {
       const keys = await caches.keys();
       const shell = keys.find(k => k.startsWith('running-shell-'));
       const c = await caches.open(shell);
-      return { url: reg.active.scriptURL, keys, n: (await c.keys()).length, idx: !!(await c.match('./index.html')) };
+      return { url: reg.active.scriptURL, keys, shell, n: (await c.keys()).length, idx: !!(await c.match('./index.html')), auth: !!(await c.match('./js/auth.js')) };
     });
     assert.match(info.url, /\/running\/sw\.js$/);
-    assert.ok(info.n >= 25, `precached ${info.n}`);
+    assert.ok(info.n >= 26, `precached ${info.n}`);
     assert.ok(info.idx);
+    assert.match(info.shell, /running-shell-0\.2\.0/);
+    assert.ok(info.auth, 'auth.js precached');
     // With the SW in control, the API host (a placeholder) is unreachable: the
     // SW must answer /api/state itself with the offline marker → badge shows.
-    await ctx.unroute(`${API_BASE}/**`);
+    await ctx.unroute(`${new URL(API_BASE).origin}/**`);
     await page.reload();
     await page.waitForFunction(() => navigator.serviceWorker.controller);
+    // The SW passes Firebase SDK requests through untouched and never caches them.
+    await ctx.unroute(/www\.gstatic\.com\/firebasejs\//);
+    let sdkHits = 0;
+    await ctx.route(/www\.gstatic\.com\/firebasejs\//, r => { sdkHits++; return r.fulfill({ status: 200, contentType: 'text/javascript', headers: { 'Access-Control-Allow-Origin': '*' }, body: 'export const ok = 1;' }); });
+    const sdk = await page.evaluate(async u => {
+      const r1 = await fetch(u); const r2 = await fetch(u, { cache: 'no-store' });
+      const cached = [];
+      for (const k of await caches.keys()) if (await (await caches.open(k)).match(u)) cached.push(k);
+      return { ok: r1.ok && r2.ok, body: await r2.text(), cached };
+    }, 'https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js');
+    assert.ok(sdk.ok && /ok = 1/.test(sdk.body));
+    assert.deepEqual(sdk.cached, [], 'Firebase SDK not in any cache');
+    assert.ok(sdkHits >= 2, `SDK requests reached the network (${sdkHits})`);
     await page.goto(`${APP}#/today`);
     await page.waitForSelector('.state--error');
     assert.ok(await page.isVisible('#offline'), 'offline badge');

@@ -165,6 +165,7 @@ img, svg { display: block; max-width: 100%; }
 }
 body[data-route="login"] .tabs, body[data-route="login"] .gear, body[data-route="login"] .top { display: none; }
 body[data-route="login"] .view { padding-bottom: 48px; }
+body[data-route="boot"] .tabs, body[data-route="boot"] .gear { display: none; }
 
 /* toasts sit just above the tab bar */
 .toasts {
@@ -511,6 +512,8 @@ output { font-variant-numeric: tabular-nums; color: var(--accent); margin-left: 
 .login-title { font-size: 52px; letter-spacing: -1.5px; margin: 6px 0 10px; }
 .login-title::after { content: '.'; color: var(--accent); }
 .login .card { margin-top: 24px; }
+.btn--google { display: inline-flex; align-items: center; justify-content: center; gap: 10px; }
+.btn--google .google-g { flex: none; box-sizing: content-box; padding: 4px; background: #fff; border-radius: 50%; }
 
 /* ── states ───────────────────────────────────────────────────────────── */
 .state { padding: 40px 0; text-align: center; color: var(--ink-3); }

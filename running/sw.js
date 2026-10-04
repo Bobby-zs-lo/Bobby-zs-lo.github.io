@@ -12,12 +12,17 @@ const SHELL_CACHE = `running-shell-${APP_VERSION}`;
 const API_CACHE = 'running-api';      // must match js/api.js
 const FONT_CACHE = 'running-fonts';
 const SCOPE = self.registration.scope; // https://bobbylo.dk/running/
-const API_ORIGIN = new URL(API_BASE).origin;
+const API_URL = new URL(API_BASE);
+const API_ORIGIN = API_URL.origin;
+const API_PREFIX = API_URL.pathname.replace(/\/+$/, ''); // '/api' for a Cloud Function named api
 const CACHED_API = new Set(['/api/week', '/api/state', '/api/plan']);
+// Firebase JS SDK (www.gstatic.com) and Google sign-in / token endpoints are
+// never intercepted or cached here: the browser fetches them directly.
+const PASS_THROUGH = /^(www\.gstatic\.com|apis\.google\.com|accounts\.google\.com|[a-z0-9-]+\.googleapis\.com|[a-z0-9-]+\.firebaseapp\.com|[a-z0-9-]+\.web\.app)$/;
 
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './css/running.css',
-  './js/config.js', './js/app.js', './js/api.js', './js/router.js', './js/format.js',
+  './js/config.js', './js/app.js', './js/api.js', './js/auth.js', './js/router.js', './js/format.js',
   './js/markdown.js', './js/push.js', './js/store.js', './js/dom.js', './js/ui.js',
   './js/icons.js', './js/sparkline.js', './js/changes.js',
   './js/views/common.js', './js/views/login.js', './js/views/today.js', './js/views/week.js',
@@ -47,14 +52,15 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
 
-  if (url.origin === API_ORIGIN) {
-    if (CACHED_API.has(url.pathname)) e.respondWith(apiNetworkFirst(req));
+  if (url.origin === API_ORIGIN && url.pathname.startsWith(API_PREFIX + '/')) {
+    if (CACHED_API.has(url.pathname.slice(API_PREFIX.length))) e.respondWith(apiNetworkFirst(req));
     return; // other API calls go straight to the network
   }
   if (url.origin === 'https://fonts.googleapis.com' || url.origin === 'https://fonts.gstatic.com') {
     e.respondWith(cacheFirst(req, FONT_CACHE));
     return;
   }
+  if (PASS_THROUGH.test(url.hostname)) return; // Firebase SDK and auth: network only
   if (url.origin !== self.location.origin || !req.url.startsWith(SCOPE)) return;
 
   if (req.mode === 'navigate') {
@@ -113,6 +119,8 @@ async function apiNetworkFirst(req) {
 
 // ── push ────────────────────────────────────────────────────────────────────
 // Payload (spec 4.9): {title, body, url, tag, actions:[{action,title}], actionToken?}
+// Plan actions POST to the API with the single-use action token in the body;
+// no Firebase ID token is needed (or available) inside the service worker.
 self.addEventListener('push', e => {
   let p = {};
   try { p = e.data ? e.data.json() : {}; } catch { p = { body: e.data ? e.data.text() : '' }; }

@@ -1,17 +1,18 @@
-import { html, mount } from '../dom.js';
-import { api, setToken } from '../api.js';
-import { navigate } from '../router.js';
+import { html, raw, mount } from '../dom.js';
+import { signIn } from '../auth.js';
+import { toast, busy } from '../ui.js';
 import { invalidate } from '../store.js';
 
-export function defaultDeviceName() {
-  try {
-    const uad = navigator.userAgentData;
-    const plat = (uad && uad.platform) || navigator.platform || '';
-    const mobile = uad ? uad.mobile : /Mobi|Android/i.test(navigator.userAgent);
-    const brand = uad && uad.brands && (uad.brands.find(b => /Chrome|Edge|Firefox|Opera/.test(b.brand)) || {}).brand;
-    const os = /Android/i.test(plat + navigator.userAgent) ? 'Android' : (plat || 'Browser');
-    return [os, mobile ? 'phone' : '', brand ? `(${brand})` : ''].filter(Boolean).join(' ').slice(0, 60);
-  } catch { return 'My phone'; }
+const GOOGLE_G = '<svg class="google-g" viewBox="0 0 48 48" width="18" height="18" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.5l6.7-6.7C35.6 2.4 30.2 0 24 0 14.6 0 6.6 5.4 2.6 13.2l7.8 6.1C12.3 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.4 28.7c-.5-1.4-.8-3-.8-4.7s.3-3.2.8-4.7l-7.8-6.1C.9 16.6 0 20.2 0 24s.9 7.4 2.6 10.8l7.8-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.8 2.3-8.4 2.3-6.3 0-11.7-4.1-13.6-9.8l-7.8 6.1C6.6 42.6 14.6 48 24 48z"/></svg>';
+
+/** Firebase error → something a person can act on. */
+export function signInMessage(err) {
+  const code = (err && err.code) || '';
+  if (code === 'auth/popup-blocked') return 'The sign-in window was blocked. Allow pop-ups for this site, then try again.';
+  if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request' || code === 'auth/user-cancelled') return 'Sign-in was cancelled. Try again.';
+  if (code === 'auth/network-request-failed') return 'Can’t reach Google. Check your connection and try again.';
+  if (code === 'auth/unauthorized-domain') return 'This site isn’t set up for sign-in yet (authorised domains in Firebase).';
+  return (err && err.message) ? `Sign-in failed: ${err.message}` : 'Sign-in failed. Try again.';
 }
 
 export async function render(el) {
@@ -19,44 +20,20 @@ export async function render(el) {
     <section class="login">
       <p class="eyebrow">Private</p>
       <h1 class="login-title">Running</h1>
-      <p class="lede">Sign in on this device. You only need to do this once per phone.</p>
-      <form class="card form" id="login-form" novalidate>
-        <div class="field">
-          <label for="passphrase">Passphrase</label>
-          <input id="passphrase" name="passphrase" type="password" autocomplete="current-password" required autofocus>
-        </div>
-        <div class="field">
-          <label for="deviceName">Device name</label>
-          <input id="deviceName" name="deviceName" type="text" autocomplete="off" maxlength="60" value="${defaultDeviceName()}">
-          <p class="help">Shown when you sign devices out.</p>
-        </div>
-        <p class="form-error" id="login-error" role="alert" hidden></p>
-        <button class="btn btn--primary btn--block" type="submit">Sign in</button>
-      </form>
+      <p class="lede">Only Bobby’s Google account can open this app.</p>
+      <div class="card login-card">
+        <button class="btn btn--primary btn--block btn--google" type="button" id="google-signin">${raw(GOOGLE_G)}<span>Sign in with Google</span></button>
+      </div>
     </section>`);
 
-  const form = el.querySelector('#login-form');
-  const err = el.querySelector('#login-error');
-  form.addEventListener('submit', async e => {
-    e.preventDefault();
-    const passphrase = form.passphrase.value;
-    const deviceName = form.deviceName.value.trim() || 'Phone';
-    err.hidden = true;
-    if (!passphrase) { err.textContent = 'Enter your passphrase.'; err.hidden = false; form.passphrase.focus(); return; }
-    const btn = form.querySelector('button[type=submit]');
-    btn.disabled = true; btn.textContent = 'Signing in…';
+  const btn = el.querySelector('#google-signin');
+  btn.addEventListener('click', () => busy(btn, async () => {
     try {
-      const { token } = await api.post('/api/login', { passphrase, deviceName }, { auth: false });
-      if (!token) throw new Error('No token in the response.');
-      if (!setToken(token)) throw new Error('This browser blocks storage, so the app can’t remember you. Turn off private mode and try again.');
+      await signIn();
       invalidate();
-      navigate('today');
+      // app.js listens for the auth change and moves on to Today.
     } catch (ex) {
-      err.textContent = ex.status === 401 || ex.status === 403 ? 'That passphrase didn’t work.' : ex.message;
-      err.hidden = false;
-      form.passphrase.select();
-    } finally {
-      btn.disabled = false; btn.textContent = 'Sign in';
+      toast(signInMessage(ex), { kind: 'error', ms: 6000 });
     }
-  });
+  }));
 }

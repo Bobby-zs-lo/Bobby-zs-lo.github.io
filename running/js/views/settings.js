@@ -1,5 +1,6 @@
 import { html, raw, mount } from '../dom.js';
-import { api, clearToken, clearApiCache } from '../api.js';
+import { api, clearApiCache } from '../api.js';
+import { signOut as authSignOut } from '../auth.js';
 import { getState, patchState, invalidate } from '../store.js';
 import { loading, errorState, toast, busy } from '../ui.js';
 import { clearParams, navigate } from '../router.js';
@@ -187,11 +188,13 @@ export async function render(el, ctx) {
   }));
 
   const signOut = async all => {
-    try { await api.post(all ? '/api/logout-all' : '/api/logout'); }
-    catch (ex) { if (ex.status !== 401) toast(`Signed out here, but the server said: ${ex.message}`, { kind: 'error' }); }
+    if (all) {
+      try { await api.post('/api/logout-all'); }
+      catch (ex) { if (ex.status !== 401) toast(`Signed out here, but the server said: ${ex.message}`, { kind: 'error' }); }
+    }
     try { const sub = await currentSubscription(); if (sub) await sub.unsubscribe(); } catch { /* ignore */ }
-    clearToken();
     await clearApiCache();
+    try { await authSignOut(); } catch { /* already signed out */ }
     invalidate();
     navigate('login');
   };
