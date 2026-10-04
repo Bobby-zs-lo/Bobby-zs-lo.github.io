@@ -458,6 +458,22 @@ body[data-route="boot"] .tabs, body[data-route="boot"] .gear { display: none; }
 .session.is-dup { opacity: .55; }
 .session.is-dup .session-main > span:first-child { text-decoration: line-through; text-decoration-color: var(--ink-3); }
 
+/* ── data table ───────────────────────────────────────────────────────── */
+.table-wrap { padding: 4px 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.dtable { width: 100%; border-collapse: collapse; font-size: 14px; }
+.dtable th, .dtable td { padding: 9px 10px; text-align: right; white-space: nowrap; }
+.dtable thead th {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--ink-3); font-weight: 500; border-bottom: 1px solid var(--rule-strong);
+}
+.dtable tbody th { text-align: left; font-weight: 600; color: var(--ink); font-size: 13.5px; }
+.dtable thead th:first-child, .dtable tbody th { padding-left: 16px; position: sticky; left: 0; background: var(--card); }
+.dtable td:last-child, .dtable thead th:last-child { padding-right: 16px; }
+.dtable tbody tr + tr th, .dtable tbody tr + tr td { border-top: 1px solid var(--rule); }
+.dtable td { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.dtable tr.is-today th, .dtable tr.is-today td { background: var(--accent-soft); }
+.dtable tr.is-today th { color: var(--accent); }
+
 /* ── reviews ──────────────────────────────────────────────────────────── */
 .proposal { border-color: var(--accent); border-width: 1px 1px 1px 3px; }
 .changes { list-style: none; border-top: 1px solid var(--rule); }

@@ -6,11 +6,25 @@ import { addDays, formatDate, formatTimestamp, formatNumber, formatDuration, for
 import { sparklineSvg, buildSparkPath } from '../sparkline.js';
 
 const METRICS = [
-  { key: 'restingHr', label: 'Resting heart rate', unit: 'bpm', digits: 0, better: 'lower' },
-  { key: 'hrvRmssd', label: 'HRV (RMSSD)', unit: 'ms', digits: 0, better: 'higher' },
-  { key: 'sleepHours', label: 'Sleep', unit: 'h', digits: 1, better: 'higher' },
-  { key: 'steps', label: 'Steps', unit: '', digits: 0, better: 'higher' },
+  { key: 'restingHr', label: 'Resting heart rate', unit: 'bpm', digits: 0, note: 'Five or more beats above your 28-day baseline for three days running is a warning sign.' },
+  { key: 'hrvRmssd', label: 'HRV (RMSSD)', unit: 'ms', digits: 0, note: 'Higher is generally better recovered. Read the trend, never a single night.' },
+  { key: 'sleepHours', label: 'Sleep', unit: 'h', digits: 1, note: 'Adaptation happens while you sleep. Seven to nine hours is the target.' },
+  { key: 'steps', label: 'Steps', unit: '', digits: 0 },
+  { key: 'activeKcal', label: 'Active energy', unit: 'kcal', digits: 0 },
+  { key: 'distanceKm', label: 'Distance moved', unit: 'km', digits: 1, note: 'Everything Health Connect saw: walking, running and cycling together.' },
+  { key: 'avgHr', label: 'Average heart rate', unit: 'bpm', digits: 0 },
   { key: 'weightKg', label: 'Weight', unit: 'kg', digits: 1 },
+  { key: 'vo2max', label: 'VO₂max estimate', unit: 'ml/kg/min', digits: 1 },
+  { key: 'spo2', label: 'Blood oxygen', unit: '%', digits: 0 },
+];
+
+/** Compact per-day log, so the raw numbers are visible and not only the trend. */
+const LOG_COLUMNS = [
+  { key: 'steps', label: 'Steps', digits: 0 },
+  { key: 'sleepHours', label: 'Sleep', digits: 1 },
+  { key: 'restingHr', label: 'RHR', digits: 0 },
+  { key: 'hrvRmssd', label: 'HRV', digits: 0 },
+  { key: 'activeKcal', label: 'kcal', digits: 0 },
 ];
 
 const EXERCISE_NAMES = { running: 'Run', biking: 'Ride', cycling: 'Ride', walking: 'Walk', strength_training: 'Strength', weightlifting: 'Strength' };
@@ -35,6 +49,25 @@ export async function render(el, ctx) {
   const series = k => dates.map(d => { const r = byDate.get(d); return r && r[k] != null ? r[k] : null; });
   const sessions = (rows || []).flatMap(r => (r.exercise || []).map(x => ({ ...x, date: r.date })))
     .sort((a, b) => String(b.startUtc).localeCompare(String(a.startUtc)));
+
+  const logDates = dates.slice(-14).reverse();
+  const fam = t => {
+    const v = String(t || '').toLowerCase();
+    if (v.includes('bik') || v.includes('cycl')) return 'ride';
+    if (v.includes('run')) return 'run';
+    if (v.includes('walk') || v.includes('hik')) return 'walk';
+    return 'other';
+  };
+  const mins = (f, days) => sessions
+    .filter(x => fam(x.type) === f && !x.duplicateOfStrava && days.includes(x.date))
+    .reduce((t, x) => t + (x.durationMin || 0), 0);
+  const last7 = dates.slice(-7), prev7 = dates.slice(-14, -7);
+  const loadRows = [
+    ['Cycling, 7 days', `${formatDuration(mins('ride', last7))}  (previous week ${formatDuration(mins('ride', prev7))})`],
+    ['Walking, 7 days', formatDuration(mins('walk', last7))],
+    ['Running, 7 days', formatDuration(mins('run', last7))],
+    ['Sessions, 28 days', String(sessions.filter(x => !x.duplicateOfStrava).length)],
+  ];
 
   mount(el, html`
     <header class="page-head">
@@ -61,9 +94,41 @@ export async function render(el, ctx) {
           <p class="metric-foot num">${n.length
             ? `${lastDate === to ? 'Today' : formatDate(lastDate)} · 28-day avg ${formatNumber(avg, m.digits)} · ${formatNumber(min, m.digits)}–${formatNumber(max, m.digits)}`
             : 'No data in the last 28 days'}</p>
+          ${m.note ? html`<p class="help">${m.note}</p>` : ''}
         </article>`;
       })}
     </div>
+    <section aria-labelledby="load-h">
+      <h2 class="section-title" id="load-h">Training load from your phone</h2>
+      <p class="help">Cycling and walking are never planned here — they are recorded, and read as context when the running plan is adjusted.</p>
+      <div class="card">
+        <dl class="kv kv--wide">
+          ${loadRows.map(([k, v]) => html`<dt>${k}</dt><dd><span class="num">${v}</span></dd>`)}
+        </dl>
+      </div>
+    </section>
+
+    <section aria-labelledby="log-h">
+      <h2 class="section-title" id="log-h">Daily log</h2>
+      <p class="help">The last 14 days exactly as Health Connect reported them. A dash means nothing was recorded.</p>
+      <div class="card table-wrap">
+        <table class="dtable">
+          <thead><tr><th scope="col">Day</th>${LOG_COLUMNS.map(c => html`<th scope="col">${c.label}</th>`)}<th scope="col">Sessions</th></tr></thead>
+          <tbody>
+            ${logDates.map(d => {
+              const r = byDate.get(d) || {};
+              const ex = (r.exercise || []).filter(x => !x.duplicateOfStrava);
+              return html`<tr${d === to ? raw(' class="is-today"') : ''}>
+                <th scope="row">${d === to ? 'Today' : formatDate(d)}</th>
+                ${LOG_COLUMNS.map(c => html`<td class="num">${r[c.key] != null ? formatNumber(r[c.key], c.digits) : '–'}</td>`)}
+                <td class="num">${ex.length ? `${ex.length} · ${formatDuration(ex.reduce((t, x) => t + (x.durationMin || 0), 0))}` : '–'}</td>
+              </tr>`;
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
     <section aria-labelledby="ex-h">
       <h2 class="section-title" id="ex-h">Exercise sessions</h2>
       <p class="help">From Health Connect. Sessions that Strava already has are greyed out and not counted twice.</p>
