@@ -1,0 +1,23 @@
+[
+ {
+  "id": "c-2026-10-12-r1",
+  "createdAt": "2026-10-12T03:52:12Z",
+  "source": "review",
+  "summary": "Moved Friday’s spin to Thursday; added calf raises to strength.",
+  "undone": false
+ },
+ {
+  "id": "c-2026-10-10-u1",
+  "createdAt": "2026-10-10T19:02:40Z",
+  "source": "user",
+  "summary": "Race settings: 5K time 23:30 → paces regenerated.",
+  "undone": false
+ },
+ {
+  "id": "c-2026-10-09-u0",
+  "createdAt": "2026-10-09T08:00:00Z",
+  "source": "user",
+  "summary": "Race date set to 26 Sep 2027.",
+  "undone": true
+ }
+]

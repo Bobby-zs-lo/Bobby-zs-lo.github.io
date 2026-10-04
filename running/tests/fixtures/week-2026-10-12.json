@@ -1,0 +1,385 @@
+{
+ "week": {
+  "index": 1,
+  "startDate": "2026-10-12",
+  "phase": "reentry",
+  "label": "Re-entry 1",
+  "isCutback": false,
+  "targetRunKm": 12,
+  "baselineRunKm": 12,
+  "focus": "Easy running only",
+  "workouts": [
+   {
+    "id": "w-2026-10-12-ride",
+    "date": "2026-10-12",
+    "sport": "ride",
+    "kind": "recovery",
+    "title": "Easy spin",
+    "details": "Very easy, high cadence.",
+    "distanceKm": null,
+    "durationMin": 45,
+    "paceKey": null,
+    "key": false,
+    "status": "done"
+   },
+   {
+    "id": "w-2026-10-13-run",
+    "date": "2026-10-13",
+    "sport": "run",
+    "kind": "easy",
+    "title": "Easy run",
+    "details": "Conversational pace. Finish wanting more.",
+    "distanceKm": 5,
+    "durationMin": null,
+    "paceKey": "E",
+    "key": false,
+    "status": "done"
+   },
+   {
+    "id": "w-2026-10-13-strength",
+    "date": "2026-10-13",
+    "sport": "strength",
+    "kind": "strength",
+    "title": "Core & mobility",
+    "details": "- Dead bugs 3×10\n- Side plank 3×30 s\n- Calf raises 3×15",
+    "distanceKm": null,
+    "durationMin": 20,
+    "paceKey": null,
+    "key": false,
+    "status": "planned"
+   },
+   {
+    "id": "w-2026-10-14-ride",
+    "date": "2026-10-14",
+    "sport": "ride",
+    "kind": "endurance",
+    "title": "Endurance ride",
+    "details": "Zone 2.",
+    "distanceKm": null,
+    "durationMin": 60,
+    "paceKey": null,
+    "key": false,
+    "status": "planned"
+   },
+   {
+    "id": "w-2026-10-15-rest",
+    "date": "2026-10-15",
+    "sport": "rest",
+    "kind": "rest",
+    "title": "Rest",
+    "details": "",
+    "distanceKm": null,
+    "durationMin": null,
+    "paceKey": null,
+    "key": false,
+    "status": "planned"
+   },
+   {
+    "id": "w-2026-10-16-ride",
+    "date": "2026-10-16",
+    "sport": "ride",
+    "kind": "recovery",
+    "title": "Easy spin",
+    "details": "",
+    "distanceKm": null,
+    "durationMin": 45,
+    "paceKey": null,
+    "key": false,
+    "status": "planned"
+   },
+   {
+    "id": "w-2026-10-17-run",
+    "date": "2026-10-17",
+    "sport": "run",
+    "kind": "long",
+    "title": "Long run",
+    "details": "Easy all the way. Walk the hills if you need to.",
+    "distanceKm": 7,
+    "durationMin": null,
+    "paceKey": "E",
+    "key": true,
+    "status": "planned"
+   },
+   {
+    "id": "w-2026-10-18-ride",
+    "date": "2026-10-18",
+    "sport": "ride",
+    "kind": "endurance",
+    "title": "Endurance ride",
+    "details": "",
+    "distanceKm": null,
+    "durationMin": 75,
+    "paceKey": null,
+    "key": false,
+    "status": "planned"
+   },
+   {
+    "id": "w-2026-10-18-strength",
+    "date": "2026-10-18",
+    "sport": "strength",
+    "kind": "strength",
+    "title": "Strength",
+    "details": "Squats, lunges, glute bridges.",
+    "distanceKm": null,
+    "durationMin": 25,
+    "paceKey": null,
+    "key": false,
+    "status": "planned"
+   }
+  ]
+ },
+ "days": [
+  {
+   "date": "2026-10-12",
+   "workouts": [
+    {
+     "id": "w-2026-10-12-ride",
+     "date": "2026-10-12",
+     "sport": "ride",
+     "kind": "recovery",
+     "title": "Easy spin",
+     "details": "Very easy, high cadence.",
+     "distanceKm": null,
+     "durationMin": 45,
+     "paceKey": null,
+     "key": false,
+     "status": "done"
+    }
+   ],
+   "activities": [
+    {
+     "id": 15800000001,
+     "date": "2026-10-12",
+     "startUtc": "2026-10-12T16:05:00Z",
+     "sportType": "Ride",
+     "name": "Evening spin",
+     "distanceKm": 18.4,
+     "movingMin": 46,
+     "avgPaceSecPerKm": null,
+     "avgHr": 118,
+     "commute": false,
+     "workoutId": "w-2026-10-12-ride"
+    }
+   ],
+   "checkin": {
+    "date": "2026-10-12",
+    "sleepHours": 7.25,
+    "sleepQuality": 4,
+    "soreness": 2,
+    "mood": 4,
+    "energy": 4,
+    "note": "Legs fine after the weekend."
+   },
+   "health": {
+    "date": "2026-10-12",
+    "steps": 8930,
+    "distanceKm": null,
+    "activeKcal": 590,
+    "restingHr": 53,
+    "hrvRmssd": 49,
+    "avgHr": 72,
+    "sleepHours": 7,
+    "sleepDeepH": 1.1,
+    "sleepRemH": 1.6,
+    "weightKg": 77.7,
+    "vo2max": null,
+    "spo2": 97,
+    "exercise": []
+   }
+  },
+  {
+   "date": "2026-10-13",
+   "workouts": [
+    {
+     "id": "w-2026-10-13-run",
+     "date": "2026-10-13",
+     "sport": "run",
+     "kind": "easy",
+     "title": "Easy run",
+     "details": "Conversational pace. Finish wanting more.",
+     "distanceKm": 5,
+     "durationMin": null,
+     "paceKey": "E",
+     "key": false,
+     "status": "done"
+    },
+    {
+     "id": "w-2026-10-13-strength",
+     "date": "2026-10-13",
+     "sport": "strength",
+     "kind": "strength",
+     "title": "Core & mobility",
+     "details": "- Dead bugs 3×10\n- Side plank 3×30 s\n- Calf raises 3×15",
+     "distanceKm": null,
+     "durationMin": 20,
+     "paceKey": null,
+     "key": false,
+     "status": "planned"
+    }
+   ],
+   "activities": [
+    {
+     "id": 15800000002,
+     "date": "2026-10-13",
+     "startUtc": "2026-10-13T05:58:00Z",
+     "sportType": "Run",
+     "name": "Morning Run",
+     "distanceKm": 5.21,
+     "movingMin": 31.6,
+     "avgPaceSecPerKm": 364,
+     "avgHr": 142,
+     "commute": false,
+     "workoutId": "w-2026-10-13-run"
+    },
+    {
+     "id": 15800000003,
+     "date": "2026-10-13",
+     "startUtc": "2026-10-13T07:40:00Z",
+     "sportType": "Ride",
+     "name": "Commute to Rigshospitalet",
+     "distanceKm": 6.1,
+     "movingMin": 19,
+     "avgPaceSecPerKm": null,
+     "avgHr": null,
+     "commute": true,
+     "workoutId": null
+    }
+   ],
+   "checkin": null,
+   "health": {
+    "date": "2026-10-13",
+    "steps": 10661,
+    "distanceKm": null,
+    "activeKcal": 627,
+    "restingHr": 54,
+    "hrvRmssd": 51,
+    "avgHr": 72,
+    "sleepHours": null,
+    "sleepDeepH": 1.1,
+    "sleepRemH": 1.6,
+    "weightKg": null,
+    "vo2max": null,
+    "spo2": 97,
+    "exercise": []
+   }
+  },
+  {
+   "date": "2026-10-14",
+   "workouts": [
+    {
+     "id": "w-2026-10-14-ride",
+     "date": "2026-10-14",
+     "sport": "ride",
+     "kind": "endurance",
+     "title": "Endurance ride",
+     "details": "Zone 2.",
+     "distanceKm": null,
+     "durationMin": 60,
+     "paceKey": null,
+     "key": false,
+     "status": "planned"
+    }
+   ],
+   "activities": [],
+   "checkin": null,
+   "health": null
+  },
+  {
+   "date": "2026-10-15",
+   "workouts": [
+    {
+     "id": "w-2026-10-15-rest",
+     "date": "2026-10-15",
+     "sport": "rest",
+     "kind": "rest",
+     "title": "Rest",
+     "details": "",
+     "distanceKm": null,
+     "durationMin": null,
+     "paceKey": null,
+     "key": false,
+     "status": "planned"
+    }
+   ],
+   "activities": [],
+   "checkin": null,
+   "health": null
+  },
+  {
+   "date": "2026-10-16",
+   "workouts": [
+    {
+     "id": "w-2026-10-16-ride",
+     "date": "2026-10-16",
+     "sport": "ride",
+     "kind": "recovery",
+     "title": "Easy spin",
+     "details": "",
+     "distanceKm": null,
+     "durationMin": 45,
+     "paceKey": null,
+     "key": false,
+     "status": "planned"
+    }
+   ],
+   "activities": [],
+   "checkin": null,
+   "health": null
+  },
+  {
+   "date": "2026-10-17",
+   "workouts": [
+    {
+     "id": "w-2026-10-17-run",
+     "date": "2026-10-17",
+     "sport": "run",
+     "kind": "long",
+     "title": "Long run",
+     "details": "Easy all the way. Walk the hills if you need to.",
+     "distanceKm": 7,
+     "durationMin": null,
+     "paceKey": "E",
+     "key": true,
+     "status": "planned"
+    }
+   ],
+   "activities": [],
+   "checkin": null,
+   "health": null
+  },
+  {
+   "date": "2026-10-18",
+   "workouts": [
+    {
+     "id": "w-2026-10-18-ride",
+     "date": "2026-10-18",
+     "sport": "ride",
+     "kind": "endurance",
+     "title": "Endurance ride",
+     "details": "",
+     "distanceKm": null,
+     "durationMin": 75,
+     "paceKey": null,
+     "key": false,
+     "status": "planned"
+    },
+    {
+     "id": "w-2026-10-18-strength",
+     "date": "2026-10-18",
+     "sport": "strength",
+     "kind": "strength",
+     "title": "Strength",
+     "details": "Squats, lunges, glute bridges.",
+     "distanceKm": null,
+     "durationMin": 25,
+     "paceKey": null,
+     "key": false,
+     "status": "planned"
+    }
+   ],
+   "activities": [],
+   "checkin": null,
+   "health": null
+  }
+ ]
+}
