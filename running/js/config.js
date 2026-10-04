@@ -3,14 +3,14 @@
 //
 // API_BASE: the Cloud Functions HTTPS endpoint of the `api` function. Request
 // paths ('/api/state', …) are appended to it as-is.
-export const API_BASE = 'https://europe-west1-REPLACE-ME.cloudfunctions.net/api';
+export const API_BASE = 'https://europe-west1-running-claude.cloudfunctions.net/api';
 
 // Firebase web app config (Firebase console › Project settings › Your apps).
 // These values are public identifiers, not secrets.
 export const FIREBASE_CONFIG = {
   apiKey: 'REPLACE-ME',
-  authDomain: 'REPLACE-ME',
-  projectId: 'REPLACE-ME',
+  authDomain: 'running-claude.firebaseapp.com',
+  projectId: 'running-claude',
   appId: 'REPLACE-ME',
 };
 
