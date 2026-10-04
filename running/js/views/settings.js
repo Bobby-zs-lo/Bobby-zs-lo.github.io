@@ -95,6 +95,10 @@ export async function render(el, ctx) {
         <button type="button" class="btn${strava.connected ? '' : ' btn--primary'}" id="strava-connect">${strava.connected ? 'Reconnect Strava' : 'Connect Strava'}</button>
         <button type="button" class="btn" id="strava-webhook"${strava.connected ? '' : raw(' disabled')}>Register Strava webhook</button>
       </div>
+      <div class="actions">
+        <button type="button" class="btn" id="strava-import"${strava.connected ? '' : raw(' disabled')}>Import past activities</button>
+      </div>
+      <p class="help" id="strava-import-status">Walks your whole Strava history once and matches it against the plan. Safe to run again; it never re-decides a status you set yourself.</p>
       <p class="help" id="strava-webhook-status">${strava.webhook
         ? 'Webhook registered. New activities arrive within a minute.'
         : 'Register the webhook once after connecting, so new activities arrive within a minute.'}</p>
@@ -194,6 +198,20 @@ export async function render(el, ctx) {
       const line = $('#strava-webhook-status');
       if (line) line.textContent = 'Webhook registered. New activities arrive within a minute.';
     } catch (ex) { toast(ex.message, { kind: 'error' }); }
+  }));
+  $('#strava-import').addEventListener('click', e => busy(e.currentTarget, async () => {
+    const line = $('#strava-import-status');
+    if (line) line.textContent = 'Importing… this can take a few minutes for several years of activities.';
+    try {
+      const r = await api.post('/api/strava/import');
+      const span = r.from && r.to ? ` (${r.from} → ${r.to})` : '';
+      const msg = `Imported ${r.imported} activities, ${r.matched} matched to the plan${span}.`;
+      if (line) line.textContent = msg;
+      toast(msg, { kind: 'ok', ms: 6000 });
+    } catch (ex) {
+      if (line) line.textContent = `Import failed: ${ex.message}`;
+      toast(ex.message, { kind: 'error', ms: 6000 });
+    }
   }));
   el.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', async () => {
     try { await navigator.clipboard.writeText(b.dataset.copy); toast('Copied'); }
