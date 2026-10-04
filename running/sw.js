@@ -142,7 +142,8 @@ self.addEventListener('notificationclick', e => {
   const n = e.notification;
   const { url, actionToken } = n.data || {};
   n.close();
-  const target = new URL(url || './#/today', SCOPE).href;
+  let target = new URL(url || './#/today', SCOPE).href;
+  if (!target.startsWith(SCOPE)) target = new URL('./#/today', SCOPE).href; // never open other origins
 
   if (e.action && actionToken && isPlanAction(e.action)) {
     e.waitUntil((async () => {

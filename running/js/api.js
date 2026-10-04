@@ -58,6 +58,7 @@ export async function api(path, { method = 'GET', body, auth = true } = {}) {
     try { data = JSON.parse(text); } catch { data = null; }
   }
   if (res.status === 401 && auth) {
+    clearApiCache().catch(() => {});
     clearToken();
     if (typeof location !== 'undefined' && !location.hash.startsWith('#/login')) location.hash = '#/login';
     throw new ApiError((data && data.error) || 'Please sign in again.', 401, data);
