@@ -78,3 +78,7 @@ The smoke test serves the repo root, fakes Firebase Auth (see above), mocks the 
 `tests/fixtures/*.json` (rebuild with `node running/tests/fixtures/build-fixtures.mjs`), and saves
 screenshots. Playwright is not a dependency of this repo. Install it somewhere else.
 Set `REAL_FONTS=1` to load Google Fonts for screenshots.
+
+## Setup status
+
+Remaining setup steps (Firebase config, deploy, go-live) are tracked in [`Running-with-Claude/STATUS.md`](https://github.com/Bobby-zs-lo/Running-with-Claude/blob/ccr-34e1687d-bk8cnq/STATUS.md). `js/config.js` still needs `apiKey` and `appId` (get them with `firebase apps:sdkconfig web --project running-claude`).
