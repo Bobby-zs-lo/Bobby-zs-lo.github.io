@@ -16,9 +16,10 @@ const VIEWS = {
   health: () => import('./views/health.js'),
   reviews: () => import('./views/reviews.js'),
   settings: () => import('./views/settings.js'),
+  workout: () => import('./views/workout.js'),
 };
 const TABS = [['today', 'Today'], ['week', 'Week'], ['plan', 'Plan'], ['health', 'Health'], ['reviews', 'Reviews']];
-const TITLES = { login: 'Sign in', today: 'Today', week: 'Week', plan: 'Plan', health: 'Health', reviews: 'Reviews', settings: 'Settings' };
+const TITLES = { login: 'Sign in', today: 'Today', week: 'Week', plan: 'Plan', health: 'Health', reviews: 'Reviews', settings: 'Settings', workout: 'Session' };
 
 const root = document.getElementById('app');
 mount(root, html`
@@ -95,7 +96,7 @@ async function route() {
     const mod = await VIEWS[r.path]();
     if (seq !== renderSeq) return;
     window.scrollTo(0, 0);
-    cleanup = await mod.render(view, { params: r.params, isCurrent: () => seq === renderSeq });
+    cleanup = await mod.render(view, { params: r.params, rest: r.rest, isCurrent: () => seq === renderSeq });
     // Move keyboard and screen-reader focus into the new view; without this, focus stays
     // on the tab link that was just activated and nothing is announced.
     if (seq === renderSeq) view.focus({ preventScroll: true });

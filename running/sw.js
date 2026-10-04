@@ -27,6 +27,7 @@ const SHELL = [
   './js/icons.js', './js/sparkline.js', './js/changes.js',
   './js/views/common.js', './js/views/login.js', './js/views/today.js', './js/views/week.js',
   './js/views/plan.js', './js/views/health.js', './js/views/reviews.js', './js/views/settings.js',
+  './js/views/workout.js',
   './assets/icon-192.png', './assets/icon-512.png', './assets/icon-maskable.png', './assets/badge-96.png',
 ];
 

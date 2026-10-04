@@ -20,14 +20,54 @@ export function activityRow(a) {
   </div>`;
 }
 
+/** '20 s', '8 min', '1:30 h' — the clock side of a segment. */
+export function formatSegDuration(sec) {
+  if (!sec) return '';
+  if (sec < 60) return `${sec} s`;
+  if (sec % 60 === 0 && sec < 3600) return `${sec / 60} min`;
+  const m = Math.round(sec / 60);
+  return m < 60 ? `${m} min` : `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')} h`;
+}
+
+/** The work a segment adds up to, e.g. '5 × 1 km (5 km)' or '4 × 20 s'. */
+export function segmentAmount(g) {
+  const unit = g.distanceKm ? formatDistance(g.distanceKm) : formatSegDuration(g.durationSec);
+  if (!unit) return '';
+  if ((g.reps || 1) <= 1) return unit;
+  const total = g.distanceKm ? formatDistance(Math.round(g.reps * g.distanceKm * 10) / 10) : formatSegDuration(g.reps * g.durationSec);
+  return `${g.reps} × ${unit} (${total})`;
+}
+
+/** The step-by-step plan for one session: what to do and what to hit. */
+export function segmentList(segments, { compact = false } = {}) {
+  if (!segments || !segments.length) return '';
+  return html`<ol class="segs${compact ? ' segs--compact' : ''}">
+    ${segments.map((g, i) => html`<li class="seg-row">
+      <span class="seg-no num" aria-hidden="true">${i + 1}</span>
+      <div class="seg-main">
+        <span class="seg-label">${g.label}</span>
+        ${segmentAmount(g) ? html`<span class="seg-amount num">${segmentAmount(g)}</span>` : ''}
+        ${!compact && g.detail ? html`<span class="seg-detail">${g.detail}</span>` : ''}
+        ${g.recovery ? html`<span class="seg-rec">Recovery · ${g.recovery}</span>` : ''}
+      </div>
+      <div class="seg-target">
+        ${g.targetTime ? html`<span class="seg-time num">${g.targetTime}</span><span class="seg-time-label">per rep</span>` : ''}
+        ${g.target ? html`<span class="seg-pace num">${g.target}</span>` : ''}
+        ${!g.target && !g.targetTime && g.durationSec ? html`<span class="seg-pace muted">by effort</span>` : ''}
+      </div>
+    </li>`)}
+  </ol>`;
+}
+
 export function workoutMini(w, paces) {
   const pr = paceRange(paces, w.paceKey);
-  return html`<li class="wmini wmini--${w.sport}${w.key ? ' is-key' : ''}">
-    <div class="wmini-main">
+  const body = html`<div class="wmini-main">
       <span class="wmini-title">${w.title}</span>
       <span class="wmini-meta num">${[workoutAmount(w), pr].filter(Boolean).join(' · ')}</span>
     </div>
-    ${w.sport === 'rest' ? '' : statusChip(w.status)}
+    ${w.sport === 'rest' ? '' : statusChip(w.status)}`;
+  return html`<li class="wmini wmini--${w.sport}${w.key ? ' is-key' : ''}">
+    ${w.sport === 'rest' ? body : html`<a class="wmini-link" href="#/workout/${encodeURIComponent(w.id)}">${body}</a>`}
   </li>`;
 }
 

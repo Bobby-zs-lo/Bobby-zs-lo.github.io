@@ -74,8 +74,9 @@ export async function render(el, ctx) {
                       const isRace = x.sport === 'race' || x.date === raceDate && x.kind === 'race';
                       return html`<li class="wk-w wk-w--${x.sport}${x.key ? ' is-key' : ''}${isRace ? ' is-race' : ''}${x.date === today ? ' is-today' : ''}">
                         <span class="wk-w-day">${dayShort(x.date)}</span>
-                        <span class="wk-w-main"><span class="wk-w-title">${isRace ? html`<span class="race-mark" aria-hidden="true">★ </span>` : ''}${x.title}</span>
-                          <span class="wk-w-meta num">${[workoutAmount(x), paceRange(plan.paces, x.paceKey)].filter(Boolean).join(' · ')}</span></span>
+                        <a class="wk-w-main" href="#/workout/${encodeURIComponent(x.id)}"><span class="wk-w-title">${isRace ? html`<span class="race-mark" aria-hidden="true">★ </span>` : ''}${x.title}</span>
+                          <span class="wk-w-meta num">${[workoutAmount(x), paceRange(plan.paces, x.paceKey)].filter(Boolean).join(' · ')}</span>
+                          ${x.details ? html`<span class="wk-w-detail">${x.details}</span>` : ''}</a>
                         ${x.sport === 'rest' || x.status === 'planned' ? '' : statusChip(x.status)}
                       </li>`;
                     })}

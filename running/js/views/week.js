@@ -63,8 +63,9 @@ export async function render(el, ctx) {
           </div>
           <div class="day-body">
             ${ws.length ? html`<ul class="plain">${ws.map(w => html`<li class="day-w${w.key ? ' is-key' : ''}${w.sport === 'race' ? ' is-race' : ''}">
-                <div><span class="day-w-title">${w.title}</span>
-                <span class="day-w-meta num">${[workoutAmount(w), paceRange(paces, w.paceKey)].filter(Boolean).join(' · ')}</span></div>
+                <a class="day-w-link" href="#/workout/${encodeURIComponent(w.id)}"><span class="day-w-title">${w.title}</span>
+                <span class="day-w-meta num">${[workoutAmount(w), paceRange(paces, w.paceKey)].filter(Boolean).join(' · ')}</span>
+                ${w.details ? html`<span class="day-w-detail">${w.details}</span>` : ''}</a>
                 ${w.sport === 'rest' ? '' : statusChip(w.status)}
               </li>`)}</ul>` : html`<p class="muted">Rest</p>`}
             ${as.map(activityRow)}

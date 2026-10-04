@@ -398,6 +398,45 @@ body[data-route="boot"] .tabs, body[data-route="boot"] .gear { display: none; }
 .wk-w.is-today .wk-w-day { color: var(--accent); }
 .race-mark { color: var(--accent); }
 
+/* ── session segments ─────────────────────────────────────────────────── */
+.segs { list-style: none; margin-top: 12px; border-top: 1px solid var(--rule); }
+.seg-row {
+  display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 4px 10px;
+  padding: 11px 0; border-bottom: 1px solid var(--rule); align-items: baseline;
+}
+.seg-no {
+  font-family: var(--mono); font-size: 11px; color: var(--ink-3);
+  border: 1px solid var(--rule-strong); border-radius: 50%;
+  width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center;
+  align-self: start; flex: none;
+}
+.seg-main { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.seg-label { font-weight: 600; color: var(--ink); font-size: 15.5px; line-height: 1.3; }
+.seg-amount { font-size: 13px; color: var(--ink-2); }
+.seg-detail { font-size: 13.5px; color: var(--ink-3); line-height: 1.45; }
+.seg-rec { font-size: 12.5px; color: var(--ink-3); }
+.seg-rec::before { content: '↺ '; color: var(--accent); }
+.seg-target { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; text-align: right; white-space: nowrap; align-self: start; }
+.seg-time { font-size: 19px; font-weight: 600; letter-spacing: -0.3px; color: var(--accent); line-height: 1.1; }
+.seg-time-label { font-family: var(--mono); font-size: 9.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink-3); }
+.seg-pace { font-size: 13px; color: var(--ink-2); }
+.segs--compact { margin-top: 10px; }
+.segs--compact .seg-row { padding: 7px 0; }
+.segs--compact .seg-label { font-size: 14.5px; font-weight: 500; }
+.segs--compact .seg-time { font-size: 15px; }
+.segs--compact .seg-time-label { display: none; }
+
+.kv--wide { grid-template-columns: 104px minmax(0, 1fr); }
+
+/* tappable rows */
+.wmini-link, .day-w-link, .wk-w-main {
+  display: flex; flex-direction: column; gap: 2px;
+  text-decoration: none; color: inherit; min-width: 0; flex: 1 1 auto;
+}
+.wmini-link { flex-direction: row; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.wmini-link:hover .wmini-title, .day-w-link:hover .day-w-title, .wk-w-main:hover .wk-w-title { color: var(--accent); }
+.day-w-detail, .wk-w-detail { display: block; font-size: 12.5px; color: var(--ink-3); line-height: 1.4; margin-top: 2px; }
+
 /* ── health ───────────────────────────────────────────────────────────── */
 .metrics { display: grid; gap: 12px; }
 .metric-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }

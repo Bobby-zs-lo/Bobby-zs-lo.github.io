@@ -3,7 +3,7 @@ import { api } from '../api.js';
 import { getState, getPaces } from '../store.js';
 import { loading, errorState, statusChip, toast, busy } from '../ui.js';
 import { formatDate, workoutAmount, paceRange, PACE_NAMES, PHASE_NAMES, formatNumber } from '../format.js';
-import { SPORT_NAMES, activityRow, weekStrip } from './common.js';
+import { SPORT_NAMES, activityRow, weekStrip, segmentList } from './common.js';
 import { renderMarkdown } from '../markdown.js';
 
 const ACTION_DONE = { done: 'Marked as done', skip: 'Skipped', move_tomorrow: 'Moved to tomorrow', undo_status: 'Status reset' };
@@ -22,6 +22,8 @@ function workoutCard(w, paces, activities) {
     ${workoutAmount(w) ? html`<p class="workout-amount num">${workoutAmount(w)}</p>` : ''}
     ${pr ? html`<p class="workout-pace num"><span class="pace-key">${w.paceKey}</span>${pr}<span class="muted"> · ${PACE_NAMES[w.paceKey] || ''} pace</span></p>` : ''}
     ${w.details ? html`<div class="workout-details md">${raw(renderMarkdown(w.details))}</div>` : ''}
+    ${w.segments && w.segments.length ? segmentList(w.segments, { compact: true }) : ''}
+    ${isRest ? '' : html`<a class="link" href="#/workout/${encodeURIComponent(w.id)}">Full session detail →</a>`}
     ${matched.length ? html`<div class="matched">${matched.map(activityRow)}</div>` : ''}
     ${isRest ? '' : html`<div class="actions">
       ${actionable
