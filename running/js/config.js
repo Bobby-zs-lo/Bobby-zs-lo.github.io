@@ -8,10 +8,10 @@ export const API_BASE = 'https://europe-west1-running-claude.cloudfunctions.net/
 // Firebase web app config (Firebase console › Project settings › Your apps).
 // These values are public identifiers, not secrets.
 export const FIREBASE_CONFIG = {
-  apiKey: 'REPLACE-ME',
+  apiKey: 'AIzaSyBF0GaI0p06UTJZvDLhSOH7zZ15LrMIHNc',
   authDomain: 'running-claude.firebaseapp.com',
   projectId: 'running-claude',
-  appId: 'REPLACE-ME',
+  appId: '1:594364987465:web:23912a2a473eda8a042798',
 };
 
 // Bump on every deploy: it names the service-worker shell cache.
