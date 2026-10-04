@@ -18,11 +18,14 @@ const NOTIFS = [
 const hourOptions = sel => Array.from({ length: 24 }, (_, h) =>
   html`<option value="${h}"${h === sel ? raw(' selected') : ''}>${String(h).padStart(2, '0')}:00</option>`);
 
-const toggle = (name, label, help, checked) => html`<label class="switch">
-  <span class="switch-text"><span class="switch-label">${label}</span>${help ? html`<span class="help">${help}</span>` : ''}</span>
-  <input type="checkbox" name="${name}" role="switch"${checked ? raw(' checked') : ''}>
+const toggle = (name, label, help, checked) => {
+  const helpId = `${name.replace(/[^a-z0-9]+/gi, '-')}-help`;
+  return html`<label class="switch">
+  <span class="switch-text"><span class="switch-label">${label}</span>${help ? html`<span class="help" id="${helpId}">${help}</span>` : ''}</span>
+  <input type="checkbox" name="${name}" role="switch"${help ? raw(` aria-describedby="${helpId}"`) : ''}${checked ? raw(' checked') : ''}>
   <span class="switch-ui" aria-hidden="true"></span>
 </label>`;
+};
 
 export async function render(el, ctx) {
   const flag = ctx.params.strava;
@@ -99,8 +102,8 @@ export async function render(el, ctx) {
       <h2 class="section-title">Health Connect</h2>
       <p>In the <strong>Health Connect to Webhook</strong> app, add a webhook:</p>
       <dl class="kv">
-        <dt>URL</dt><dd><code class="copyable" id="ingest-url">${ingestUrl}</code> <button type="button" class="btn btn--sm" data-copy="${ingestUrl}">Copy</button></dd>
-        <dt>Header</dt><dd><code>X-Ingest-Key</code> <button type="button" class="btn btn--sm" data-copy="X-Ingest-Key">Copy</button></dd>
+        <dt>URL</dt><dd><code class="copyable" id="ingest-url">${ingestUrl}</code> <button type="button" class="btn btn--sm" data-copy="${ingestUrl}" aria-label="Copy webhook URL">Copy</button></dd>
+        <dt>Header</dt><dd><code>X-Ingest-Key</code> <button type="button" class="btn btn--sm" data-copy="X-Ingest-Key" aria-label="Copy header name">Copy</button></dd>
         <dt>Value</dt><dd class="muted">The ingest key printed at setup (SETUP.md). It is never shown here.</dd>
         <dt>Interval</dt><dd>60 minutes</dd>
       </dl>
@@ -122,10 +125,14 @@ export async function render(el, ctx) {
     const fiveKSeconds = parseMmSs(form.fiveK.value);
     if (fiveKSeconds == null || fiveKSeconds < 12 * 60 || fiveKSeconds > 60 * 60) {
       toast('Enter the 5K time as mm:ss, e.g. 23:30.', { kind: 'error' });
+      form.fiveK.setAttribute('aria-invalid', 'true');
       form.fiveK.focus();
       return;
     }
     if (!form.raceName.value.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(form.raceDate.value)) {
+      const bad = form.raceName.value.trim() ? form.raceDate : form.raceName;
+      bad.setAttribute('aria-invalid', 'true');
+      bad.focus();
       toast('Race name and date are required.', { kind: 'error' });
       return;
     }

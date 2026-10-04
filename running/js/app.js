@@ -32,7 +32,7 @@ mount(root, html`
   <nav class="tabs" id="tabs" aria-label="Sections">
     ${TABS.map(([k, label]) => html`<a class="tab" href="#/${k}" data-tab="${k}">${raw(ICONS[k])}<span>${label}</span></a>`)}
   </nav>
-  <div class="toasts" id="toasts" aria-live="polite"></div>
+  <div class="toasts" id="toasts"></div>
 `);
 
 const view = document.getElementById('view');
@@ -96,6 +96,9 @@ async function route() {
     if (seq !== renderSeq) return;
     window.scrollTo(0, 0);
     cleanup = await mod.render(view, { params: r.params, isCurrent: () => seq === renderSeq });
+    // Move keyboard and screen-reader focus into the new view; without this, focus stays
+    // on the tab link that was just activated and nothing is announced.
+    if (seq === renderSeq) view.focus({ preventScroll: true });
   } catch (e) {
     if (seq === renderSeq) errorState(view, e, route);
   }
