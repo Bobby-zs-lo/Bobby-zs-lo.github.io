@@ -67,7 +67,10 @@ self.addEventListener('fetch', e => {
     e.respondWith(fetch(req).catch(async () => (await caches.match(asset('index.html'))) || Response.error()));
     return;
   }
-  if (url.pathname.endsWith('/js/config.js')) {
+  // config.js and the manifest must never be answered from a stale cache: config.js carries
+  // API_BASE, and a stale manifest keeps Chrome on an old app identity, which makes the install
+  // state unrecoverable from inside the page. Both stay precached for offline use.
+  if (url.pathname.endsWith('/js/config.js') || url.pathname.endsWith('/manifest.webmanifest')) {
     e.respondWith(shellNetworkFirst(req));
     return;
   }
