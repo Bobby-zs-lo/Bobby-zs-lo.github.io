@@ -81,4 +81,4 @@ Set `REAL_FONTS=1` to load Google Fonts for screenshots.
 
 ## Setup status
 
-Remaining setup steps (Firebase config, deploy, go-live) are tracked in [`Running-with-Claude/STATUS.md`](https://github.com/Bobby-zs-lo/Running-with-Claude/blob/ccr-34e1687d-bk8cnq/STATUS.md). `js/config.js` still needs `apiKey` and `appId` (get them with `firebase apps:sdkconfig web --project running-claude`).
+Remaining setup steps (secrets, deploy, go-live) are tracked in [`Running-with-Claude/STATUS.md`](https://github.com/Bobby-zs-lo/Running-with-Claude/blob/main/STATUS.md). `js/config.js` is filled in: `apiKey` and `appId` came from `firebase apps:sdkconfig web --project running-claude` and are public identifiers.
