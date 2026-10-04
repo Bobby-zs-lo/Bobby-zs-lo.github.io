@@ -1,0 +1,37 @@
+[
+ {
+  "id": "p-2026-10-12-b7",
+  "createdAt": "2026-10-12T03:52:12Z",
+  "status": "pending",
+  "summary": "Your legs handled week 0 well. Two bigger changes need your OK.",
+  "changes": [
+   {
+    "op": "set_week_target",
+    "weekIndex": 4,
+    "targetRunKm": 16,
+    "reason": "Cutback is a little deep; 16 km keeps momentum."
+   },
+   {
+    "op": "add",
+    "date": "2026-10-29",
+    "workout": {
+     "sport": "run",
+     "kind": "strides",
+     "title": "Strides session",
+     "details": "6×20 s",
+     "distanceKm": 4,
+     "durationMin": null,
+     "paceKey": "E"
+    },
+    "reason": "Start neuromuscular work early."
+   }
+  ]
+ },
+ {
+  "id": "p-2026-10-05-x1",
+  "createdAt": "2026-10-05T03:50:00Z",
+  "status": "rejected",
+  "summary": "Old",
+  "changes": []
+ }
+]

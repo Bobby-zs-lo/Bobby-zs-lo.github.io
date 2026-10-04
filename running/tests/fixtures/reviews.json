@@ -1,0 +1,26 @@
+[
+ {
+  "id": "r-2026-10-13-a1",
+  "weekStart": "2026-10-05",
+  "createdAt": "2026-10-12T03:52:11Z",
+  "body": {
+   "weekStart": "2026-10-05",
+   "headline": "Good start: both sessions done, easy pace held. Week 1 unchanged.",
+   "summary": "A short first week, and you did **exactly** what was planned.\n\nYour easy run came in at the slow end of the *E* range, which is right for a re-entry block. Sleep averaged 7.1 h.\n\n## Next week\n- Keep both runs conversational\n- Add the core session on Tuesday\n- If the calves feel tight, swap Friday’s spin for a walk",
+   "adherence": {
+    "score": 92,
+    "verdict": "on_track"
+   },
+   "observations": [
+    "Saturday 5 km at 6:21/km, inside the easy range.",
+    "Resting HR 55–57 bpm, stable.",
+    "Sunday ride 62 min, as planned."
+   ],
+   "riskFlags": [
+    "Sleep under 6.5 h on two nights."
+   ],
+   "changes": [],
+   "goalAssessment": "Too early to predict. Re-test 5K in week 8."
+  }
+ }
+]

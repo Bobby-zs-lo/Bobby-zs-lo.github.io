@@ -1,0 +1,33 @@
+{
+ "today": "2026-10-13",
+ "settings": {
+  "raceDate": "2027-09-26",
+  "raceName": "Berlin Marathon",
+  "fiveKSeconds": 1410,
+  "hasWatch": false,
+  "notify": {
+   "morning": true,
+   "evening": true,
+   "activity": true,
+   "weekly": true
+  },
+  "morningHour": 7,
+  "eveningHour": 20
+ },
+ "strava": {
+  "connected": true,
+  "athleteName": "Bobby Lo"
+ },
+ "push": {
+  "vapidPublicKey": "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U",
+  "subscribed": false
+ },
+ "pendingProposals": 1,
+ "lastReview": {
+  "id": "r-2026-10-13-a1",
+  "weekStart": "2026-10-05",
+  "createdAt": "2026-10-12T03:52:11Z",
+  "headline": "Good start: both sessions done, easy pace held. Week 1 unchanged."
+ },
+ "healthLastSync": "2026-10-13T06:12:00Z"
+}
