@@ -16,7 +16,7 @@ import { createRequire } from 'node:module';
 import { dirname, join, extname, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
-import { API_BASE } from '../js/config.js';
+import { API_BASE, APP_VERSION } from '../js/config.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = join(HERE, '..', '..');
@@ -129,12 +129,20 @@ async function overflow(page) {
   return page.evaluate(() => {
     const W = document.documentElement.clientWidth;
     const bad = [];
+    // Content inside a box that scrolls or clips sideways (the Health log table) may run past the
+    // viewport on purpose; the box itself is still checked. <body> clips too, so stop below it.
+    const contained = el => {
+      for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
+        if (getComputedStyle(a).overflowX !== 'visible') return true;
+      }
+      return false;
+    };
     for (const el of document.querySelectorAll('body *')) {
       const r = el.getBoundingClientRect();
       if (!r.width || !r.height) continue;
       const cs = getComputedStyle(el);
       if (cs.visibility === 'hidden' || cs.position === 'fixed') continue;
-      if (el.closest('.sr-only,.skip,.toasts')) continue;
+      if (el.closest('.sr-only,.skip,.toasts') || contained(el)) continue;
       if (r.right > W + 0.5 || r.left < -0.5) bad.push(`${el.tagName.toLowerCase()}.${[...el.classList].join('.')} [${Math.round(r.left)}..${Math.round(r.right)}]`);
     }
     return { W, scrollW: document.documentElement.scrollWidth, bad: bad.slice(0, 8) };
@@ -156,9 +164,13 @@ const ORIGIN = `http://127.0.0.1:${srv.address().port}`;
 const APP = `${ORIGIN}/running/`;
 await mkdir(SHOTS, { recursive: true });
 
-async function newPage({ user = 'owner', signInFails = 0, delay = 0, scheme = 'light', sw = 'block' } = {}) {
+// desk: a 1440 × 900 desktop window (≥ 1100 px, so js/layout.js picks the rail layout).
+async function newPage({ user = 'owner', signInFails = 0, delay = 0, scheme = 'light', sw = 'block', desk = false } = {}) {
+  const device = desk
+    ? { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1, isMobile: false, hasTouch: false }
+    : { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true };
   const ctx = await browser.newContext({
-    viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true,
+    ...device,
     colorScheme: scheme, serviceWorkers: sw, timezoneId: 'Europe/Copenhagen', locale: 'en-GB',
   });
   // Fonts come from Google; keep the test hermetic and fast.
@@ -301,7 +313,8 @@ try {
     assert.match(await page.textContent('h1'), /19–25 Oct/);
 
     await go(page, 'health');
-    assert.equal(await page.$$eval('.metric svg[role=img]', e => e.length), 5);
+    // One sparkline per entry in METRICS (js/views/health.js): ten since the Health Connect expansion.
+    assert.equal(await page.$$eval('.metric svg[role=img]', e => e.length), 10);
     assert.ok(await page.$('.session.is-dup'));
 
     await go(page, 'reviews');
@@ -384,6 +397,71 @@ try {
     });
   }
 
+  await step('desk (1440 px): Overview by default, rail left of the view, no overflow', async () => {
+    for (const scheme of ['light', 'dark']) {
+      const { ctx, page, errors } = await newPage({ desk: true, scheme });
+      const suffix = scheme === 'dark' ? '-dark' : '';
+      const railLeftOfView = async () => {
+        const nav = await page.locator('nav.tabs').boundingBox();
+        const main = await page.locator('#view').boundingBox();
+        assert.ok(nav && main && nav.x + nav.width <= main.x + 0.5, `rail left of view: ${JSON.stringify({ nav, main })}`);
+        assert.ok(nav.height >= 900 - 80, `rail runs the full height (${nav.height})`);
+      };
+      await page.goto(APP);
+      await page.waitForFunction(() => location.hash === '#/overview');
+      await page.waitForSelector('.view > .page-head');
+      assert.equal(await page.getAttribute('html', 'data-layout'), 'desk');
+      assert.equal(await page.textContent('#view h1'), 'Overview');
+      await railLeftOfView();
+      assert.equal(await page.locator('.tab--desk:visible').count(), 2);
+      assert.equal(await page.locator('.tab:visible').count(), 7);
+      assert.equal(await page.getAttribute('.tab[data-tab=overview]', 'aria-current'), 'page');
+      assert.equal(await page.getAttribute('.brand', 'href'), '#/overview');
+      let o = await overflow(page);
+      assert.ok(o.scrollW <= o.W && o.bad.length === 0, `overview (${scheme}) overflows: ${JSON.stringify(o)}`);
+      await page.screenshot({ path: join(SHOTS, `desk-overview${suffix}.png`) });
+
+      await page.goto(`${APP}#/today`);
+      await page.waitForSelector('.workout-title');
+      await page.waitForTimeout(150);
+      await railLeftOfView();
+      assert.equal(await page.getAttribute('.tab[data-tab=today]', 'aria-current'), 'page');
+      o = await overflow(page);
+      assert.ok(o.scrollW <= o.W && o.bad.length === 0, `today (${scheme}) overflows: ${JSON.stringify(o)}`);
+      await page.screenshot({ path: join(SHOTS, `desk-today${suffix}.png`) });
+
+      if (scheme === 'light') {
+        // Crossing the breakpoint switches the layout and the brand's home link live.
+        await page.setViewportSize({ width: 1000, height: 900 });
+        await page.waitForFunction(() => document.documentElement.dataset.layout === 'phone');
+        assert.equal(await page.getAttribute('.brand', 'href'), '#/today');
+        assert.equal(await page.locator('.tab--desk:visible').count(), 0);
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await page.waitForFunction(() => document.documentElement.dataset.layout === 'desk');
+        assert.equal(await page.getAttribute('.brand', 'href'), '#/overview');
+      }
+      assert.deepEqual(errors, []);
+      await ctx.close();
+    }
+  });
+
+  await step('phone (390 px): Today by default, bottom tab bar, no desk tabs', async () => {
+    const { ctx, page, errors } = await newPage();
+    await page.goto(APP);
+    await page.waitForSelector('.workout-title');
+    assert.equal(new URL(page.url()).hash, '#/today');
+    assert.equal(await page.getAttribute('html', 'data-layout'), 'phone');
+    assert.equal(await page.locator('.tab--desk').count(), 2);
+    assert.equal(await page.locator('.tab--desk:visible').count(), 0);
+    assert.equal(await page.locator('.tab:visible').count(), 5);
+    const bar = await page.locator('nav.tabs').boundingBox();
+    assert.ok(bar.y > 700, `tab bar at the bottom (top ${bar.y})`);
+    assert.equal(await page.getAttribute('.brand', 'href'), '#/today');
+    await page.screenshot({ path: join(SHOTS, 'phone-home.png') });
+    assert.deepEqual(errors, []);
+    await ctx.close();
+  });
+
   await step('service worker installs (module type), precaches the shell, answers offline', async () => {
     const { ctx, page } = await newPage({ sw: 'allow' });
     await page.goto(`${APP}#/login`);
@@ -397,11 +475,13 @@ try {
     assert.match(info.url, /\/running\/sw\.js$/);
     assert.ok(info.n >= 26, `precached ${info.n}`);
     assert.ok(info.idx);
-    assert.match(info.shell, /running-shell-0\.2\.0/);
+    assert.equal(info.shell, `running-shell-${APP_VERSION}`);
     assert.ok(info.auth, 'auth.js precached');
-    // With the SW in control, the API host (a placeholder) is unreachable: the
-    // SW must answer /api/state itself with the offline marker → badge shows.
+    // With the SW in control, the API host is unreachable: the SW must answer
+    // /api/state itself with the offline marker → badge shows. API_BASE is the
+    // live Cloud Function, so fail its requests here rather than letting them out.
     await ctx.unroute(`${new URL(API_BASE).origin}/**`);
+    await ctx.route(`${new URL(API_BASE).origin}/**`, r => r.abort('internetdisconnected'));
     await page.reload();
     await page.waitForFunction(() => navigator.serviceWorker.controller);
     // The SW passes Firebase SDK requests through untouched and never caches them.
