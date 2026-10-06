@@ -163,7 +163,7 @@ async function newPage({ user = 'owner', signInFails = 0, delay = 0, scheme = 'l
   });
   await ctx.route(url => EXTERNAL_HOST.test(url.hostname), r => r.abort());
   const log = [];
-  const api = createMockApi({ fixturesDir: FIXTURES, routeDelayMs: 0, ...(settings ? { settings } : {}) });
+  const api = createMockApi({ fixturesDir: FIXTURES, routeDelayMs: 0, planDelayMs: 0, ...(settings ? { settings } : {}) });
   await ctx.route(`${new URL(API_BASE).origin}/**`, apiRoute(api, log));
   // Test mode must never load the real SDK; count any attempt.
   const sdkRequests = [];
@@ -575,6 +575,95 @@ try {
     await page.screenshot({ path: join(SHOTS, 'desk-routes.png') });
     await page.screenshot({ path: join(SHOTS, 'desk-routes-full.png'), fullPage: true });
     assert.deepEqual(popups, [], 'no new tab opened');
+    assert.deepEqual(errors, []);
+    await ctx.close();
+  });
+
+  // Routes with handles: the route editor (js/views/routes-edit.js) and POST /api/routes/plan.
+  const HOME = { lat: 55.7, lng: 12.55 };
+  const planCalls = log => log.filter(l => l.method === 'POST' && l.path === '/api/routes/plan');
+  const planAnswer = page => page.waitForResponse(r => r.url().endsWith('/routes/plan') && r.request().method() === 'POST');
+  const planSettled = page => page.waitForSelector('#rt-results[aria-busy="false"] .rt-total');
+  const routesMap = async page => {
+    await page.waitForSelector('#rt-map.leaflet-container', { timeout: 20000 });
+    await page.waitForSelector('#rt-map-wait', { state: 'hidden' });
+    const box = await page.locator('#rt-map').boundingBox();
+    return [box.x + box.width / 2, box.y + box.height / 2];
+  };
+
+  await step('desk Routes, Draw: three clicks from home plan a loop along paths; Undo; GPX download', async () => {
+    const { ctx, page, log, errors, popups } = await newPage({ desk: true, settings: { home: HOME } });
+    await go(page, 'routes?mode=draw&km=5');
+    const centre = await routesMap(page);
+    assert.equal(await page.isChecked('input[name=mode][value=draw]'), true);
+    assert.equal(await page.isVisible('#rt-go'), false, 'no Generate button in Draw');
+    assert.equal(await page.locator('#rt-map .map-handle').count(), 1, 'home is the first point');
+    let route = null;
+    for (const [dx, dy] of [[140, -110], [220, 70], [40, 170]]) {
+      const answered = planAnswer(page);
+      await page.mouse.click(centre[0] + dx, centre[1] + dy);
+      route = (await (await answered).json()).route;
+    }
+    await planSettled(page);
+    const calls = planCalls(log);
+    assert.equal(calls.length, 3, 'one plan per click');
+    const { points, loop, profile } = calls[2].body;
+    assert.equal(points.length, 4);
+    assert.deepEqual(points[0], [HOME.lat, HOME.lng], 'drawn from home');
+    assert.deepEqual([loop, profile], [true, 'run'], 'back to start is on for a run');
+    assert.equal(await page.locator('#rt-map .map-handle').count(), 4);
+    assert.match(await page.textContent('#rt-live'), new RegExp(formatDistance(route.distanceKm).replace('.', '\\.')));
+    await page.waitForTimeout(500); // tiles
+    await page.screenshot({ path: join(SHOTS, 'desk-routes-draw.png') });
+
+    const [download] = await Promise.all([page.waitForEvent('download'), page.click('[data-export=gpx]')]);
+    assert.match(download.suggestedFilename(), /^run-\d+km-2026-10-13\.gpx$/);
+    const gpx = await readFile(await download.path(), 'utf8');
+    assert.equal(gpx.split('<trkpt').length - 1, decodePolyline(route.polyline).length, 'every point of the drawn route');
+
+    // Undo goes back to the route through three points, which was already planned: no new request.
+    await page.click('#rt-undo');
+    await planSettled(page);
+    assert.equal(await page.locator('#rt-map .map-handle').count(), 3);
+    assert.equal(planCalls(log).length, 3);
+    assert.deepEqual(popups, [], 'no new tab opened');
+    assert.deepEqual(errors, []);
+    await ctx.close();
+  });
+
+  await step('desk Routes, Edit: a variant re-planned through handles; a dragged handle re-plans with the moved point', async () => {
+    const { ctx, page, log, errors } = await newPage({ desk: true, settings: { home: HOME } });
+    await go(page, 'routes?km=10');
+    await routesMap(page);
+    await page.click('#rt-go');
+    await page.waitForSelector('[data-edit]');
+    let answered = planAnswer(page);
+    await page.click('[data-edit]');
+    const before = (await (await answered).json()).route;
+    await planSettled(page);
+    const first = planCalls(log)[0].body;
+    assert.equal(first.points.length, 7, 'the start and six handles along the variant');
+    assert.deepEqual(first.points[0], [HOME.lat, HOME.lng]);
+    assert.equal(first.loop, true);
+    assert.match(await page.textContent('#rt-status'), /Re-routed through 6 handles — drag to reshape/);
+    assert.equal(await page.locator('#rt-map .map-handle').count(), 7);
+
+    const box = await page.locator('#rt-map .map-handle').nth(3).boundingBox();
+    const from = [box.x + box.width / 2, box.y + box.height / 2];
+    answered = planAnswer(page);
+    await page.mouse.move(...from);
+    await page.mouse.down();
+    for (let i = 1; i <= 8; i++) await page.mouse.move(from[0] + i * 10, from[1] - i * 8);
+    await page.mouse.up();
+    const after = (await (await answered).json()).route;
+    await planSettled(page);
+    const moved = planCalls(log).at(-1).body.points;
+    assert.equal(moved.length, 7);
+    assert.ok(moved[3][0] > first.points[3][0] && moved[3][1] > first.points[3][1], `handle 3 moved north-east, as dragged: ${moved[3]} from ${first.points[3]}`);
+    for (const i of [0, 1, 2, 4, 5, 6]) assert.deepEqual(moved[i], first.points[i], `handle ${i} stayed`);
+    assert.notEqual(after.distanceKm, before.distanceKm);
+    await page.waitForTimeout(500); // tiles
+    await page.screenshot({ path: join(SHOTS, 'desk-routes-edit.png') });
     assert.deepEqual(errors, []);
     await ctx.close();
   });

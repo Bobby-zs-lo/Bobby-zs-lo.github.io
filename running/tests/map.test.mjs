@@ -1,5 +1,5 @@
 // Tests for js/map.js: the loader's retry behaviour, fit()'s input handling, destroy()'s safety,
-// and the scheme re-colouring's bookkeeping. Leaflet itself is not loaded: a fake document records
+// the scheme re-colouring's bookkeeping, and the route editor's draggable handles. Leaflet itself is not loaded: a fake document records
 // what the loader appends, a fake ctx records what fit() and destroy() ask of the map, and a fake L
 // stands in for the layers. Drawing is checked by screenshot, not here.
 import { test } from 'node:test';
@@ -186,11 +186,35 @@ function fakeLeaflet() {
       return this.fire('remove');
     },
   });
+  // A marker's icon element: attributes, classes and listeners, nothing more.
+  const element = () => {
+    const listeners = {};
+    const classes = new Set();
+    return {
+      attrs: {}, classes,
+      classList: { add: c => classes.add(c), remove: c => classes.delete(c), toggle: (c, on) => (on ? classes.add(c) : classes.delete(c)) },
+      setAttribute(k, v) { this.attrs[k] = String(v); },
+      addEventListener(type, fn) { (listeners[type] ||= new Set()).add(fn); },
+      removeEventListener(type, fn) { if (listeners[type]) listeners[type].delete(fn); },
+      dispatch(type, e) { [...(listeners[type] || [])].forEach(fn => fn(e)); },
+    };
+  };
   const L = {
     canvas: () => ({}),
     tileLayer: (url, options) => layer(options),
     polyline: (points, options) => layer(options),
     circleMarker: (point, options) => layer(options),
+    divIcon: options => ({ options }),
+    marker: (point, options) => {
+      const el = element();
+      options.icon.options.className.split(' ').forEach(c => el.classList.add(c));
+      let at = { lat: point[0], lng: point[1] };
+      return Object.assign(layer(options), {
+        getElement: () => el,
+        getLatLng: () => at,
+        setLatLng(p) { at = { lat: p[0], lng: p[1] }; return this; },
+      });
+    },
     layerGroup: () => layer({}),
     map: () => Object.assign(evented(), {
       layers: new Set(),
@@ -269,4 +293,71 @@ test('the OpenStreetMap credit opens in a new tab without handing it the page', 
   const { ctx } = await fakeMap();
   assert.match(ctx.tiles.options.attribution, /<a href="https:\/\/www\.openstreetmap\.org\/copyright" target="_blank" rel="noopener">/);
   assert.equal(ctx.tiles.options.referrerPolicy, 'origin');
+});
+
+// --- route handles ---------------------------------------------------------------
+
+const keyEvent = key => ({ key, prevented: false, stopped: false, preventDefault() { this.prevented = true; }, stopPropagation() { this.stopped = true; } });
+
+test('addHandle: a draggable, focusable marker that names itself and says where it was dropped', async () => {
+  const { lib, ctx } = await fakeMap();
+  const seen = { drops: [], moves: [], clicks: 0, keys: [] };
+  const handle = lib.addHandle(ctx, [55.7, 12.55], {
+    label: 'Point 2 of 4', kind: 'via',
+    onDrag: p => seen.moves.push(p),
+    onDragEnd: p => seen.drops.push(p),
+    onClick: () => { seen.clicks++; },
+    onKey: e => { seen.keys.push(e.key); return e.key === 'Delete'; },
+  });
+  assert.equal(handle.options.draggable, true, 'dragged with the mouse or a finger');
+  assert.equal(handle.options.keyboard, true, 'reachable with Tab');
+  const el = handle.getElement();
+  assert.equal(el.attrs['aria-label'], 'Point 2 of 4');
+  assert.ok(el.classes.has('map-handle') && el.classes.has('map-handle--via'));
+  assert.ok(ctx.map.hasLayer(handle));
+
+  handle.setLatLng([55.705, 12.555]);
+  handle.fire('drag');
+  handle.setLatLng([55.71, 12.56]);
+  handle.fire('dragend');
+  assert.deepEqual(seen.moves, [[55.705, 12.555]], 'where it is on the way, for a preview');
+  assert.deepEqual(seen.drops, [[55.71, 12.56]]);
+  handle.fire('click');
+  assert.equal(seen.clicks, 1);
+
+  const del = keyEvent('Delete');
+  el.dispatch('keydown', del);
+  assert.ok(del.prevented && del.stopped, 'a key the editor used goes no further: an arrow would pan the map');
+  const tab = keyEvent('Tab');
+  el.dispatch('keydown', tab);
+  assert.ok(!tab.prevented && !tab.stopped, 'any other key still moves focus as usual');
+  assert.deepEqual(seen.keys, ['Delete', 'Tab']);
+
+  handle.remove();
+  el.dispatch('keydown', keyEvent('Delete'));
+  assert.equal(seen.keys.length, 2, 'removing the handle removes its key listener');
+  assert.equal(ctx.themed.length, 0, 'CSS colours a handle, so there is nothing to re-colour');
+});
+
+test('addHandle: the start sits above the other handles', async () => {
+  const { lib, ctx } = await fakeMap();
+  assert.ok(lib.addHandle(ctx, ROUTE[0], { kind: 'start' }).options.zIndexOffset > 0);
+  assert.equal(lib.addHandle(ctx, ROUTE[1]).options.zIndexOffset, 0);
+});
+
+test('updateHandle: a new name and kind, on the same marker', async () => {
+  const { lib, ctx } = await fakeMap();
+  const handle = lib.addHandle(ctx, ROUTE[1], { label: 'Point 2 of 2, the finish', kind: 'end' });
+  lib.updateHandle(handle, { label: 'Point 2 of 3', kind: 'via' });
+  const el = handle.getElement();
+  assert.equal(el.attrs['aria-label'], 'Point 2 of 3');
+  assert.ok(el.classes.has('map-handle--via') && !el.classes.has('map-handle--end'));
+});
+
+test('addLine: interactive on request, so a line can be grabbed without a click handler', async () => {
+  const { lib, ctx } = await fakeMap();
+  assert.equal(lib.addLine(ctx, ROUTE, { color: '#123456' }).options.interactive, false);
+  const grab = lib.addLine(ctx, ROUTE, { color: '#123456', interactive: true });
+  assert.equal(grab.options.interactive, true);
+  assert.equal(grab.options.bubblingMouseEvents, false, 'a press on the line is not also a press on the map');
 });

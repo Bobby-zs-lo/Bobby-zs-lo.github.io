@@ -20,7 +20,7 @@ const km = ([lat1, lng1], [lat2, lng2]) => {
   return 2 * 6371.0088 * Math.asin(Math.sqrt(h));
 };
 const perimeterKm = (pts) => pts.reduce((sum, p, i) => (i ? sum + km(pts[i - 1], p) : 0), 0);
-const newApi = () => createMockApi({ fixturesDir: FIXTURES, routeDelayMs: 0 });
+const newApi = () => createMockApi({ fixturesDir: FIXTURES, routeDelayMs: 0, planDelayMs: 0 });
 const call = (api, method, path, { search = '', body = null, authz = OWNER } = {}) => api({ method, path, search, body, authz });
 
 // ── fixtures ────────────────────────────────────────────────────────────────
@@ -136,6 +136,57 @@ test('mock: generated routes start where asked and are about as long as asked', 
   }
   const defaults = await call(api, 'POST', '/api/routes/generate', { body: { start: CENTRE, profile: 'run', km: 10 } });
   assert.equal(defaults.json.variants.length, 3);
+});
+
+test('mock: plan requests are validated like the contract', async () => {
+  const api = newApi();
+  const bad = async (body) => (await call(api, 'POST', '/api/routes/plan', { body })).status;
+  const two = [CENTRE, [55.71, 12.56]];
+  assert.equal(await bad({ points: [CENTRE], profile: 'run' }), 400, 'one point');
+  assert.equal(await bad({ points: Array.from({ length: 31 }, (_, i) => [55.7 + i / 1000, 12.55]), profile: 'run' }), 400, '31 points');
+  assert.equal(await bad({ points: [CENTRE, [55.7]], profile: 'run' }), 400, 'half a pair');
+  assert.equal(await bad({ points: [CENTRE, [95, 12]], profile: 'run' }), 400, 'off the globe');
+  assert.equal(await bad({ points: two, profile: 'swim' }), 400);
+  assert.equal(await bad({ points: two, profile: 'run', loop: 'yes' }), 400);
+  assert.equal(await bad(null), 400);
+  const ok = await call(api, 'POST', '/api/routes/plan', { body: { points: two, profile: 'ride' } });
+  assert.equal(ok.status, 200);
+  assert.equal(ok.json.loop, false, 'loop defaults to false');
+});
+
+test('mock: a planned route passes through every point in order, and back to the start on a loop', async () => {
+  const points = [CENTRE, [55.705, 12.565], [55.712, 12.55], [55.706, 12.535]];
+  const { status, json } = await call(newApi(), 'POST', '/api/routes/plan', { body: { points, profile: 'run', loop: true } });
+  assert.equal(status, 200);
+  assert.deepEqual([json.profile, json.loop], ['run', true]);
+  const { route } = json;
+  const pts = decodePolyline(route.polyline);
+  assert.equal(route.wayPoints.length, points.length + 1, 'every point, and the start again');
+  assert.deepEqual(route.wayPoints, [...route.wayPoints].sort((a, b) => a - b), 'in order');
+  [...points, points[0]].forEach((p, i) => assert.ok(km(pts[route.wayPoints[i]], p) < 0.002, `way point ${i} is on point ${i}`));
+  assert.equal(route.wayPoints.at(-1), pts.length - 1);
+  assert.ok(Math.abs(perimeterKm(pts) - route.distanceKm) < 0.01, 'the distance is the length of the line');
+  const straight = perimeterKm([...points, points[0]]);
+  assert.ok(route.distanceKm >= straight && route.distanceKm < straight * 1.15, `a little longer than straight lines (${route.distanceKm} vs ${straight})`);
+  assert.ok(pts.every((p, i) => !i || km(pts[i - 1], p) < 0.07), 'densified to ~50 m steps');
+  assert.equal(route.elevations.length, pts.length);
+  assert.ok(route.elevations.every(Number.isFinite));
+  assert.ok(route.ascentM > 0 && route.descentM > 0);
+  assert.deepEqual(route.surface, { paved: 0.8, unpaved: 0.2, unknown: 0 });
+});
+
+test('mock: without a loop the route ends at the last point', async () => {
+  const points = [CENTRE, [55.71, 12.56]];
+  const { json } = await call(newApi(), 'POST', '/api/routes/plan', { body: { points, profile: 'trail', loop: false } });
+  const pts = decodePolyline(json.route.polyline);
+  assert.equal(json.route.wayPoints.length, 2);
+  assert.ok(km(pts.at(-1), points[1]) < 0.002);
+});
+
+test('mock: a point in the sea is too far from any path (502, in OpenRouteService’s words)', async () => {
+  const { status, json } = await call(newApi(), 'POST', '/api/routes/plan', { body: { points: [CENTRE, [55.705, 12.565], [55.7, 12.66]], profile: 'run', loop: true } });
+  assert.equal(status, 502);
+  assert.match(json.error, /Could not find routable point within a radius of 1000\.0 meters of specified coordinate 2/);
 });
 
 test('mock: settings changes (home included) show in state, per mock instance', async () => {

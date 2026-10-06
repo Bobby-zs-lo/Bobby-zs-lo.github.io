@@ -10,8 +10,9 @@
 // Why it exists: the app shows Strava data and Strava's API policy forbids that data reaching
 // an AI, so a Claude session developing the app must run it against these fixtures and never
 // against the live API. The behaviour mirrors functions/src/app.js closely enough for the
-// front end (auth, range validation, route-request validation, settings merge), and the
-// fixtures are re-read when their file changes, so rebuilding them needs no server restart.
+// front end (auth, range validation, route-request validation, settings merge, a planned route
+// through given points: tests/mock-plan.mjs), and the fixtures are re-read when their file
+// changes, so rebuilding them needs no server restart.
 //
 // Each createMockApi() call has its own copy of the settings: PUT /api/settings changes it and
 // GET /api/state reflects it. Everything else is read-only (workout actions answer, they do not stick).
@@ -19,6 +20,7 @@ import { readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { addDays, mondayOf } from '../js/format.js';
 import { decodePolyline, encodePolyline } from '../js/polyline.js';
+import { planRoute } from './mock-plan.mjs';
 
 export const MOCK_TOKENS = { owner: 'test-token', stranger: 'stranger-token' };
 
@@ -26,6 +28,7 @@ const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const KM_RANGE = { run: [2, 60], trail: [2, 60], ride: [10, 200] };
 const KM_PER_DEG = 111.195;
 const DEFAULT_ROUTE_DELAY_MS = 600; // long enough that loading states are visible
+const DEFAULT_PLAN_DELAY_MS = 300;  // a re-plan after a drag: long enough to see the old line fade
 const ACTION_STATUS = { done: 'done', skip: 'skipped', move_tomorrow: 'moved', undo_status: 'planned' };
 const SETTINGS_KEYS = ['raceDate', 'raceName', 'fiveKSeconds', 'hasWatch', 'morningHour', 'eveningHour', 'home'];
 const NOTIFY_KEYS = ['morning', 'evening', 'activity', 'weekly'];
@@ -141,7 +144,7 @@ function findWorkout(id, week, plan) {
   return week.week.workouts.find((w) => w.id === id) || plan.weeks.flatMap((w) => w.workouts).find((w) => w.id === id) || null;
 }
 
-export function createMockApi({ fixturesDir, routeDelayMs = DEFAULT_ROUTE_DELAY_MS, settings: overrides = {} }) {
+export function createMockApi({ fixturesDir, routeDelayMs = DEFAULT_ROUTE_DELAY_MS, planDelayMs = DEFAULT_PLAN_DELAY_MS, settings: overrides = {} }) {
   const fx = fixtureReader(fixturesDir);
   let settings = structuredClone({ home: null, ...fx('state.json').settings, ...overrides });
 
@@ -239,6 +242,11 @@ export function createMockApi({ fixturesDir, routeDelayMs = DEFAULT_ROUTE_DELAY_
     ['POST', /^\/api\/workouts\/([^/]+)\/action$/, ({ params, body }) => workoutAction(decodeURIComponent(params[0]), body)],
     ['POST', /^\/api\/checkin$/, () => ({ ok: true })],
     ['POST', /^\/api\/routes\/generate$/, ({ body }) => generateRoutes(body)],
+    ['POST', /^\/api\/routes\/plan$/, async ({ body }) => {
+      const answer = planRoute(body, fail); // validates before waiting, as the backend does
+      await new Promise((resolve) => setTimeout(resolve, planDelayMs));
+      return answer;
+    }],
     ['PUT', /^\/api\/settings$/, ({ body }) => updateSettings(body)],
     ['POST', /^\/.*$/, () => ({ ok: true, sent: 1 })],
   ];

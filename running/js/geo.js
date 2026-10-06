@@ -6,6 +6,10 @@ const MAX_GOOGLE_WAYPOINTS = 9; // Google Maps URLs ignore anything past 9 inter
 const toRad = deg => deg * Math.PI / 180;
 const coord = n => n.toFixed(5);
 const latLng = ([lat, lng]) => `${coord(lat)},${coord(lng)}`;
+const isLatLng = p => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]);
+
+/** True when a planned route's own points can stand in for Google's waypoints. */
+export const usableVia = via => Array.isArray(via) && via.length <= MAX_GOOGLE_WAYPOINTS && via.every(isLatLng);
 
 export function haversineKm(a, b) {
   const dLat = toRad(b[0] - a[0]);
@@ -18,6 +22,13 @@ export function pathKm(points) {
   let km = 0;
   for (let i = 1; i < points.length; i++) km += haversineKm(points[i - 1], points[i]);
   return km;
+}
+
+// Distance from the start to each vertex: the x axis of an elevation profile.
+export function cumulativeKm(points) {
+  const out = points.length ? [0] : [];
+  for (let i = 1; i < points.length; i++) out.push(out[i - 1] + haversineKm(points[i - 1], points[i]));
+  return out;
 }
 
 // [[minLat, minLng], [maxLat, maxLng]] — the shape Leaflet's fitBounds takes.
@@ -87,14 +98,16 @@ export function buildGpx({ name, points, elevations = [], time }) {
 }
 
 // null when there is no route to link to, so callers hide the button instead of opening a dead URL.
-export function googleMapsUrl(points, mode = 'walking') {
+// `via`: the points a planned route was drawn through. Up to 9 of them are more faithful than
+// samples of the line; more than Google takes, and the line is sampled after all.
+export function googleMapsUrl(points, mode = 'walking', { via } = {}) {
   if (!Array.isArray(points) || points.length < 2) return null;
   const params = new URLSearchParams({
     api: '1',
     origin: latLng(points[0]),
     destination: latLng(points[points.length - 1]),
   });
-  const waypoints = samplePoints(points, MAX_GOOGLE_WAYPOINTS);
+  const waypoints = usableVia(via) ? via : samplePoints(points, MAX_GOOGLE_WAYPOINTS);
   if (waypoints.length) params.set('waypoints', waypoints.map(latLng).join('|'));
   params.set('travelmode', mode);
   return `https://www.google.com/maps/dir/?${params}`;

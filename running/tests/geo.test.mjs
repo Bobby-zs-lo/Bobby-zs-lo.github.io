@@ -1,7 +1,7 @@
 // Tests for the pure geometry/export helpers (distance, sampling, GPX, map-app deep links).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { haversineKm, pathKm, bbox, samplePoints, buildGpx, googleMapsUrl, cccUrl, gpxFilename } from '../js/geo.js';
+import { haversineKm, pathKm, cumulativeKm, bbox, samplePoints, buildGpx, googleMapsUrl, usableVia, cccUrl, gpxFilename } from '../js/geo.js';
 
 test('haversine: 1° of latitude ≈ 111.2 km', () => {
   assert.ok(Math.abs(haversineKm([55, 12], [56, 12]) - 111.19) < 0.05);
@@ -113,6 +113,27 @@ test('googleMapsUrl omits waypoints when the route is too short to sample', () =
   const u = new URL(googleMapsUrl([[55, 12], [55.1, 12.1]], 'driving'));
   assert.equal(u.searchParams.has('waypoints'), false);
   assert.equal(u.searchParams.get('destination'), '55.10000,12.10000');
+});
+
+test('googleMapsUrl: a planned route’s own points replace the samples, up to 9 of them', () => {
+  const line = Array.from({ length: 50 }, (_, i) => [55 + i * 0.001, 12]);
+  const via = [[55.01, 12.001], [55.02, 12.002]];
+  const u = new URL(googleMapsUrl(line, 'bicycling', { via }));
+  assert.equal(u.searchParams.get('waypoints'), '55.01000,12.00100|55.02000,12.00200');
+  assert.equal(u.searchParams.get('origin'), '55.00000,12.00000', 'the ends are still the line’s');
+  const ten = Array.from({ length: 10 }, (_, i) => [55.001 * (i + 1), 12]);
+  assert.equal(usableVia(ten), false);
+  assert.equal(new URL(googleMapsUrl(line, 'walking', { via: ten })).searchParams.get('waypoints').split('|').length, 9, 'too many: sampled after all');
+  assert.equal(new URL(googleMapsUrl(line, 'walking', { via: [] })).searchParams.has('waypoints'), false, 'no points between the ends');
+  assert.equal(usableVia([[55, 'x']]), false);
+});
+
+test('cumulativeKm: distance from the start to each vertex', () => {
+  const km = cumulativeKm([[55, 12], [56, 12], [55, 12]]);
+  assert.equal(km.length, 3);
+  assert.equal(km[0], 0);
+  assert.ok(Math.abs(km[1] - 111.19) < 0.05 && Math.abs(km[2] - 222.39) < 0.1);
+  assert.deepEqual(cumulativeKm([]), []);
 });
 
 test('googleMapsUrl defaults the travel mode to walking', () => {

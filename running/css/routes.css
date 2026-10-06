@@ -1,4 +1,5 @@
-/* Running — the Routes view (js/views/routes.js): generator panel, results and the map's frame.
+/* Running — the Routes view (js/views/routes.js): planner panel, results, the map's frame and the
+   route editor's controls (the handles themselves are in map.css).
    On a desk (html[data-layout="desk"]) a 380 px panel sits beside a map that fills the window's
    height and stays put while the panel scrolls; narrower, everything stacks and the map is 360 px
    tall (map.css). desk.css styles .chip-btn, .tile-label and the charts on a desk only, so their
@@ -46,7 +47,25 @@
 .rt-field > .tile-label { padding: 0; margin-bottom: 10px; }
 .rt-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 
-/* Mode: real radios, drawn as chips. The checked one takes the pressed-chip look. */
+/* Plan: Auto or Draw. Real radios, drawn as one segmented control, a step above the chips below it. */
+.rt-seg {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: 1px solid var(--edge); border-radius: var(--radius); overflow: hidden;
+}
+.rt-seg-opt { position: relative; display: block; }
+.rt-seg-opt + .rt-seg-opt { border-left: 1px solid var(--edge); }
+.rt-seg-opt input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.rt-seg-opt span {
+  display: flex; align-items: center; justify-content: center; min-height: 40px;
+  font-size: 14px; font-weight: 600; letter-spacing: .1px; color: var(--ink-2);
+  transition: background-color .15s ease, color .15s ease;
+}
+.rt-seg-opt input:hover + span { color: var(--ink); background: color-mix(in srgb, var(--ink) 5%, transparent); }
+.rt-seg-opt input:checked + span { background: var(--ink); color: var(--paper); }
+.rt-seg-opt input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: -4px; border-radius: 3px; }
+.rt-mode-help { margin-top: 10px; font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
+
+/* Activity: real radios, drawn as chips. The checked one takes the pressed-chip look. */
 .rt-choice { position: relative; display: inline-flex; }
 .rt-choice input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
 .rt .rt-choice input:checked + .chip-btn { background: var(--ink); border-color: var(--ink); color: var(--paper); }
@@ -81,12 +100,68 @@
 .rt .rt-map { border: 1px solid var(--rule); }
 /* The credit line under the map carries the same credits, so Leaflet's corner copy would repeat it. */
 .rt .rt-map .leaflet-control-attribution { display: none; }
+/* While a route has handles a click on the map adds a point, and the line can be grabbed. */
+.rt .rt-map.is-editing.leaflet-container { cursor: crosshair; }
+.leaflet-dragging .rt .rt-map.is-editing.leaflet-container { cursor: grabbing; }
+.rt .rt-map.is-editing canvas.leaflet-interactive { cursor: grab; }
 .rt-map-wait {
   position: absolute; inset: 0; z-index: 1;
   display: flex; align-items: center; justify-content: center;
   font-family: var(--mono); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
   color: var(--ink-3); pointer-events: none;
 }
+/* The editor's bar, top right on the map: the zoom buttons' look, so it reads as part of the map. */
+.rt-tools {
+  position: absolute; top: 10px; right: 10px; z-index: 2;
+  display: flex; flex-wrap: wrap; justify-content: flex-end;
+  max-width: calc(100% - 66px);   /* clear of the zoom buttons at the top left */
+  background: var(--card); border: 1px solid var(--edge); border-radius: var(--radius);
+  box-shadow: 0 2px 10px rgba(26, 22, 20, .12);
+  overflow: hidden;
+}
+.rt-tools[hidden] { display: none; }
+.rt-tool {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 36px; padding: 0 12px;
+  border: 0; border-left: 1px solid var(--rule); background: var(--card); color: var(--ink);
+  font: 500 13px/1 var(--sans); white-space: nowrap; cursor: pointer;
+  transition: background-color .15s ease, color .15s ease;
+}
+.rt-tool:first-child { border-left: 0; }
+.rt-tool:hover { background: var(--paper-2); }
+.rt-tool:active { transform: translateY(1px); }
+.rt-tool:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+.rt-tool[aria-disabled="true"] { color: var(--ink-3); opacity: .55; cursor: default; }
+.rt-tool[aria-disabled="true"]:hover { background: var(--card); }
+.rt-tool[aria-disabled="true"]:active { transform: none; }
+.rt-tool[hidden] { display: none; }
+.rt-tool-icon { font-size: 16px; line-height: 1; }
+/* Back to start: a toggle, with a box that fills when it is on. */
+.rt-tool--toggle::before {
+  content: ''; flex: none; width: 14px; height: 14px; box-sizing: border-box;
+  border: 1.5px solid var(--ink-2); border-radius: 3px;
+}
+.rt-tool--toggle[aria-pressed="true"]::before {
+  border-color: var(--accent);
+  background: var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M3 7.2l2.6 2.6L11 4.4' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 12px no-repeat;
+}
+
+/* The live readout, bottom left on the map, so the distance is in view while the route is drawn. */
+.rt-live {
+  position: absolute; left: 10px; bottom: 10px; z-index: 2;
+  display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 12px;
+  max-width: calc(100% - 20px); padding: 8px 14px;
+  background: var(--card); border: 1px solid var(--edge); border-radius: var(--radius);
+  box-shadow: 0 2px 10px rgba(26, 22, 20, .12);
+  font-size: 13px; color: var(--ink-2);
+  pointer-events: none;   /* a readout, never in the way of a click on the map */
+}
+.rt-live[hidden] { display: none; }
+.rt-live strong { font-family: var(--serif); font-size: 24px; font-weight: 500; line-height: 1.1; letter-spacing: -0.4px; color: var(--ink); }
+.rt-live-delta { font-weight: 500; }
+.rt-live .spinner { align-self: center; margin: 0; width: 13px; height: 13px; }
+.rt-live.is-stale strong { color: var(--ink-3); }
+
 .rt-attrib { margin-top: 8px; font-size: 11.5px; line-height: 1.5; color: var(--ink-3); }
 .rt-attrib a { color: var(--ink-2); text-decoration: none; }
 .rt-attrib a:hover { color: var(--accent); text-decoration: underline; }
@@ -96,6 +171,10 @@
 .rt-status { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink-2); }
 .rt-status .spinner { margin-right: 0; }
 .rt-status--error { color: var(--bad); font-weight: 500; line-height: 1.45; }
+.rt-status--info { color: var(--ink-2); line-height: 1.45; }
+.rt-status--info::before { content: '✓'; flex: none; color: var(--ok); font-weight: 700; }
+.rt-results:focus { outline: none; }
+.rt-results:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .rt-results-h { margin-bottom: 10px; }
 .rt-note {
   margin-bottom: 10px; padding: 8px 10px; border-radius: var(--radius);
@@ -121,6 +200,31 @@
 .rt-variant-km strong { font-size: 17px; font-weight: 600; line-height: 1.25; color: var(--ink); }
 .rt-delta { font-size: 12px; color: var(--ink-3); }
 .rt-stat { font-size: 13px; color: var(--ink-2); white-space: nowrap; text-align: right; }
+
+/* The way into the editor, under the variant cards. */
+.rt-edit-cta { margin-top: 14px; }
+.rt-edit-cta .help { margin-top: 6px; font-size: 12.5px; }
+
+/* ── a route with handles: edited or drawn ───────────────────────────────────────────── */
+.rt-edit-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.rt-edit-head .tile-label { margin: 0; }
+.rt-readout { transition: opacity .2s ease; }
+.rt-readout.is-stale, .rt-detail.is-stale { opacity: .5; }
+.rt-detail.is-stale { pointer-events: none; }
+.rt-total { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.rt-total strong {
+  font-family: var(--serif); font-size: 36px; font-weight: 500; line-height: 1.05;
+  letter-spacing: -0.8px; color: var(--ink);
+}
+.rt-total .rt-delta { font-size: 14px; font-weight: 500; color: var(--ink-2); }
+.rt-vs { color: var(--ink-3); font-weight: 400; }
+.rt-facts { display: flex; flex-wrap: wrap; gap: 4px 0; margin-top: 6px; font-size: 13.5px; color: var(--ink-2); }
+.rt-facts > span + span::before { content: '·'; margin: 0 8px; color: var(--ink-3); }
+.rt-hint { margin-top: 12px; font-size: 13px; line-height: 1.5; color: var(--ink-2); }
+.rt-hint-keys { display: block; margin-top: 2px; color: var(--ink-3); font-size: 12.5px; }
+.rt-empty { padding: 10px 0 4px; }
+.rt-empty-h { font-family: var(--serif); font-size: 21px; font-weight: 500; letter-spacing: -0.3px; color: var(--ink); }
+.rt-empty .help { margin-top: 6px; }
 
 .rt-profile { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--rule); }
 .rt-cap { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
@@ -156,3 +260,5 @@ html[data-layout="desk"] .rt .rt-map {
   min-height: 480px;
 }
 html[data-layout="desk"] .rt-head .sub { max-width: 34ch; }
+/* A phone has no Tab key to reach a handle with. */
+html[data-layout="phone"] .rt-hint-keys { display: none; }

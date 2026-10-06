@@ -4,9 +4,9 @@
 // hit area is drawn on one canvas renderer: a heatmap of every route, each of ~200 points, would
 // be tens of thousands of SVG nodes.
 //
-// Contract used by views/activity.js, views/routes.js and views/tiles-map.js:
+// Contract used by views/activity.js, views/routes.js, views/routes-edit.js and views/tiles-map.js:
 //   loadLeaflet() → Promise<L>; createMap(el, opts) → ctx { L, map, renderer, tiles };
-//   cssVar, addLine, addLines, addStart, fit, destroy. Points are [lat, lng].
+//   cssVar, addLine, addLines, addStart, addHandle, updateHandle, fit, destroy. Points are [lat, lng].
 
 export const LEAFLET = {
   js: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',
@@ -34,6 +34,9 @@ const HIT_TOLERANCE_PX = 5;       // a 2 px canvas line is otherwise nearly impo
 const HOVER_OPACITY = 0.9;
 const START_RADIUS_PX = 6;
 const START_WEIGHT_PX = 3;
+const HANDLE_PX = 36;             // a handle's hit area; the dot drawn inside it is smaller (css/map.css)
+const HANDLE_KINDS = ['start', 'via', 'end'];
+const START_HANDLE_Z = 1000;      // the start stays on top of a point dropped onto it
 
 // --- Leaflet loader --------------------------------------------------------
 
@@ -149,12 +152,12 @@ const toLine = (ctx, points, style) => ctx.L.polyline(points, {
 });
 
 /**
- * One route line. Non-interactive unless it has a click handler or a tooltip, so a line
- * drawn over the map never swallows the map's own clicks. `tooltip` is plain text: it is set
- * as text, so markup in it shows as written rather than being run.
+ * One route line. Non-interactive unless it has a click handler or a tooltip, or asks to be
+ * (the route editor grabs its line), so a line drawn over the map never swallows the map's own
+ * clicks. `tooltip` is plain text: it is set as text, so markup in it shows as written.
  */
-export function addLine(ctx, points, { color, weight = 3, opacity = 1, onClick, tooltip } = {}) {
-  const interactive = !!(onClick || tooltip);
+export function addLine(ctx, points, { color, weight = 3, opacity = 1, onClick, tooltip, interactive: grab = false } = {}) {
+  const interactive = !!(grab || onClick || tooltip);
   const style = () => ({ color: color || cssVar('--accent'), weight, opacity });
   const line = toLine(ctx, points, { ...style(), interactive, bubblingMouseEvents: !interactive });
   if (onClick) line.on('click', onClick);
@@ -190,6 +193,47 @@ export function addStart(ctx, point) {
   });
   marker.addTo(ctx.map);
   return themed(ctx, marker, () => marker.setStyle(style()));
+}
+
+/**
+ * A point a route is planned through, to drag, click or move from the keyboard. A Leaflet marker
+ * with a divIcon, because a canvas circle cannot be dragged; css/map.css draws it, so it follows
+ * the colour scheme with no re-colouring. Leaflet makes it a focusable role="button"; `label` is
+ * its accessible name. onDragStart(); onDrag([lat, lng]) on the way, for a preview; onDragEnd([lat, lng]);
+ * onClick() (a press with no drag);
+ * onKey(event) returns true for a key it used, which then goes no further: an arrow would also pan
+ * the map. The key listener is taken off with the marker, like the other layers' bookkeeping.
+ */
+export function addHandle(ctx, point, { label = '', kind = 'via', onDragStart, onDrag, onDragEnd, onClick, onKey } = {}) {
+  const icon = ctx.L.divIcon({ className: `map-handle map-handle--${kind}`, html: '<span class="map-handle-dot"></span>', iconSize: [HANDLE_PX, HANDLE_PX] });
+  const marker = ctx.L.marker(point, {
+    icon, draggable: true, keyboard: true, autoPan: true, zIndexOffset: kind === 'start' ? START_HANDLE_Z : 0,
+  });
+  const at = () => { const { lat, lng } = marker.getLatLng(); return [lat, lng]; };
+  if (onDragStart) marker.on('dragstart', () => onDragStart());
+  if (onDrag) marker.on('drag', () => onDrag(at()));
+  if (onDragEnd) marker.on('dragend', () => onDragEnd(at()));
+  if (onClick) marker.on('click', () => onClick());
+  marker.addTo(ctx.map);
+  const el = marker.getElement();
+  el.setAttribute('aria-label', label);
+  const keydown = e => {
+    if (!onKey || !onKey(e)) return;
+    e.preventDefault();
+    e.stopPropagation();
+  };
+  el.addEventListener('keydown', keydown);
+  marker.once('remove', () => el.removeEventListener('keydown', keydown));
+  return marker;
+}
+
+/** A handle's name and kind changed (points before it were added or removed): same marker, so focus stays. */
+export function updateHandle(marker, { label, kind } = {}) {
+  const el = marker.getElement();
+  if (!el) return marker;
+  if (label != null) el.setAttribute('aria-label', label);
+  if (kind) HANDLE_KINDS.forEach(k => el.classList.toggle(`map-handle--${k}`, k === kind));
+  return marker;
 }
 
 const isLatLng = p => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]);
