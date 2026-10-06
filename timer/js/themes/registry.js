@@ -32,6 +32,24 @@ registerScene(
   () => import('./supernova.js').then(m => m.SupernovaScene)
 );
 
+// Cyberpunk Mech Launch Theme:
+registerScene(
+  { id: 'mech', name: 'Mech Launch', thumb: 'thumb_mech', comingSoon: false },
+  () => import('./mech.js').then(m => m.MechScene)
+);
+
+// Deep Sea Leviathan Theme:
+registerScene(
+  { id: 'abyss', name: 'Deep Abyss', thumb: 'thumb_abyss', comingSoon: false },
+  () => import('./abyss.js').then(m => m.AbyssScene)
+);
+
+// Arcane Alchemy Hourglass Theme:
+registerScene(
+  { id: 'alchemy', name: 'Alchymia', thumb: 'thumb_alchemy', comingSoon: false },
+  () => import('./alchemy.js').then(m => m.AlchemyScene)
+);
+
 // Phase-2 live theme (appended last so it shows last in the picker):
 registerScene(
   { id: 'mouse', name: 'Mouse Timer', thumb: 'thumb_mouse', comingSoon: false },

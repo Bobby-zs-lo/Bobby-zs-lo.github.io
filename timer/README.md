@@ -40,7 +40,23 @@ Deployed live at **[bobbylo.dk/timer/](https://bobbylo.dk/timer/)**.
    - **Milestones (20%, 40%, 60%, 80%)**: Coronal Mass Ejections (CMEs) rippling through deep space with harmonic synth chimes.
    - **Finale (0:00)**: Gravitational core collapse, gamma flash, vertical relativistic bipolar plasma jets, expanding chromatic spherical shockwaves, and the birth of a radiant spinning Pulsar with sweeping lighthouse beams!
 
-7. **Mouse Timer** (`mouse`)
+7. **Mech Launch** (`mech`)
+   - An anime mecha launch sequence inside a high-tech subterranean silo.
+   - Diagnostic system checks -> Gantry disconnect -> Maglev platform ascent -> Thruster ignition -> Silo blast door breach -> Full afterburner overload.
+   - Finale: Sonic boom shockwave blasts downward as the mech ejects vertically into orbit at hypersonic velocity with glowing contrails.
+
+8. **Deep Abyss** (`abyss`)
+   - An atmospheric bathysphere dive from the sunlit surface to the 11,000m Hadal Mariana Trench.
+   - Depth meter readout (`-0m` to `-11000m`), ambient darkness deepening, god rays giving way to bioluminescent jellyfish, anglerfish, and hydrothermal vents.
+   - Sonar ping milestone waves revealing deep trench secrets.
+   - Finale: A colossal Ancient Leviathan emerges from the abyss, illuminating the ocean floor in breathtaking emerald bioluminescence.
+
+9. **Alchymia (The Hourglass of Liquid Light)** (`alchemy`)
+   - An arcane clockwork laboratory with fluid dynamics. Viscous liquid light drains through an antique brass astrolabe hourglass.
+   - Golden reservoir -> Mystical transmutation to emerald/violet -> Boiling bubbles in the crucible -> Sacred geometry mandalas rotating.
+   - Finale: The liquid crystallizes and blooms into a radiant fractal Philosopher's Lotus with expanding mandala rings and cascading stardust.
+
+10. **Mouse Timer** (`mouse`)
    - Inspired by the classic visual timer. An HD cartoon mouse nibbles through a grid of apples (1 apple per ~10s, uncapped for any duration) toward the final cheese wedge.
    - Finale: Mouse finishes the cheese and celebrates with a full belly.
 
@@ -54,7 +70,7 @@ Deployed live at **[bobbylo.dk/timer/](https://bobbylo.dk/timer/)**.
 
 ### Running Unit Tests
 ```bash
-# Run all unit tests (48 tests covering engines, math, and theme lifecycles)
+# Run all unit tests (62 tests covering engines, math, and theme lifecycles)
 node --test tests/*.mjs
 ```
 
