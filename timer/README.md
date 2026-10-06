@@ -40,32 +40,34 @@ Deployed live at **[bobbylo.dk/timer/](https://bobbylo.dk/timer/)**.
    - **Milestones (20%, 40%, 60%, 80%)**: Coronal Mass Ejections (CMEs) rippling through deep space with harmonic synth chimes.
    - **Finale (0:00)**: Gravitational core collapse, gamma flash, vertical relativistic bipolar plasma jets, expanding chromatic spherical shockwaves, and the birth of a radiant spinning Pulsar with sweeping lighthouse beams!
 
-7. **Gundam Mech Assembly & Launch** (`mech`)
-   - Progressive assembly of an RX-78 style mobile suit in an underground hangar:
-     - **0% – 25% (Frame Assembly)**: Inner skeleton & legs locked on launch bed; robotic arms weld joints with sparks.
-     - **25% – 50% (Torso Armor)**: Heavy blue/red/yellow chest armor lowers from overhead gantry crane and seals cockpit.
-     - **50% – 75% (Weapons & Arms)**: Beam rifle and shoulder armor lock into place; vernier thrusters test-fire.
-     - **75% – 95% (Head & System Online)**: Head with golden V-fin locks in; dual green visor eyes flash bright with activation glow!
-     - **95% – 100% (Catapult Lock)**: Feet lock into catapult clamps; overhead blast doors iris open to starry sky; rails energize.
-   - **Finale (0:00)**: Twin thrusters roar with massive flames, catapult slingshots the Gundam upward at hypersonic speed into space, trailing billowing exhaust smoke!
+7. **Gundam Mech Assembly & Sortie** (`mech`)
+   - Progressive construction of an RX-78 style mobile suit inside a grounded subterranean research lab:
+     - **Stationary Lab Environment**: Solid checkered steel floor with hazard perimeter lines, server rack LED diagnostics, overhead hoist crane cables, and a heavy floor cradle pad that stays firmly grounded throughout. (No moving background during assembly).
+     - **0% – 25% (Frame Assembly)**: Inner skeleton & legs locked into the floor cradle; hovering repair drone welds joint actuators with bright plasma sparks.
+     - **25% – 50% (Torso Armor)**: Heavy navy/red/yellow chest armor descends from ceiling hoist cable and locks into place, sealing the cockpit.
+     - **50% – 75% (Weapons & Arms)**: Beam rifle and red/white shield mount to articulated shoulders; vernier thrusters test-fire.
+     - **75% – 95% (Head & System Online)**: Head with golden V-fin locks in; dual emerald-green visor eyes flash bright with an activation power surge!
+     - **95% – 100% (Sortie Prep)**: Warning klaxons pulse, base steam vents hiss, and system reports all green.
+   - **Finale (0:00)**: Massive armored blast doors slide open behind the Gundam to reveal the starry night sky and crescent moon! Foot clamps decouple, rocket thrusters roar with cyan flame exhaust, and the Gundam leaps out into the sky to fight while exhaust smoke rolls across the stationary floor cradle!
 
-8. **Leviathan Abyss** (`abyss`)
-   - An atmospheric bathysphere dive from the sunlit surface to the 11,000m Hadal Mariana Trench, meeting mythical sea life:
-     - **0% – 25% (Surface Shallows, 0 – 2,750m)**: Sunlit turquoise water, god rays, and gentle sea turtles gliding past.
-     - **25% – 50% (Twilight Zone, 2,750 – 5,500m)**: Water darkens into deep indigo; mythical Giant Kraken Squid glides past with glowing eyes; twin searchlights turn on.
-     - **50% – 75% (Sunken Atlantis, 5,500 – 8,250m)**: Midnight pitch black; searchlights illuminate ancient sunken Atlantean temple columns with glowing runes.
-     - **75% – 95% (Hadal Trench, 8,250 – 10,450m)**: Seafloor vents, red cockpit alarm, and giant ancient glowing yellow slit eyes stalking from the abyss floor.
-     - **95% – 100% (Leviathan Stalk)**: Massive shadow ascends directly beneath the diving bell.
-   - **Finale (0:00)**: The colossal Ancient Leviathan jaws surge upward with razor fangs, gaping wide, and CHOMP the diving bell whole with crunching impact, swallowing it into its glowing belly!
+8. **Living Leviathan Abyss** (`abyss`)
+   - An atmospheric descent from a vibrant living coral aquarium down to the 11,000m Mariana Trench:
+     - **0% – 25% (Coral Shallows, 0 – 2,750m)**: Sunlit turquoise water, god rays, active schools of reef clownfish and electric blue tangs darting, loggerhead sea turtles swimming, and translucent jellyfish pulsing upward.
+     - **25% – 50% (Twilight Zone, 2,750 – 5,500m)**: Deep indigo water, glowing comb jellies, and the mythical Giant Kraken Squid gliding across with waving tentacles and glowing eye; twin searchlights turn on.
+     - **50% – 75% (Sunken Atlantis, 5,500 – 8,250m)**: Midnight black; searchlights illuminate ancient carved Atlantean columns with glowing cyan hieroglyphs, while a menacing deep-sea Anglerfish with glowing yellow lure bobs past.
+     - **75% – 95% (Hadal Trench, 8,250 – 10,450m)**: Volcanic floor, slithering Gulper Eels with glowing tail lights, cockpit warning beacon, and giant predatory yellow slit eyes blinking open in the trench floor.
+     - **95% – 100% (Leviathan Stalk)**: Massive silhouette ascends directly beneath the diving bell.
+   - **Finale (0:00)**: The colossal Ancient Leviathan jaws surge upward, gaping wide with rows of razor fangs, and CHOMP the diving bell whole with crunching impact, swallowing it into its glowing belly!
 
-9. **Chrono-Warp (Earth in Reverse & The Big Bang)** (`alchemy`)
-   - An epic cosmic hourglass that flows in **REVERSE**, rewinding entropy and journeying backward through Earth's epochs:
-     - **0% – 20% (Modern Digital Age, 2026 AD)**: Neon cyberpunk skyscraper skyline and digital grids.
-     - **20% – 40% (Victorian Steam Age, 1880 AD)**: Cobblestone streets, Big Ben clocktower, and a steam locomotive puffing smoke.
-     - **40% – 60% (Ancient Egypt, 2500 BC)**: Great Pyramids rising against a golden desert sun disk.
-     - **60% – 80% (Jurassic Dinosaurs, 150M BC)**: Prehistoric jungle, smoking volcano, and roaring T-Rex.
-     - **80% – 95% (Primordial Molten Earth, 4.5B BC)**: Boiling magma ocean and flaming meteors crashing down.
-     - **95% – 100% (Cosmic Singularity, T = 0)**: Earth dissolves and all space-time contracts into an infinitely dense white point inside the hourglass.
+9. **Chrono-Warp (Reverse Hourglass & Living Eras)** (`alchemy`)
+   - A grand, unmistakable ornate celestial hourglass (44x70) that flows in **REVERSE**, rewinding entropy through living animated historical epochs:
+     - **Reverse Stardust Flow**: Golden sand grains cascade UPWARD from the bottom bulb through the narrow capillary waist into the top bulb, defying gravity.
+     - **0% – 20% (Cyberpunk 2026 AD)**: Neon skyscraper skyline, holographic billboards, flying hover-cars zooming backwards across the sky, and digital neon matrix code rain floating upward in reverse.
+     - **20% – 40% (Victorian Steam Age 1880 AD)**: Cobblestone streets, gaslamps, Big Ben clocktower with clock hands spinning rapidly backwards, and an iron steam locomotive chugging in reverse puffing coal smoke clouds.
+     - **40% – 60% (Ancient Egypt 2500 BC)**: Great Pyramids of Giza rising across desert dunes, desert winds, and a walking camel caravan under the blazing golden Sun of Ra.
+     - **60% – 80% (Jurassic Dinosaurs 150M BC)**: Prehistoric cycad jungle, smoking volcanic peaks, flying Pterodactyls flapping wings across the sky, and a roaring T-Rex with snapping jaws.
+     - **80% – 95% (Primordial Molten Earth 4.5B BC)**: Surging Hadean boiling magma sea and swarms of flaming meteors crashing down into the molten crust.
+     - **95% – 100% (Cosmic Singularity, T = 0)**: Earth dissolves and all space-time contracts into an ultra-dense, vibrating white Singularity inside the hourglass.
    - **Finale (0:00)**: The hourglass shatters and space detonates into **THE BIG BANG**! Blinding cosmic inflation explosion, prismatic expanding rings of light, and the cosmic dawn of newborn galaxies and stars.
 
 10. **Mouse Timer** (`mouse`)
