@@ -125,19 +125,23 @@ export function barsSvg(rows, { width = 720, height = 200, selected = null, labe
 
 const safeClass = key => String(key).replace(/[^\w-]/g, '-');
 
-/** One horizontal bar split into shares (each 0..1, summing to <= 1). */
+/**
+ * One horizontal bar split into shares (each 0..1, summing to <= 1). Each part is a
+ * `zone zone--<key>` rect (not "seg", which running.css already uses for the check-in's
+ * segmented control).
+ */
 export function stackedBarSvg(parts, { width = 320, height = 18, label = 'Share' } = {}) {
   const shown = (parts || []).filter(p => p.share > 0);
   if (!shown.length) return emptySvg(width, height, label);
   let x = 0;
-  const segs = shown.map(p => {
+  const rects = shown.map(p => {
     const w = Math.min(p.share, 1) * width;
-    const seg = `<rect class="seg seg--${safeClass(p.key)}" x="${num(x)}" y="0" width="${num(w)}" height="${num(height)}">`
+    const rect = `<rect class="zone zone--${safeClass(p.key)}" x="${num(x)}" y="0" width="${num(w)}" height="${num(height)}">`
       + `<title>${escapeHtml(p.label)} ${Math.round(p.share * 100)} %</title></rect>`;
     x += w;
-    return seg;
+    return rect;
   });
-  return open('stacked', width, height, label) + segs.join('') + '</svg>';
+  return open('stacked', width, height, label) + rects.join('') + '</svg>';
 }
 
 // --- lineSvg -----------------------------------------------------------------
@@ -188,7 +192,7 @@ export function lineSvg(points, { width = 320, height = 120, invert = false, yFo
 // --- calendarSvg -------------------------------------------------------------
 
 const LEVEL_FLOORS_KM = [5, 10, 16]; // 0 | <5 | <10 | <16 | >=16 -> levels 0..4
-const CALENDAR_TOP = 14;             // room above the grid for month labels
+export const CALENDAR_TOP = 14;      // room above the grid for month labels; Overview's weekday labels align to it
 const MIN_MONTH_LABEL_COLS = 3;      // closer labels would overlap, so the earlier one is dropped
 
 const levelOf = km => (km > 0 ? 1 + LEVEL_FLOORS_KM.filter(floor => km >= floor).length : 0);

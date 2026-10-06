@@ -110,11 +110,17 @@ function send(res, status, body, headers = {}) {
 }
 const sendJson = (res, status, data, headers = {}) => send(res, status, JSON.stringify(data), { 'Content-Type': 'application/json; charset=utf-8', ...CORS, ...headers });
 
-// A path segment starting with '.' (.git, .claude, .env) is never served, even though this only listens on 127.0.0.1.
-function resolveStatic(pathname) {
+// The repo file a URL path names, or null for one never served, even though this only listens on 127.0.0.1:
+//   - a segment starting with '.': '..', and .git, .claude, .env;
+//   - a backslash, a separator to Windows, so '/%5c.git%5cconfig' would slip past the segment test into .git;
+//   - ':' and '~': Windows reads 'config.js::$DATA' (a file's data stream) and 'CONFIG~1.JS' (an 8.3 short
+//     name) as js/config.js itself, under a name the rewrite below does not recognise, so they served the
+//     unrewritten config with the live API_BASE.
+// No file in the repo has any of these characters in its name.
+export function resolveStatic(pathname) {
   let decoded;
   try { decoded = decodeURIComponent(pathname); } catch { return null; }
-  if (decoded.includes('\0') || decoded.split('/').some((segment) => segment.startsWith('.') || segment === '..')) return null;
+  if (/[\0\\:~]/.test(decoded) || decoded.split('/').some((segment) => segment.startsWith('.'))) return null;
   const file = resolve(join(REPO, decoded.endsWith('/') ? `${decoded}index.html` : decoded));
   return file.startsWith(REPO + sep) ? file : null;
 }

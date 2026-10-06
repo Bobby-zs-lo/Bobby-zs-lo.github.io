@@ -7,14 +7,12 @@ import { api } from '../api.js';
 import { getState, getPlan, patchState, peekState } from '../store.js';
 import { toast, busy, loading, errorState } from '../ui.js';
 import { buildHash } from '../router.js';
-import { formatDate, formatDistance, toISODate } from '../format.js';
+import { copenhagenToday, formatDate, formatDistance } from '../format.js';
 import { buildGpx, googleMapsUrl, cccUrl, gpxFilename, haversineKm } from '../geo.js';
 import { decodePolyline } from '../polyline.js';
 import { currentPosition } from '../geolocate.js';
 import { PROFILES, LETTERS, pageTpl, startTpl, statusTpl, resultsTpl, detailTpl } from './routes-ui.js';
-// A namespace import, not named ones: should map.js ever be a stub again, a missing named export
-// would fail this whole module at link time instead of only leaving the map out.
-import * as mapLib from '../map.js';
+import { createMap, addLine, addStart, cssVar, fit, destroy } from '../map.js';
 
 const DEFAULT_KM = { run: 10, trail: 10, ride: 60 };
 const DENMARK = [55.68, 12.57];
@@ -78,7 +76,7 @@ export async function render(el, ctx) {
 
   const p = ctx.params || {};
   const home = state.settings && state.settings.home;
-  const today = state.today || toISODate(new Date());
+  const today = state.today || copenhagenToday(); // /api/state always carries it; if not, Copenhagen's date, not UTC's
   const st = {
     home: home ? [home.lat, home.lng] : null, start: null, startKind: null,
     from: (p.from && planWorkouts(plan).find(w => w.id === p.from)) || null,
@@ -118,7 +116,7 @@ export async function render(el, ctx) {
   function placeStart() {
     if (!mapCtx || !st.start) return;
     if (startMarker) startMarker.setLatLng(st.start);
-    else startMarker = mapLib.addStart(mapCtx, st.start);
+    else startMarker = addStart(mapCtx, st.start);
     startMarker.bringToFront();
   }
 
@@ -194,23 +192,23 @@ export async function render(el, ctx) {
   // routes are dotted: a thin solid grey line reads as one more road on the tiles.
   function styleLines() {
     if (!mapCtx || !lines.length) return;
-    const quiet = { color: mapLib.cssVar('--ink'), weight: 3.5, opacity: 0.55, dashArray: '1 7' };
+    const quiet = { color: cssVar('--ink'), weight: 3.5, opacity: 0.55, dashArray: '1 7' };
     lines.forEach((line, i) => { if (i !== st.selected) line.setStyle(quiet); });
     const on = lines[st.selected];
-    if (on) { on.setStyle({ color: mapLib.cssVar('--accent'), weight: 5, opacity: 1, dashArray: null }); on.bringToFront(); }
+    if (on) { on.setStyle({ color: cssVar('--accent'), weight: 5, opacity: 1, dashArray: null }); on.bringToFront(); }
     if (startMarker) startMarker.bringToFront();
   }
 
   function fitSelected() {
     const v = st.result && st.result.variants[st.selected];
-    if (mapCtx && v) mapLib.fit(mapCtx, v.points, { padding: 32 });
+    if (mapCtx && v) fit(mapCtx, v.points, { padding: 32 });
   }
 
   function drawRoutes() {
     if (!mapCtx) return;
     lines.forEach(line => line.remove());
-    lines = !st.result ? [] : st.result.variants.map((v, i) => mapLib.addLine(mapCtx, v.points, {
-      color: mapLib.cssVar('--ink-2'),
+    lines = !st.result ? [] : st.result.variants.map((v, i) => addLine(mapCtx, v.points, {
+      color: cssVar('--ink-2'),
       tooltip: `${LETTERS[i]} · ${formatDistance(v.distanceKm)}`,
       onClick: () => select(i), // interactive lines don't bubble, so the start stays put
     }));
@@ -219,15 +217,14 @@ export async function render(el, ctx) {
   }
 
   async function initMap() {
-    if (typeof mapLib.createMap !== 'function') return; // no map module: the placeholder stays
     let made;
     try {
-      made = await mapLib.createMap($('#rt-map'), { zoomControl: true, scrollWheelZoom: true });
+      made = await createMap($('#rt-map'), { zoomControl: true, scrollWheelZoom: true });
     } catch {
       if (alive()) $('#rt-map-wait').textContent = 'The map couldn’t load. Routes and exports still work.';
       return;
     }
-    if (!alive()) { mapLib.destroy(made); return; }
+    if (!alive()) { destroy(made); return; }
     mapCtx = made;
     $('#rt-map-wait').hidden = true;
     mapCtx.map.setView(st.start || DENMARK, st.start ? START_ZOOM : DENMARK_ZOOM);
@@ -351,7 +348,7 @@ export async function render(el, ctx) {
   return () => {
     disposed = true;
     scheme.removeEventListener('change', styleLines);
-    if (mapCtx) mapLib.destroy(mapCtx); // only set when map.js has a real createMap
+    destroy(mapCtx); // null-safe: the map may never have loaded
     mapCtx = null;
   };
 }

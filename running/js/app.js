@@ -34,7 +34,8 @@ const TITLES = {
   settings: 'Settings', workout: 'Session', activity: 'Activity', overview: 'Overview', routes: 'Routes',
 };
 
-// Where a bare URL and a fresh sign-in land: the dashboard on a desk, the day on a phone.
+// Where a bare URL, an unknown route and a fresh sign-in land: the dashboard on a desk, the day
+// on a phone. The manifest's start_url is a bare './' for the same reason.
 const homeRoute = () => (isDesk() ? 'overview' : 'today');
 const BARE_HASHES = new Set(['', '#', '#/']);
 
@@ -109,13 +110,12 @@ async function route() {
   const authed = !!currentUser();
   if (!authed && r.path !== 'login') return navigate('login');
   if (authed && r.path === 'login') return navigate(homeRoute());
-  // A bare URL opens this layout's home view. replaceState, not navigate: a new history entry
-  // would send Back to the bare URL, which would redirect straight forward again.
-  if (BARE_HASHES.has(location.hash)) {
+  // A bare URL or an unknown route opens this layout's home view. replaceState, not navigate: a
+  // new history entry would send Back to the old URL, which would redirect straight forward again.
+  if (BARE_HASHES.has(location.hash) || !r.known) {
     history.replaceState(null, '', buildHash(homeRoute()));
     r = parseHash(location.hash);
   }
-  if (!r.known) return navigate('today');
 
   document.body.dataset.route = r.path;
   document.title = `${TITLES[r.path]} · Running`;

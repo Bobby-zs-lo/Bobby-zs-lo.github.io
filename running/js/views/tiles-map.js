@@ -16,12 +16,13 @@ const PICK_WEIGHT = 3;
 const CORE_SHARE = 0.9;        // frame the central 90 % of start points; a holiday run would zoom out to a country
 const MIN_POINTS = 2;
 
-// Activity id → decoded points. Decoding is the costly step, and a route never changes.
-const decoded = new Map();
-function pointsOf(row) {
-  if (!row || typeof row.polyline !== 'string') return [];
-  if (!decoded.has(row.id)) decoded.set(row.id, decodePolyline(row.polyline));
-  return decoded.get(row.id);
+/**
+ * The heatmap's footnote. Until the route lines are in, the period's activity count; then, if
+ * some have no route (a treadmill, a ride without GPS), how many of them the map actually shows.
+ */
+export function heatCount(total, drawn = null) {
+  const noun = total === 1 ? 'activity' : 'activities';
+  return drawn == null || drawn === total ? `${total} ${noun}` : `${drawn} of ${total} ${noun} on the map`;
 }
 
 /** The lines whose start lies inside the central share of all starts, by latitude and longitude. */
@@ -88,6 +89,15 @@ export function mapTiles(root, { loadRoutes, openActivity }) {
   let heat = null, heatPromise = null, heatKey = '', heatLayer = null, pickLayer = null;
   let mini = null, miniId = null;
 
+  // Activity id → decoded points. Decoding is the costly step and a route never changes, so a
+  // filter change reuses them; they go with the visit, like the responses they came from.
+  const decoded = new Map();
+  function pointsOf(row) {
+    if (!row || typeof row.polyline !== 'string') return [];
+    if (!decoded.has(row.id)) decoded.set(row.id, decodePolyline(row.polyline));
+    return decoded.get(row.id);
+  }
+
   const say = (el, text) => { el.textContent = text || ''; el.hidden = !text; };
 
   // Leaflet needs its box to have a size, and nothing should load for a tile nobody looks at.
@@ -119,6 +129,7 @@ export function mapTiles(root, { loadRoutes, openActivity }) {
       const points = pointsOf(byId.get(a.id));
       if (points.length >= MIN_POINTS) lines.push({ id: a.id, points });
     }
+    $('[data-heat-count]').textContent = heatCount(m.periodActs.length, lines.length);
     if (!lines.length) { say(heatNote, 'No routes in this period.'); }
     const ctx = await heatMap();
     if (my !== seq) return;
@@ -160,7 +171,11 @@ export function mapTiles(root, { loadRoutes, openActivity }) {
     const m = model;
     let rows;
     try {
-      rows = await loadRoutes(m.weekRows[0]?.week || m.range.from);
+      // From the start of the period, not of the bars: 'All' caps the bars at MAX_BAR_WEEKS,
+      // but the heatmap draws every route in the period. A few thousand lines on one canvas is
+      // fine (each is simplified to the zoom and clipped to the view); the cost is the one larger
+      // response, which still waits until a map tile scrolls into view.
+      rows = await loadRoutes(m.range.from);
     } catch (e) {
       const text = `Couldn’t load the routes. ${e.message || ''}`.trim();
       say(heatNote, text);
@@ -184,9 +199,8 @@ export function mapTiles(root, { loadRoutes, openActivity }) {
   return {
     update(m) {
       model = m;
-      const count = m.periodActs.length;
       $('[data-heat-meta]').textContent = m.sel ? `Week of ${shortDate(m.sel)} on top` : '';
-      $('[data-heat-count]').textContent = `${count} ${count === 1 ? 'activity' : 'activities'}`;
+      $('[data-heat-count]').textContent = heatCount(m.periodActs.length); // drawHeat says how many have a route
       $('[data-last-meta]').textContent = m.sel ? `Week of ${shortDate(m.sel)}` : 'Newest in the period';
       $('[data-last-body]').innerHTML = toString(lastBody(m));
       root.querySelector('#ov-last').classList.toggle('is-empty', !m.last);

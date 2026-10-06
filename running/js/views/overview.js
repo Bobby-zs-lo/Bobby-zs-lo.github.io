@@ -5,14 +5,15 @@
 //
 // Data: /api/state and /api/plan from the store, then activities (with a warm-up before the
 // period for the load curves and a full year for the calendar), health, and lazily the route
-// lines for the maps. Each response is cached for the session, a narrower period reuses a
-// wider one, and a failing request empties only the tiles that need it.
+// lines for the maps. Each response is kept for the visit (the next visit, or another user
+// after a sign-out, starts afresh), a narrower period reuses a wider one, and a failing request
+// empties only the tiles that need it.
 import { html, mount, toString } from '../dom.js';
 import { api } from '../api.js';
 import { getState, getPlan } from '../store.js';
 import { buildHash } from '../router.js';
-import { addDays, formatDate, mondayOf } from '../format.js';
-import { periodRange } from '../analytics.js';
+import { addDays, copenhagenToday, formatDate, mondayOf } from '../format.js';
+import { periodRange, YEAR_DAYS } from '../analytics.js';
 import { buildModel } from './overview-model.js';
 import {
   head, summaryLine, scopeLine, shortDate, raceKpi, weekKpi, hitKpi, easyKpi, formKpi, phaseKpi, healthTile, nextTile,
@@ -26,7 +27,6 @@ const SPORTS = [['run', 'Running'], ['ride', 'Riding'], ['all', 'Everything']];
 const DEFAULTS = { p: '12w', s: 'run' };
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 const WARMUP_DAYS = 90;   // fitness is a 42-day average: three months lets it settle before the period starts
-const YEAR_DAYS = 364;
 const ALL_FROM = '2000-01-01';
 const RESIZE_STEP_PX = 4; // smaller width changes are rounding noise, not worth a redraw
 
@@ -42,27 +42,35 @@ const TILES = [
 ];
 const CHART_TILES = new Set(['volume', 'zones', 'eff', 'load', 'cal', 'health']);
 
-// --- session cache ---------------------------------------------------------------
+// --- request session ---------------------------------------------------------------
 
-// URL → promise of the parsed response. A failure is dropped, so the next render retries.
-const cache = new Map();
-// What each kind of request already covers, so a narrower period reuses a wider response.
-const spans = { acts: [], health: [], routes: [] };
 const PATHS = { acts: '/api/activities', health: '/api/health', routes: '/api/activities' };
 
-function fetchOnce(url) {
-  if (!cache.has(url)) cache.set(url, api.get(url).catch(e => { cache.delete(url); throw e; }));
-  return cache.get(url);
-}
+/**
+ * The requests of one visit, made through `get(url)`. `load(kind, from, to)` resolves that
+ * kind's rows between the dates, reusing a response that already covers them. render() makes
+ * one per visit: a module-level cache outlived the visit, so it served the last visit's data
+ * (after a sign-out, the last user's) and grew for as long as the tab stayed open.
+ */
+export function createSession(get) {
+  const cache = new Map(); // URL → promise of the rows; a failure is dropped, so the next load retries
+  const spans = { acts: [], health: [], routes: [] }; // what each kind's responses cover
 
-function loadSpan(kind, from, to) {
-  const hit = spans[kind].find(s => s.from <= from && s.to >= to);
-  if (hit) return fetchOnce(hit.url);
-  const url = `${PATHS[kind]}?from=${from}&to=${to}${kind === 'routes' ? '&with=polyline' : ''}`;
-  return fetchOnce(url).then(rows => {
-    if (!spans[kind].some(s => s.url === url)) spans[kind].push({ from, to, url });
-    return Array.isArray(rows) ? rows : [];
-  });
+  function fetchOnce(url) {
+    if (!cache.has(url)) cache.set(url, get(url).catch(e => { cache.delete(url); throw e; }));
+    return cache.get(url);
+  }
+
+  function load(kind, from, to) {
+    const hit = spans[kind].find(s => s.from <= from && s.to >= to);
+    const url = hit ? hit.url : `${PATHS[kind]}?from=${from}&to=${to}${kind === 'routes' ? '&with=polyline' : ''}`;
+    return fetchOnce(url).then(rows => {
+      if (!spans[kind].some(s => s.url === url)) spans[kind].push({ from, to, url });
+      return Array.isArray(rows) ? rows : [];
+    });
+  }
+
+  return { load };
 }
 
 const minDate = (a, b) => (a < b ? a : b);
@@ -78,9 +86,6 @@ function windows(p, today, plan) {
     health: maxDate(from, addDays(today, -YEAR_DAYS)),
   };
 }
-
-/** Today in Copenhagen, for when /api/state itself failed. */
-const localToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Copenhagen' }).format(new Date());
 
 function readFilters(params = {}) {
   const p = PERIODS.some(([k]) => k === params.p) ? params.p : DEFAULTS.p;
@@ -126,12 +131,14 @@ export function render(el, ctx) {
   let model = null;
   let seq = 0, disposed = false, lastWidth = 0, frame = 0;
   const table = { sort: { key: 'date', dir: 'desc' }, all: false };
+  // Filter changes within this visit reuse its responses; the next visit asks again.
+  const session = createSession(url => api.get(url));
 
   mount(el, shell(filters));
   const dash = el.querySelector('.dash');
   const $ = sel => el.querySelector(sel);
   const maps = mapTiles(el, {
-    loadRoutes: from => loadSpan('routes', from, base.today),
+    loadRoutes: from => session.load('routes', from, base.today),
     openActivity: id => { location.hash = `#/activity/${encodeURIComponent(id)}`; },
   });
 
@@ -141,7 +148,7 @@ export function render(el, ctx) {
     if (st.status === 'rejected') errors.state = st.reason;
     if (pl.status === 'rejected') errors.plan = pl.reason;
     const state = st.value || {};
-    return { today: ISO.test(state.today || '') ? state.today : localToday(), settings: state.settings || {}, plan: pl.value || null, errors };
+    return { today: ISO.test(state.today || '') ? state.today : copenhagenToday(), settings: state.settings || {}, plan: pl.value || null, errors };
   }
 
   async function refresh(focus) {
@@ -149,7 +156,7 @@ export function render(el, ctx) {
     dash.setAttribute('aria-busy', 'true');
     if (!base) base = await loadBase();
     const need = windows(filters.p, base.today, base.plan);
-    const [acts, health] = await Promise.allSettled([loadSpan('acts', need.acts, base.today), loadSpan('health', need.health, base.today)]);
+    const [acts, health] = await Promise.allSettled([session.load('acts', need.acts, base.today), session.load('health', need.health, base.today)]);
     if (disposed || my !== seq || !ctx.isCurrent()) return;
     const errors = { ...base.errors };
     if (acts.status === 'rejected') errors.acts = acts.reason;

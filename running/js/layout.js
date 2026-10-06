@@ -1,6 +1,6 @@
 // Desk layout: wide screens get a left rail and the Overview/Routes views. Phone layout is untouched.
-// The result lives on <html data-layout>, so every desk rule in css/desk.css can be scoped to it
-// and a phone never matches one by accident.
+// The result lives on <html data-layout>, so every desk rule (css/desk.css and the views' own
+// sheets) can be scoped to it and a phone never matches one by accident.
 export const DESK_QUERY = '(min-width: 1100px)';
 
 // matchMedia is missing under node:test; there the app is never on a desk.

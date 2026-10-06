@@ -420,6 +420,11 @@ try {
       assert.ok(o.scrollW <= o.W && o.bad.length === 0, `overview (${scheme}) overflows: ${JSON.stringify(o)}`);
       await page.screenshot({ path: join(SHOTS, `desk-overview${suffix}.png`) });
 
+      // An unknown route lands where a bare URL does: Overview on a desk.
+      await page.evaluate(() => { location.hash = '#/nowhere'; });
+      await page.waitForFunction(() => location.hash === '#/overview');
+      await overviewReady(page);
+
       await page.goto(`${APP}#/today`);
       await page.waitForSelector('.workout-title');
       await page.waitForTimeout(150);
@@ -587,6 +592,10 @@ try {
     assert.ok(bar.y > 700, `tab bar at the bottom (top ${bar.y})`);
     assert.equal(await page.getAttribute('.brand', 'href'), '#/today');
     await page.screenshot({ path: join(SHOTS, 'phone-home.png') });
+    // An unknown route lands where a bare URL does: Today on a phone.
+    await page.evaluate(() => { location.hash = '#/nowhere'; });
+    await page.waitForFunction(() => location.hash === '#/today');
+    await page.waitForSelector('.workout-title');
     assert.deepEqual(errors, []);
     await ctx.close();
   });

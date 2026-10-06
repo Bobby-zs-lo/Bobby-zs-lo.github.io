@@ -115,9 +115,11 @@ test('stackedBarSvg draws one titled segment per non-zero share', () => {
     { key: 'T', label: 'Threshold', share: 0 },
   ]);
   assert.match(svg, /^<svg class="chart chart--stacked" viewBox="0 0 320 18" role="img" aria-label="Share">/);
-  assert.equal(count(svg, /seg--E/g), 1);
-  assert.equal(count(svg, /seg--M/g), 1);
-  assert.equal(count(svg, /seg--T/g), 0);
+  assert.equal(count(svg, /zone--E/g), 1);
+  assert.equal(count(svg, /zone--M/g), 1);
+  assert.equal(count(svg, /zone--T/g), 0);
+  // Not "seg": running.css styles .seg as the check-in's segmented control.
+  assert.doesNotMatch(svg, /class="seg/);
   assert.match(svg, /<title>Easy 78 %<\/title>/);
   assert.match(svg, /<title>Marathon 22 %<\/title>/);
   assertClean(svg);
@@ -125,8 +127,8 @@ test('stackedBarSvg draws one titled segment per non-zero share', () => {
 
 test('stackedBarSvg segments follow each other and fill the width', () => {
   const svg = stackedBarSvg([{ key: 'a', label: 'A', share: 0.5 }, { key: 'b', label: 'B', share: 0.5 }], { width: 200 });
-  assert.match(svg, /<rect class="seg seg--a" x="0" y="0" width="100" height="18"/);
-  assert.match(svg, /<rect class="seg seg--b" x="100" y="0" width="100" height="18"/);
+  assert.match(svg, /<rect class="zone zone--a" x="0" y="0" width="100" height="18"/);
+  assert.match(svg, /<rect class="zone zone--b" x="100" y="0" width="100" height="18"/);
 });
 
 test('stackedBarSvg escapes labels and falls back to the empty state', () => {
@@ -343,7 +345,7 @@ test('stackedBarSvg turns the part key into a single safe class token', () => {
   for (const key of [BREAKOUT, HANDLER, 'two words']) {
     const svg = stackedBarSvg([{ key, label: BREAKOUT, share: 1 }], { label: BREAKOUT });
     assertInert(svg);
-    assert.match(svg, /<rect class="seg seg--[\w-]+" /);
+    assert.match(svg, /<rect class="zone zone--[\w-]+" /);
   }
 });
 

@@ -9,6 +9,9 @@ import { addDays, diffDays, mondayOf, parsePace, sportFamily } from './format.js
 /** Pace zones from slowest to fastest; ties between two zones go to the earlier one. */
 export const ZONE_ORDER = Object.freeze(['E', 'M', 'HM', 'T', 'I', 'R']);
 
+/** A year as the views count it: 52 whole weeks, so a year back from a Tuesday is a Tuesday. */
+export const YEAR_DAYS = 364;
+
 const EASY_KINDS = new Set(['easy', 'long', 'recovery']);
 const HIT_STATUSES = ['done', 'partial', 'skipped'];
 
@@ -38,12 +41,14 @@ const round2 = x => Math.round(x * 100) / 100 + 0;
 const round3 = x => Math.round(x * 1000) / 1000 + 0;
 const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
 const isPositive = v => typeof v === 'number' && Number.isFinite(v) && v > 0;
-const isRunWorkout = w => w.sport === 'run' || w.sport === 'race';
 // Anything that iterates or buckets by date needs a real calendar-shaped date;
 // a stray string would otherwise sort into the range or crash the date maths.
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const hasValidDate = a => ISO_DATE.test(a?.date);
 const byDate = (a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+
+/** A planned session the plan counts as running: a run, or the race itself. */
+export const isRunWorkout = w => w.sport === 'run' || w.sport === 'race';
 
 function median(values) {
   if (!values.length) return null;
@@ -56,7 +61,7 @@ function median(values) {
 
 export function periodRange(key, today, plan) {
   const seasonStart = plan?.weeks?.[0]?.startDate;
-  if (key === '1y') return { from: addDays(today, -364), to: today };
+  if (key === '1y') return { from: addDays(today, -YEAR_DAYS), to: today };
   if (key === 'all') return { from: '2000-01-01', to: today };
   if (key === 'season' && seasonStart) {
     // Before the plan begins, show its first week rather than an inverted range.
@@ -86,12 +91,12 @@ export function weekOf(plan, date) {
 
 // --- volume and plan adherence -----------------------------------------------
 
-// The plan prescribes running only, so any non-running sport has nothing planned
-// (0) while a week missing from the plan is unknown (null). 'all' keeps the run
-// plan, because running is all the plan ever asks for.
+// The plan prescribes running only, so a non-running sport has no plan at all
+// (null, which the bars read as "no plan" rather than "planned 0 km"), and nor
+// does a week missing from the plan. 'all' keeps the run plan, because running
+// is all the plan ever asks for.
 function plannedKmFor(week, sport) {
-  if (sport !== 'run' && sport !== 'all') return 0;
-  if (!week) return null;
+  if (!week || (sport !== 'run' && sport !== 'all')) return null;
   return round1(week.workouts.filter(isRunWorkout).reduce((sum, w) => sum + (w.distanceKm || 0), 0));
 }
 

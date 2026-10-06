@@ -1,9 +1,10 @@
-// Map rendering shared by the Activity page and the Routes view. Leaflet is loaded on demand
-// from cdnjs (with subresource integrity), so a page without a map never pays for it and an
-// offline phone loses only the map, never the page. Every line, marker and hit area is drawn on
-// one canvas renderer: ~300 route lines of ~200 points would be tens of thousands of SVG nodes.
+// Map rendering shared by the Activity page, the Routes view and Overview's map tiles. Leaflet
+// is loaded on demand from cdnjs (with subresource integrity), so a page without a map never
+// pays for it and an offline phone loses only the map, never the page. Every line, marker and
+// hit area is drawn on one canvas renderer: a heatmap of every route, each of ~200 points, would
+// be tens of thousands of SVG nodes.
 //
-// Contract used by views/activity.js, views/routes.js and views/tiles.js:
+// Contract used by views/activity.js, views/routes.js and views/tiles-map.js:
 //   loadLeaflet() → Promise<L>; createMap(el, opts) → ctx { L, map, renderer, tiles };
 //   cssVar, addLine, addLines, addStart, fit, destroy. Points are [lat, lng].
 
@@ -20,7 +21,8 @@ export const LEAFLET = {
 // shown. There is one tile set for both schemes: css/map.css themes it with a filter, which also
 // follows a scheme change with no tile reload.
 const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+// A new tab, so following the credit never drops the page (or an installed app) for OSM's site.
+const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors';
 const DARK_QUERY = '(prefers-color-scheme: dark)';
 // index.html sends no Referer (<meta name="referrer" content="no-referrer">), which OSM answers with
 // a 403 "Access blocked" tile. Tiles alone are sent the origin: it names the site, never the page.
@@ -46,20 +48,28 @@ function appendAsset(tag, attrs, onLoad, onError) {
   return node;
 }
 
+const hasLeafletCss = () => typeof document !== 'undefined'
+  && [...document.querySelectorAll('link[rel="stylesheet"]')].some(link => link.href === LEAFLET.css);
+
 /**
  * Leaflet, once. Resolves window.L after both the script and the stylesheet have loaded.
  * A failure (offline, blocked, integrity mismatch) removes the tags and clears the memo,
  * so the next call is a real retry rather than a replay of the old rejection.
+ * A Leaflet already on the page is reused only with its stylesheet: without it the tiles and
+ * controls land in a heap, so a missing link (removed, or a script that came some other way)
+ * is added again and waited for.
  */
 export function loadLeaflet() {
   if (leafletPromise) return leafletPromise;
-  if (typeof window !== 'undefined' && window.L && window.L.map) {
+  const needJs = !(typeof window !== 'undefined' && window.L && window.L.map);
+  const needCss = !hasLeafletCss();
+  if (!needJs && !needCss) {
     leafletPromise = Promise.resolve(window.L);
     return leafletPromise;
   }
   leafletPromise = new Promise((resolve, reject) => {
     const nodes = [];
-    let waiting = 2, settled = false;
+    let waiting = Number(needJs) + Number(needCss), settled = false;
     const fail = () => {
       if (settled) return;
       settled = true;
@@ -73,8 +83,8 @@ export function loadLeaflet() {
       settled = true;
       resolve(window.L);
     };
-    nodes.push(appendAsset('link', { rel: 'stylesheet', href: LEAFLET.css, integrity: LEAFLET.cssSri }, loaded, fail));
-    nodes.push(appendAsset('script', { src: LEAFLET.js, integrity: LEAFLET.jsSri, async: true }, loaded, fail));
+    if (needCss) nodes.push(appendAsset('link', { rel: 'stylesheet', href: LEAFLET.css, integrity: LEAFLET.cssSri }, loaded, fail));
+    if (needJs) nodes.push(appendAsset('script', { src: LEAFLET.js, integrity: LEAFLET.jsSri, async: true }, loaded, fail));
   });
   return leafletPromise;
 }
@@ -116,10 +126,22 @@ export async function createMap(el, { zoomControl = true, scrollWheelZoom = true
   return ctx;
 }
 
-/** Layers coloured from CSS variables are tracked so a scheme change can re-resolve them. */
-function themed(ctx, layer, styleOf) {
-  ctx.themed.push(() => layer.setStyle(styleOf()));
+/**
+ * Layers coloured from CSS variables are tracked so a scheme change can re-resolve them, and
+ * dropped again when the layer leaves the map. Overview swaps its heat and pick layers on every
+ * filter click; kept, each old closure (and the lines it holds) would live as long as the map.
+ */
+function themed(ctx, layer, recolour) {
+  ctx.themed = [...ctx.themed, recolour];
+  layer.once('remove', () => { ctx.themed = ctx.themed.filter(f => f !== recolour); });
   return layer;
+}
+
+// A tooltip string is parsed as HTML; an element's text never is.
+function textContent(text) {
+  const span = document.createElement('span');
+  span.textContent = String(text);
+  return span;
 }
 
 const toLine = (ctx, points, style) => ctx.L.polyline(points, {
@@ -128,16 +150,17 @@ const toLine = (ctx, points, style) => ctx.L.polyline(points, {
 
 /**
  * One route line. Non-interactive unless it has a click handler or a tooltip, so a line
- * drawn over the map never swallows the map's own clicks.
+ * drawn over the map never swallows the map's own clicks. `tooltip` is plain text: it is set
+ * as text, so markup in it shows as written rather than being run.
  */
 export function addLine(ctx, points, { color, weight = 3, opacity = 1, onClick, tooltip } = {}) {
   const interactive = !!(onClick || tooltip);
   const style = () => ({ color: color || cssVar('--accent'), weight, opacity });
   const line = toLine(ctx, points, { ...style(), interactive, bubblingMouseEvents: !interactive });
   if (onClick) line.on('click', onClick);
-  if (tooltip) line.bindTooltip(tooltip, { sticky: true });
+  if (tooltip) line.bindTooltip(textContent(tooltip), { sticky: true });
   line.addTo(ctx.map);
-  return color ? line : themed(ctx, line, style);
+  return color ? line : themed(ctx, line, () => line.setStyle(style()));
 }
 
 /**
@@ -154,8 +177,8 @@ export function addLines(ctx, lines, { color, weight = 2, opacity = 0.22, onClic
     if (onClick) line.on('click', () => onClick(id));
     group.addLayer(line);
   }
-  if (!color) ctx.themed.push(() => { const style = base(); group.eachLayer(line => line.setStyle(style)); });
-  return group.addTo(ctx.map);
+  group.addTo(ctx.map);
+  return color ? group : themed(ctx, group, () => { const style = base(); group.eachLayer(line => line.setStyle(style)); });
 }
 
 /** The start of a route: a ring in the accent colour with a card-coloured centre. */
@@ -166,7 +189,7 @@ export function addStart(ctx, point) {
     interactive: false, ...style(),
   });
   marker.addTo(ctx.map);
-  return themed(ctx, marker, style);
+  return themed(ctx, marker, () => marker.setStyle(style()));
 }
 
 const isLatLng = p => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]);
@@ -183,6 +206,6 @@ export function destroy(ctx) {
   if (!ctx || ctx.destroyed) return;
   ctx.destroyed = true;
   ctx.scheme.mq.removeEventListener('change', ctx.scheme.onChange);
-  ctx.themed.length = 0;
+  ctx.themed = [];
   ctx.map.remove();
 }

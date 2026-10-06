@@ -1,11 +1,15 @@
-// The Overview's pure parts: the model behind every tile, the table sort, the heatmap's
-// framing and the form words. The DOM side is covered by screenshots on the preview server.
+// The Overview's pure parts: the model behind every tile, the request session, the table sort,
+// the heatmap's framing and footnote, the form words. The DOM side is covered by screenshots on
+// the preview server.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildModel, displayRange, MAX_BAR_WEEKS } from '../js/views/overview-model.js';
 import { sortActivities, firstDirection } from '../js/views/tiles-table.js';
-import { coreLines } from '../js/views/tiles-map.js';
+import { coreLines, heatCount } from '../js/views/tiles-map.js';
 import { formWord } from '../js/views/tiles.js';
+import { volumeTile } from '../js/views/tiles-charts.js';
+import { createSession } from '../js/views/overview.js';
+import { toString } from '../js/dom.js';
 import { addDays } from '../js/format.js';
 
 const TODAY = '2026-10-13'; // a Tuesday
@@ -63,6 +67,17 @@ test("'Everything' measures the plan by run km while the total counts every spor
   assert.equal(m.weekRow.plannedKm, 16);
 });
 
+test('rides have no plan: their bars say so rather than "planned 0 km"', () => {
+  const acts = [act('2026-10-12', 20, 'Ride'), act('2026-10-13', 5)];
+  const rides = model(acts, { s: 'ride' });
+  assert.ok(rides.weekRows.every(r => r.plannedKm === null));
+  assert.equal(rides.weekRow.plannedKm, null);
+  const svg = toString(volumeTile(rides, 'ov-volume', 720));
+  assert.match(svg, /aria-label="12 Oct: no plan, actual 20 km"/);
+  assert.doesNotMatch(svg, /planned 0 km/);
+  assert.doesNotMatch(svg, /bar--planned/);
+});
+
 test('the next run skips closed sessions; a picked week shows its key session', () => {
   assert.equal(model([]).next.pick.id, 'c');
   assert.deepEqual(model([]).next.then.map(w => w.id), ['d']);
@@ -113,6 +128,61 @@ test('the heatmap frames the central starts and leaves a far-away trip out', () 
   assert.ok(!core.includes(trip));
   assert.ok(core.length >= 17);
   assert.deepEqual(coreLines(home.slice(0, 3)), home.slice(0, 3)); // too few to call anything an outlier
+});
+
+test('the heatmap footnote counts the period, then says how many of it are on the map', () => {
+  assert.equal(heatCount(250), '250 activities');
+  assert.equal(heatCount(1), '1 activity');
+  assert.equal(heatCount(250, 250), '250 activities');
+  assert.equal(heatCount(250, 212), '212 of 250 activities on the map');
+  assert.equal(heatCount(0, 0), '0 activities');
+});
+
+// --- the request session --------------------------------------------------------
+
+const FROM = '2026-01-05', TO = TODAY;
+const fakeGet = (respond = url => [{ url }]) => {
+  const calls = [];
+  return { calls, get: url => { calls.push(url); return Promise.resolve().then(() => respond(url)); } };
+};
+
+test('session: a span inside one already loaded reuses it; a wider one asks again', async () => {
+  const { calls, get } = fakeGet();
+  const s = createSession(get);
+  await s.load('acts', FROM, TO);
+  await s.load('acts', addDays(FROM, 28), TO);
+  assert.deepEqual(calls, [`/api/activities?from=${FROM}&to=${TO}`]);
+  await s.load('acts', addDays(FROM, -7), TO);
+  assert.equal(calls.length, 2);
+  // Kinds never share a response: route lines are a different, larger request.
+  await s.load('health', FROM, TO);
+  await s.load('routes', FROM, TO);
+  assert.deepEqual(calls.slice(2), [`/api/health?from=${FROM}&to=${TO}`, `/api/activities?from=${FROM}&to=${TO}&with=polyline`]);
+});
+
+test('session: two loads of one span in flight share a request', async () => {
+  const { calls, get } = fakeGet();
+  const s = createSession(get);
+  const [a, b] = await Promise.all([s.load('acts', FROM, TO), s.load('acts', FROM, TO)]);
+  assert.equal(calls.length, 1);
+  assert.equal(a, b);
+});
+
+test('session: each visit starts empty, so nothing outlives it (or a sign-out)', async () => {
+  const { calls, get } = fakeGet();
+  await createSession(get).load('acts', FROM, TO);
+  await createSession(get).load('acts', FROM, TO);
+  assert.equal(calls.length, 2);
+});
+
+test('session: a failed request is dropped, so the next load retries; odd bodies read as no rows', async () => {
+  let fail = true;
+  const { calls, get } = fakeGet(() => { if (fail) throw new Error('offline'); return { not: 'rows' }; });
+  const s = createSession(get);
+  await assert.rejects(s.load('acts', FROM, TO), /offline/);
+  fail = false;
+  assert.deepEqual(await s.load('acts', FROM, TO), []);
+  assert.equal(calls.length, 2);
 });
 
 test('form words: fresh above +5, tired below -10', () => {

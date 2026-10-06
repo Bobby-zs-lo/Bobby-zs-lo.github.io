@@ -4,7 +4,7 @@
 // overview.js redraws them when the dashboard is resized.
 import { html, raw } from '../dom.js';
 import { formatDate, formatDuration, formatNumber, paceRange, PACE_NAMES, PHASE_NAMES, diffDays, addDays } from '../format.js';
-import { barsSvg, stackedBarSvg, lineSvg, calendarSvg } from '../charts.js';
+import { barsSvg, stackedBarSvg, lineSvg, calendarSvg, CALENDAR_TOP } from '../charts.js';
 import { ZONE_ORDER } from '../analytics.js';
 import { MAX_BAR_WEEKS, CALENDAR_WEEKS } from './overview-model.js';
 import { head, empty, failed, shortDate, km, signed, pct, formWord } from './tiles.js';
@@ -16,8 +16,6 @@ const CAL_GAP = 2;
 const CAL_CELL_MIN = 7;
 const CAL_CELL_MAX = 14;      // beyond this the year stops reading as one block
 const LEGEND_DAYS = ['Rest', 'Under 5', '5–10', '10–16', '16 km +'];
-// charts.js draws the calendar's first row this far down (CALENDAR_TOP), under the month labels.
-const CAL_TOP = 14;
 const CAL_DAYS_PX = 30;       // the weekday label column left of the grid
 const CAL_DAY_LABELS = [[0, 'Mon'], [2, 'Wed'], [4, 'Fri']];
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -113,7 +111,7 @@ export function zonesTile(m, id, width) {
     <ul class="ov-zones" role="list">${ZONE_ORDER.map(key => {
       const z = m.zones.find(x => x.key === key);
       return html`<li class="${z.minutes ? '' : 'is-zero'}">
-        <span class="ov-zone-name">${swatch(`seg--${key}`)}${PACE_NAMES[key] || key}</span>
+        <span class="ov-zone-name">${swatch(`zone--${key}`)}${PACE_NAMES[key] || key}</span>
         <span class="ov-zone-win">${paceRange(m.paces, key).replace('/km', '')}</span>
         <span class="ov-zone-min">${z.minutes ? hoursMinutes(z.minutes) : '–'}</span>
         <span class="ov-zone-pct">${z.minutes ? `${pct(z.share)} %` : ''}</span>
@@ -200,7 +198,7 @@ export function calendarTile(m, id, width) {
   const stride = cell + CAL_GAP;
   // Positioned to the pixel against the SVG's rows, which is why the SVG keeps its natural size.
   const days = html`<span class="ov-cal-days" aria-hidden="true">${CAL_DAY_LABELS.map(([r, text]) =>
-    html`<span style="top:${CAL_TOP + r * stride}px;height:${cell}px;line-height:${cell}px">${text}</span>`)}</span>`;
+    html`<span style="top:${CALENDAR_TOP + r * stride}px;height:${cell}px;line-height:${cell}px">${text}</span>`)}</span>`;
   const svg = calendarSvg(m.cal.km, { end: m.today, weeks: CALENDAR_WEEKS, cell, gap: CAL_GAP, label: `Distance per day, last ${CALENDAR_WEEKS} weeks` });
   const c = m.cal;
   const rest = [`longest streak ${c.longest} ${c.longest === 1 ? 'day' : 'days'}`];

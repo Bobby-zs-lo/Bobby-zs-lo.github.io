@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   ZONE_ORDER, periodRange, filterActivities, weeksBetween, weeklyVolume, planHitRate, easyTooFast,
   classifyPace, paceZoneShares, efficiencySeries, rollingMedian, hrDefaults, activityLoad,
-  loadSeries, dailyKm, weekOf, firstActivityDate,
+  loadSeries, dailyKm, weekOf, firstActivityDate, isRunWorkout, YEAR_DAYS,
 } from '../js/analytics.js';
 
 const paces = {
@@ -49,6 +49,16 @@ test('periodRange: other keys, unknown keys, and a season that has not started',
   assert.deepEqual(periodRange('season', '2026-09-20', plan), { from: '2026-10-05', to: '2026-10-11' });
 });
 
+test('YEAR_DAYS: a year is 52 whole weeks, so a year back from a Tuesday is a Tuesday', () => {
+  assert.equal(YEAR_DAYS % 7, 0);
+  assert.equal(periodRange('1y', '2026-10-13', plan).from, '2025-10-14'); // both Tuesdays
+});
+
+test('isRunWorkout: runs and the race count as running; rides, rest and anything else do not', () => {
+  assert.deepEqual(['run', 'race', 'ride', 'rest', 'walk', undefined].map(sport => isRunWorkout({ sport })),
+    [true, true, false, false, false, false]);
+});
+
 test('periodRange: the season falls back to the 12w range when there is no plan', () => {
   assert.deepEqual(periodRange('season', '2026-10-13', null), periodRange('12w', '2026-10-13', null));
   assert.deepEqual(periodRange('season', '2026-10-13', { weeks: [] }), { from: '2026-07-27', to: '2026-10-13' });
@@ -83,17 +93,18 @@ test('weeksBetween lists the Mondays that touch the range', () => {
 test('weeklyVolume', () => assert.deepEqual(weeklyVolume(plan, acts, { from: '2026-10-05', to: '2026-10-11', sport: 'run' }),
   [{ week: '2026-10-05', plannedKm: 26, actualKm: 11.1, label: 'Start', phase: 'reentry', isCutback: false }]));
 
-test('weeklyVolume for rides has no plan', () => assert.equal(weeklyVolume(plan, acts, { from: '2026-10-05', to: '2026-10-11', sport: 'ride' })[0].plannedKm, 0));
+// null, not 0: the bars then say "no plan" for a ride week instead of "planned 0 km".
+test('weeklyVolume for rides has no plan', () => assert.equal(weeklyVolume(plan, acts, { from: '2026-10-05', to: '2026-10-11', sport: 'ride' })[0].plannedKm, null));
 
 test('weeklyVolume: only runs and the combined view carry the run plan', () => {
   const planned = sport => weeklyVolume(plan, acts, { from: '2026-10-05', to: '2026-10-11', sport })[0].plannedKm;
   assert.equal(planned('run'), 26);
   assert.equal(planned('all'), 26); // the plan only prescribes running, so 'all' shows that plan
-  assert.equal(planned('ride'), 0);
-  assert.equal(planned('other'), 0);
-  assert.equal(planned('strength'), 0);
-  // Still 0, not null, when the week is outside the plan.
-  assert.equal(weeklyVolume(plan, acts, { from: '2026-09-28', to: '2026-09-28', sport: 'other' })[0].plannedKm, 0);
+  assert.equal(planned('ride'), null);
+  assert.equal(planned('other'), null);
+  assert.equal(planned('strength'), null);
+  // The same outside the plan.
+  assert.equal(weeklyVolume(plan, acts, { from: '2026-09-28', to: '2026-09-28', sport: 'other' })[0].plannedKm, null);
 });
 
 test('weeklyVolume: ride kilometres are summed and rest days add no planned km', () => {

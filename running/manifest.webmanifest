@@ -3,7 +3,7 @@
   "short_name": "Running",
   "description": "Private marathon training plan and coach.",
   "id": "/running/",
-  "start_url": "./#/today",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",

@@ -6,6 +6,7 @@ import { addDays, diffDays, mondayOf, parsePace } from '../format.js';
 import {
   periodRange, filterActivities, weeklyVolume, planHitRate, easyTooFast, paceZoneShares,
   efficiencySeries, rollingMedian, hrDefaults, loadSeries, dailyKm, weekOf, firstActivityDate,
+  isRunWorkout, YEAR_DAYS,
 } from '../analytics.js';
 
 export const MAX_BAR_WEEKS = 104;   // two years of bars is as many as 720 px can tell apart
@@ -13,11 +14,9 @@ export const CALENDAR_WEEKS = 53;
 const EFFICIENCY_DAYS = 28;
 const EASY_SLACK_SEC = 10;
 const RECENT_DAYS = 28;             // "in the last 4 weeks", today included
-const YEAR_DAYS = 364;
 const UPCOMING_RUNS = 3;            // listed under the next run
 const CLOSED = new Set(['done', 'skipped']);
 
-const isRunWorkout = w => w.sport === 'run' || w.sport === 'race';
 const byStart = (a, b) => String(a.startUtc || a.date).localeCompare(String(b.startUtc || b.date));
 const byDate = (a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
 const sumKm = acts => acts.reduce((s, a) => s + (a.distanceKm || 0), 0);
