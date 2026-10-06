@@ -1,0 +1,158 @@
+/* Running — the Routes view (js/views/routes.js): generator panel, results and the map's frame.
+   On a desk (html[data-layout="desk"]) a 380 px panel sits beside a map that fills the window's
+   height and stays put while the panel scrolls; narrower, everything stacks and the map is 360 px
+   tall (map.css). desk.css styles .chip-btn, .tile-label and the charts on a desk only, so their
+   narrow-screen look is repeated here under .rt; on a desk desk.css's selectors outrank these. */
+
+.rt { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+
+/* ── the desk grammar, for narrow screens ────────────────────────────────────────────── */
+.rt .tile-label {
+  display: block;
+  font-family: var(--mono); font-size: 11px; font-weight: 500; line-height: 1.4;
+  letter-spacing: 1.8px; text-transform: uppercase; color: var(--ink-3);
+}
+.rt .chip-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 40px; padding: 6px 14px;   /* a touch target on a phone; desk.css makes it 30 px */
+  border: 1px solid var(--edge); border-radius: 99px;
+  background: transparent; color: var(--ink-2);
+  font-size: 13px; font-weight: 500; line-height: 1.2; white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+.rt .chip-btn:hover { color: var(--ink); border-color: var(--ink-2); background: color-mix(in srgb, var(--ink) 5%, transparent); }
+.rt .chip-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 99px; }
+.rt .chip-btn[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.rt .chip-btn[disabled] { opacity: .45; cursor: not-allowed; }
+.rt-profile .chart { width: 100%; height: auto; display: block; overflow: visible; }
+.rt-profile .chart .axis { font: 500 10px var(--mono); fill: var(--ink-3); font-variant-numeric: tabular-nums; }
+.rt-profile .chart .profile {
+  fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5;
+  stroke-linejoin: round; vector-effect: non-scaling-stroke;
+}
+
+/* ── panel ───────────────────────────────────────────────────────────────────────────── */
+.rt-panel {
+  min-width: 0;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.rt-field { min-width: 0; border: 0; }
+.rt-field + .rt-field { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--rule); }
+.rt-field > .tile-label { padding: 0; margin-bottom: 10px; }
+.rt-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* Mode: real radios, drawn as chips. The checked one takes the pressed-chip look. */
+.rt-choice { position: relative; display: inline-flex; }
+.rt-choice input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
+.rt .rt-choice input:checked + .chip-btn { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.rt .rt-choice input:focus-visible + .chip-btn { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.rt-start { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; margin-bottom: 10px; }
+.rt-start-name { font-family: var(--serif); font-size: 21px; font-weight: 500; letter-spacing: -0.3px; color: var(--ink); }
+.rt-coords { font-family: var(--mono); font-size: 12px; color: var(--ink-3); }
+.rt-start-none { font-size: 15px; color: var(--ink-2); }
+/* "Saved as home" is a confirmation, not a dead button: it keeps full strength, in the ok colour. */
+.rt .rt-chips .chip-btn.is-saved { opacity: 1; cursor: default; color: var(--ok); border-color: currentColor; background: var(--ok-soft); }
+.rt .rt-chips .chip-btn.is-saved::before { content: '✓'; }
+
+.rt-km input { width: 112px; font-size: 18px; font-weight: 600; }
+.rt-for { margin-top: 10px; font-size: 13.5px; color: var(--ink-2); }
+.rt-link {
+  border: 0; background: none; padding: 2px 0; cursor: pointer;
+  color: var(--accent); font-size: 13px; font-weight: 500;
+  text-decoration: underline; text-underline-offset: 2px;
+}
+.rt-link:hover { text-decoration-thickness: 2px; }
+.rt-runs { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin-top: 12px; }
+
+.rt-msg { margin-top: 8px; font-size: 13px; line-height: 1.45; color: var(--ink-3); }
+.rt-msg:empty { display: none; }
+.rt-msg--error { color: var(--bad); font-weight: 500; }
+.rt-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.rt-actions .btn { flex: 1 1 auto; }
+
+/* ── map ─────────────────────────────────────────────────────────────────────────────── */
+.rt-mapbox { position: relative; }
+.rt .rt-map { border: 1px solid var(--rule); }
+/* The credit line under the map carries the same credits, so Leaflet's corner copy would repeat it. */
+.rt .rt-map .leaflet-control-attribution { display: none; }
+.rt-map-wait {
+  position: absolute; inset: 0; z-index: 1;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--ink-3); pointer-events: none;
+}
+.rt-attrib { margin-top: 8px; font-size: 11.5px; line-height: 1.5; color: var(--ink-3); }
+.rt-attrib a { color: var(--ink-2); text-decoration: none; }
+.rt-attrib a:hover { color: var(--accent); text-decoration: underline; }
+
+/* ── results ─────────────────────────────────────────────────────────────────────────── */
+.rt-results > :not(:empty) + :not(:empty) { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--rule); }
+.rt-status { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--ink-2); }
+.rt-status .spinner { margin-right: 0; }
+.rt-status--error { color: var(--bad); font-weight: 500; line-height: 1.45; }
+.rt-results-h { margin-bottom: 10px; }
+.rt-note {
+  margin-bottom: 10px; padding: 8px 10px; border-radius: var(--radius);
+  background: var(--warn-soft); color: var(--warn); font-size: 13px; line-height: 1.4;
+}
+
+.rt-variants { display: grid; gap: 8px; min-width: 0; border: 0; }
+.rt-variant {
+  position: relative;
+  display: grid; grid-template-columns: 28px minmax(0, 1fr) auto auto; align-items: center; column-gap: 14px;
+  min-height: 58px; padding: 8px 14px 8px 12px;
+  border: 1px solid var(--rule); border-radius: var(--radius); background: var(--card);
+  cursor: pointer;
+  transition: border-color .15s ease, background-color .15s ease, box-shadow .15s ease;
+}
+.rt-variant input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; pointer-events: none; }
+.rt-variant:hover { border-color: var(--edge); }
+.rt-variant:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+.rt-variant:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.rt-letter { font-family: var(--serif); font-size: 24px; font-weight: 500; line-height: 1; text-align: center; color: var(--ink-3); }
+.rt-variant:has(input:checked) .rt-letter { color: var(--accent); }
+.rt-variant-km { display: flex; flex-direction: column; min-width: 0; }
+.rt-variant-km strong { font-size: 17px; font-weight: 600; line-height: 1.25; color: var(--ink); }
+.rt-delta { font-size: 12px; color: var(--ink-3); }
+.rt-stat { font-size: 13px; color: var(--ink-2); white-space: nowrap; text-align: right; }
+
+.rt-profile { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid var(--rule); }
+.rt-cap { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.rt-cap .tile-label { margin: 0; }
+.rt-meta { font-size: 12px; line-height: 1.4; color: var(--ink-3); white-space: nowrap; }
+.rt-profile > .rt-meta { margin-top: 8px; white-space: normal; }
+
+.rt-exports { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--rule); }
+.rt-exports > .tile-label { margin-bottom: 10px; }
+.rt-export-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 10px; }
+/* An odd one out (CCC, rides only) takes the whole row rather than leaving a hole. */
+.rt-export:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.rt-export .help { margin-top: 6px; font-size: 12.5px; }
+.rt-file { font-family: var(--mono); font-size: 11.5px; overflow-wrap: anywhere; }
+
+/* ── desk: panel left, map right, the map pinned under the masthead ──────────────────── */
+html[data-layout="desk"] body[data-route="routes"] .view { padding-bottom: 24px; }
+html[data-layout="desk"] .rt {
+  grid-template-columns: 380px minmax(0, 1fr);
+  grid-template-rows: auto auto auto 1fr;   /* the last row takes the slack, so nothing stretches */
+  column-gap: 28px; row-gap: 16px;
+  align-items: start;
+}
+html[data-layout="desk"] .rt > * { grid-column: 1; }
+/* Sticky at the offset it starts at (masthead + the view's top padding), so it never jumps. */
+html[data-layout="desk"] .rt > .rt-mapcol {
+  grid-column: 2; grid-row: 1 / -1;
+  position: sticky; top: calc(var(--top-h) + 28px);
+}
+html[data-layout="desk"] .rt .rt-map {
+  height: calc(100vh - var(--top-h) - 76px);
+  height: calc(100dvh - var(--top-h) - 76px);
+  min-height: 480px;
+}
+html[data-layout="desk"] .rt-head .sub { max-width: 34ch; }

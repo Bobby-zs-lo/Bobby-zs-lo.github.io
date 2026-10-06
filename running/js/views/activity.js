@@ -4,7 +4,7 @@
 import { html, raw, mount } from '../dom.js';
 import { api } from '../api.js';
 import { loading, errorState, busy } from '../ui.js';
-import { formatDate, formatDistance, formatDuration, formatPace, formatNumber, parsePace, paceRange, PACE_NAMES, dayLong, sportFamily } from '../format.js';
+import { formatDate, formatDistance, formatDuration, formatPace, formatNumber, parsePace, paceRange, PACE_NAMES, sportFamily } from '../format.js';
 import { decodePolyline } from '../polyline.js';
 import { createMap, addLine, addStart, fit, destroy } from '../map.js';
 import { lineSvg } from '../charts.js';
@@ -268,7 +268,7 @@ export async function render(el, ctx) {
     <header class="page-head page-head--nav">
       <a class="icon-btn" href="#/week?date=${a.date}" aria-label="Back to the week">${raw(BACK)}</a>
       <div class="page-head-mid">
-        <p class="eyebrow">${dayLong(a.date)} ${formatDate(a.date)}</p>
+        <p class="eyebrow">${formatDate(a.date, { long: true })}</p>
         <h1 class="h1--compact">${a.name || a.sportType}</h1>
       </div>
       <span></span>

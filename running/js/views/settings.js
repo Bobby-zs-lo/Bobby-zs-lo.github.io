@@ -7,6 +7,7 @@ import { clearParams, navigate } from '../router.js';
 import { formatMmSs, parseMmSs, formatTimestamp } from '../format.js';
 import { enablePush, permissionState, pushSupported, currentSubscription } from '../push.js';
 import { API_BASE, APP_VERSION } from '../config.js';
+import { currentPosition, formatLatLng } from '../geolocate.js';
 
 const NOTIFS = [
   ['morning', 'Morning', 'Today’s session at your chosen hour'],
@@ -14,6 +15,8 @@ const NOTIFS = [
   ['activity', 'After an activity', 'A note when Strava gets a new activity'],
   ['weekly', 'Weekly review', 'When the Monday review is in'],
 ];
+
+const homeText = home => (home ? `Home: ${formatLatLng([home.lat, home.lng])}` : 'Not set');
 
 const hourOptions = sel => Array.from({ length: 24 }, (_, h) =>
   html`<option value="${h}"${h === sel ? raw(' selected') : ''}>${String(h).padStart(2, '0')}:00</option>`);
@@ -117,6 +120,17 @@ export async function render(el, ctx) {
     </section>
 
     <section class="card">
+      <h2 class="section-title">Route start</h2>
+      <p class="status-line"><span class="status-dot${s.home ? ' is-on' : ''}" id="home-dot"></span><span id="home-status" class="num">${homeText(s.home)}</span></p>
+      <p class="help">Where new routes begin on the Routes page. Set it here while you are at home, or pick a point on the Routes map.</p>
+      <div class="actions">
+        <button type="button" class="btn" id="home-locate">Use my location</button>
+        <button type="button" class="btn" id="home-clear"${s.home ? '' : raw(' disabled')}>Clear</button>
+      </div>
+      <p class="form-error" id="home-error" role="alert" hidden></p>
+    </section>
+
+    <section class="card">
       <h2 class="section-title">Account</h2>
       <div class="actions">
         <button type="button" class="btn" id="logout">Sign out</button>
@@ -213,6 +227,39 @@ export async function render(el, ctx) {
       toast(ex.message, { kind: 'error', ms: 6000 });
     }
   }));
+
+  // Route start: the same PUT /api/settings as the form, one field at a time.
+  const homeError = $('#home-error'), homeClear = $('#home-clear');
+  const showHomeError = msg => { homeError.textContent = msg || ''; homeError.hidden = !msg; };
+  const saveHome = async home => {
+    const saved = await api.put('/api/settings', { home });
+    s.home = saved && 'home' in saved ? saved.home : home;
+    patchState({ settings: { ...s } });
+    $('#home-status').textContent = homeText(s.home);
+    $('#home-dot').classList.toggle('is-on', !!s.home);
+  };
+  $('#home-locate').addEventListener('click', async e => {
+    showHomeError('');
+    await busy(e.currentTarget, async () => {
+      try {
+        const [lat, lng] = await currentPosition();
+        await saveHome({ lat, lng });
+        toast('Home saved', { kind: 'ok' });
+      } catch (ex) { showHomeError(ex.message); }
+    });
+    homeClear.disabled = !s.home; // after busy(), so its own re-enable cannot undo this
+  });
+  homeClear.addEventListener('click', async () => {
+    showHomeError('');
+    await busy(homeClear, async () => {
+      try {
+        await saveHome(null);
+        toast('Home cleared', { kind: 'ok' });
+      } catch (ex) { showHomeError(ex.message); }
+    });
+    homeClear.disabled = !s.home;
+  });
+
   el.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', async () => {
     try { await navigator.clipboard.writeText(b.dataset.copy); toast('Copied'); }
     catch { toast('Copy failed. Long-press the text to copy it.', { kind: 'error' }); }
