@@ -94,6 +94,42 @@ const SUPERNOVA_LOOP = [
   { note: 'A',  oct: 3, dur: 0.5, type: 'tri' },
 ];
 
+// High-octane cyberpunk mech launch drive (~134bpm)
+const MECH_LOOP = [
+  { note: 'E', oct: 3, dur: 0.5, type: 'saw' },
+  { note: 'G', oct: 3, dur: 0.5, type: 'saw' },
+  { note: 'E', oct: 3, dur: 0.5, type: 'saw' },
+  { note: 'A', oct: 3, dur: 0.5, type: 'saw' },
+  { note: 'B', oct: 3, dur: 0.5, type: 'square' },
+  { note: 'A', oct: 3, dur: 0.5, type: 'square' },
+  { note: 'G', oct: 3, dur: 0.5, type: 'saw' },
+  { note: 'E', oct: 3, dur: 0.5, type: 'saw' },
+];
+
+// Atmospheric deep sea minor arpeggio (~78bpm)
+const ABYSS_LOOP = [
+  { note: 'A', oct: 2, dur: 1, type: 'tri' },
+  { note: 'E', oct: 3, dur: 1, type: 'tri' },
+  { note: 'C', oct: 4, dur: 1, type: 'tri' },
+  { note: 'E', oct: 3, dur: 1, type: 'tri' },
+  { note: 'F', oct: 2, dur: 1, type: 'tri' },
+  { note: 'C', oct: 3, dur: 1, type: 'tri' },
+  { note: 'A', oct: 3, dur: 1, type: 'tri' },
+  { note: 'C', oct: 3, dur: 1, type: 'tri' },
+];
+
+// Arcane clockwork harpsichord arpeggio (~112bpm)
+const ALCHEMY_LOOP = [
+  { note: 'D', oct: 4, dur: 0.5, type: 'square' },
+  { note: 'F', oct: 4, dur: 0.5, type: 'square' },
+  { note: 'A', oct: 4, dur: 0.5, type: 'square' },
+  { note: 'D', oct: 5, dur: 0.5, type: 'tri' },
+  { note: 'A', oct: 4, dur: 0.5, type: 'square' },
+  { note: 'F', oct: 4, dur: 0.5, type: 'square' },
+  { note: 'G', oct: 4, dur: 0.5, type: 'square' },
+  { note: 'E', oct: 4, dur: 0.5, type: 'square' },
+];
+
 /**
  * Compute logical stage dimensions from the current viewport.
  * Shorter side = 240 logical px; longer side = round(240 * ratio),
@@ -168,6 +204,9 @@ export async function renderRun(ctx, { themeId, durationMs }) {
              : themeId === 'bridge'    ? BRIDGE_LOOP
              : themeId === 'feeding'   ? FEAST_LOOP
              : themeId === 'supernova' ? SUPERNOVA_LOOP
+             : themeId === 'mech'      ? MECH_LOOP
+             : themeId === 'abyss'     ? ABYSS_LOOP
+             : themeId === 'alchemy'   ? ALCHEMY_LOOP
              : CASTLE_LOOP;
   const bpm  = themeId === 'monsterhp' ? 132
              : themeId === 'mouse'     ? 120
@@ -175,6 +214,9 @@ export async function renderRun(ctx, { themeId, durationMs }) {
              : themeId === 'bridge'    ? 118
              : themeId === 'feeding'   ? 120
              : themeId === 'supernova' ? 124
+             : themeId === 'mech'      ? 134
+             : themeId === 'abyss'     ? 78
+             : themeId === 'alchemy'   ? 112
              : 110;
 
   // Fast-forward: a scaled clock injected as the engine's `now`. The scene's
