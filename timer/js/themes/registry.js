@@ -32,21 +32,21 @@ registerScene(
   () => import('./supernova.js').then(m => m.SupernovaScene)
 );
 
-// Cyberpunk Mech Launch Theme:
+// Gundam Mech Launch Theme:
 registerScene(
-  { id: 'mech', name: 'Mech Launch', thumb: 'thumb_mech', comingSoon: false },
+  { id: 'mech', name: 'Gundam Mech', thumb: 'thumb_mech', comingSoon: false },
   () => import('./mech.js').then(m => m.MechScene)
 );
 
 // Deep Sea Leviathan Theme:
 registerScene(
-  { id: 'abyss', name: 'Deep Abyss', thumb: 'thumb_abyss', comingSoon: false },
+  { id: 'abyss', name: 'Leviathan Abyss', thumb: 'thumb_abyss', comingSoon: false },
   () => import('./abyss.js').then(m => m.AbyssScene)
 );
 
-// Arcane Alchemy Hourglass Theme:
+// Chrono-Warp Reverse Hourglass Theme:
 registerScene(
-  { id: 'alchemy', name: 'Alchymia', thumb: 'thumb_alchemy', comingSoon: false },
+  { id: 'alchemy', name: 'Chrono-Warp', thumb: 'thumb_alchemy', comingSoon: false },
   () => import('./alchemy.js').then(m => m.AlchemyScene)
 );
 
