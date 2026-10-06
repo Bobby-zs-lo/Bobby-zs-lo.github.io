@@ -26,6 +26,12 @@ registerScene({ id: 'volcano', name: 'Volcano Run',   thumb: 'thumb_volcano', co
 registerScene({ id: 'feeding', name: 'Poke Feast', thumb: 'thumb_feeding', comingSoon: false },
   () => import('./feast.js').then(m => m.FeastScene));
 
+// Celestial Supernova Theme:
+registerScene(
+  { id: 'supernova', name: 'Supernova', thumb: 'thumb_supernova', comingSoon: false },
+  () => import('./supernova.js').then(m => m.SupernovaScene)
+);
+
 // Phase-2 live theme (appended last so it shows last in the picker):
 registerScene(
   { id: 'mouse', name: 'Mouse Timer', thumb: 'thumb_mouse', comingSoon: false },

@@ -74,6 +74,26 @@ const FEAST_LOOP = [ // upbeat munchy bounce, ~120bpm
   { note:'C', oct:4, dur:1.5, type:'square' },
 ];
 
+// Ethereal synthwave cosmic arpeggio for Supernova theme (~124bpm)
+const SUPERNOVA_LOOP = [
+  { note: 'D',  oct: 3, dur: 0.5, type: 'tri' },
+  { note: 'A',  oct: 3, dur: 0.5, type: 'tri' },
+  { note: 'D',  oct: 4, dur: 0.5, type: 'square' },
+  { note: 'F',  oct: 4, dur: 0.5, type: 'square' },
+  { note: 'A',  oct: 4, dur: 0.5, type: 'square' },
+  { note: 'F',  oct: 4, dur: 0.5, type: 'square' },
+  { note: 'D',  oct: 4, dur: 0.5, type: 'square' },
+  { note: 'A',  oct: 3, dur: 0.5, type: 'tri' },
+  { note: 'A#', oct: 2, dur: 0.5, type: 'tri' },
+  { note: 'F',  oct: 3, dur: 0.5, type: 'tri' },
+  { note: 'A#', oct: 3, dur: 0.5, type: 'square' },
+  { note: 'D',  oct: 4, dur: 0.5, type: 'square' },
+  { note: 'F',  oct: 4, dur: 0.5, type: 'square' },
+  { note: 'D',  oct: 4, dur: 0.5, type: 'square' },
+  { note: 'C',  oct: 4, dur: 0.5, type: 'square' },
+  { note: 'A',  oct: 3, dur: 0.5, type: 'tri' },
+];
+
 /**
  * Compute logical stage dimensions from the current viewport.
  * Shorter side = 240 logical px; longer side = round(240 * ratio),
@@ -147,12 +167,14 @@ export async function renderRun(ctx, { themeId, durationMs }) {
              : themeId === 'dragon'    ? DRAGON_LOOP
              : themeId === 'bridge'    ? BRIDGE_LOOP
              : themeId === 'feeding'   ? FEAST_LOOP
+             : themeId === 'supernova' ? SUPERNOVA_LOOP
              : CASTLE_LOOP;
   const bpm  = themeId === 'monsterhp' ? 132
              : themeId === 'mouse'     ? 120
              : themeId === 'dragon'    ? 84
              : themeId === 'bridge'    ? 118
              : themeId === 'feeding'   ? 120
+             : themeId === 'supernova' ? 124
              : 110;
 
   // Fast-forward: a scaled clock injected as the engine's `now`. The scene's

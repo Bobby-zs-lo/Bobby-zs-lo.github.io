@@ -1,11 +1,11 @@
-const CACHE = 'pixel-timer-v14';
+const CACHE = 'pixel-timer-v15';
 const ASSETS = [
   './', './index.html', './css/shell.css', './css/crt.css',
   './js/main.js', './js/timer.js', './js/ffclock.js', './js/audio.js', './js/input.js',
   './js/pixelfont.js', './js/palette.js', './js/scene.js',
   './js/themes/registry.js', './js/themes/castle.js', './js/themes/monsterhp.js',
   './js/themes/dragon.js', './js/themes/mouse.js', './js/themes/bridge.js',
-  './js/themes/feast.js',
+  './js/themes/feast.js', './js/themes/supernova.js',
   './js/screens/home.js', './js/screens/picker.js', './js/screens/run.js',
   './js/screens/done.js', './manifest.webmanifest',
   './assets/castle.png', './assets/castle.json',
@@ -14,11 +14,12 @@ const ASSETS = [
   './assets/mouse.png', './assets/mouse.json',
   './assets/bridge.png', './assets/bridge.json',
   './assets/feeding.png', './assets/feeding.json',
+  './assets/supernova.png', './assets/supernova.json',
   './assets/icon-192.png', './assets/icon-512.png', './assets/icon-maskable.png',
   './assets/thumb_castle.png', './assets/thumb_monsterhp.png',
   './assets/thumb_dragon.png', './assets/thumb_bridge.png',
   './assets/thumb_volcano.png', './assets/thumb_feeding.png',
-  './assets/thumb_mouse.png',
+  './assets/thumb_supernova.png', './assets/thumb_mouse.png',
   './assets/thumb_lock.png',
 ];
 
