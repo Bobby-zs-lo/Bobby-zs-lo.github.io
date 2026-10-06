@@ -1,10 +1,17 @@
 // Builds the JSON fixtures used by smoke.playwright.mjs (shapes from spec 4.2/4.6).
 //   node running/tests/fixtures/build-fixtures.mjs
 // Plan: start Sat 2026-10-10, Berlin Marathon Sun 2027-09-26. "Today" is Tue 2026-10-13.
+//
+// Everything here is invented (the app shows Strava data, which must never reach an AI).
+// The original fixtures are unchanged; history.json, streams.json, routes-generate.json and
+// health-year.json are generated from one seeded random source (see synthetic.mjs), so
+// re-running this script reproduces every file byte for byte.
 import { writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { addDays, diffDays, mondayOf } from '../../js/format.js';
+import { makeRandom } from './synthetic-geo.mjs';
+import { buildHistory, buildStreams, buildRoutesGenerate, buildHealthYear } from './synthetic.mjs';
 
 const DIR = dirname(fileURLToPath(import.meta.url));
 const TODAY = '2026-10-13';
@@ -206,7 +213,19 @@ const state = {
   healthLastSync: '2026-10-13T06:12:00Z',
 };
 
+// ── synthetic: a year of history, one run's streams, route variants, a year of health ──
+const HISTORY_FROM = '2025-10-13';
+const rng = makeRandom(20261006);
+const history = buildHistory({ rng, existing: acts, from: HISTORY_FROM, planStart: START });
+const streams = buildStreams(rng);
+const routesGenerate = buildRoutesGenerate(rng);
+const healthYear = buildHealthYear({
+  rng, history, from: HISTORY_FROM, to: TODAY,
+  fixedExercise: new Map(healthRows.filter(r => r.exercise.length).map(r => [r.date, r.exercise])),
+});
+
 const out = { 'state.json': state, 'plan.json': plan, 'week-2026-10-12.json': week, 'health.json': healthRows,
-  'reviews.json': reviews, 'proposals.json': proposals, 'changesets.json': changesets, 'activities.json': acts };
+  'reviews.json': reviews, 'proposals.json': proposals, 'changesets.json': changesets, 'activities.json': acts,
+  'history.json': history, 'streams.json': streams, 'routes-generate.json': routesGenerate, 'health-year.json': healthYear };
 for (const [f, v] of Object.entries(out)) writeFileSync(join(DIR, f), JSON.stringify(v, null, 1) + '\n');
-console.log(`fixtures written (plan: ${weeks.length} weeks, N=${N})`);
+console.log(`fixtures written (plan: ${weeks.length} weeks, N=${N}; history: ${history.length} activities, health-year: ${healthYear.length} days)`);

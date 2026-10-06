@@ -28,6 +28,11 @@ const SHELL = [
   './js/views/common.js', './js/views/login.js', './js/views/today.js', './js/views/week.js',
   './js/views/plan.js', './js/views/health.js', './js/views/reviews.js', './js/views/settings.js',
   './js/views/workout.js', './js/views/activity.js',
+  // Desk layout (≥ 1100 px). Map tiles, Leaflet (cdnjs) and route requests are cross-origin
+  // and never reach the cache: the fetch handler returns early for other origins.
+  './css/desk.css', './css/overview.css', './css/map.css', './css/routes.css', './js/layout.js', './js/polyline.js', './js/geo.js',
+  './js/analytics.js', './js/charts.js', './js/map.js', './js/geolocate.js',
+  './js/views/overview.js', './js/views/tiles.js', './js/views/overview-model.js', './js/views/tiles-charts.js', './js/views/tiles-table.js', './js/views/tiles-map.js', './js/views/routes.js', './js/views/routes-ui.js',
   './assets/icon-192.png', './assets/icon-512.png', './assets/icon-maskable.png', './assets/badge-96.png',
 ];
 

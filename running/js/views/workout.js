@@ -2,8 +2,10 @@
 import { html, raw, mount } from '../dom.js';
 import { api } from '../api.js';
 import { getPlan, getPaces } from '../store.js';
+import { buildHash } from '../router.js';
+import { isDesk } from '../layout.js';
 import { loading, errorState, statusChip, toast, busy } from '../ui.js';
-import { formatDate, formatDistance, formatDuration, workoutAmount, paceRange, PACE_NAMES, PHASE_NAMES, dayLong } from '../format.js';
+import { formatDate, formatDistance, formatDuration, workoutAmount, paceRange, PACE_NAMES, PHASE_NAMES } from '../format.js';
 import { SPORT_NAMES, activityRow, segmentList, segmentAmount } from './common.js';
 import { renderMarkdown } from '../markdown.js';
 
@@ -26,7 +28,7 @@ function header(w, week) {
   return html`<header class="page-head page-head--nav">
     <a class="icon-btn" href="#/week?date=${w.date}" aria-label="Back to the week">${raw('<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" focusable="false"><path d="M15 18l-6-6 6-6"/></svg>')}</a>
     <div class="page-head-mid">
-      <p class="eyebrow">${dayLong(w.date)} ${formatDate(w.date)}</p>
+      <p class="eyebrow">${formatDate(w.date, { long: true })}</p>
       <h1 class="h1--compact">${w.title}</h1>
     </div>
     <span></span>
@@ -44,6 +46,12 @@ function facts(w, paces) {
   return html`<dl class="kv kv--wide">
     ${rows.map(([k, v]) => html`<dt>${k}</dt><dd>${v == null ? statusChip(w.status) : html`<span class="num">${v}</span>`}</dd>`)}
   </dl>`;
+}
+
+/** A run with a distance can seed the route generator; routes are a desk view, so a phone is not offered one. */
+function routeLink(w) {
+  if (!isDesk() || w.sport !== 'run' || !(w.distanceKm > 0)) return '';
+  return html`<p><a class="link" href="${buildHash('routes', { km: w.distanceKm, from: w.id })}">Make a route for this run →</a></p>`;
 }
 
 function comparison(w, matched) {
@@ -96,6 +104,7 @@ export async function render(el, ctx) {
       ${workoutAmount(w) ? html`<p class="workout-amount num">${workoutAmount(w)}</p>` : ''}
       ${w.details ? html`<div class="workout-details md">${raw(renderMarkdown(w.details))}</div>` : ''}
       ${facts(w, paces)}
+      ${routeLink(w)}
     </article>
 
     ${w.segments && w.segments.length ? html`<section class="card">

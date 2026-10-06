@@ -11,6 +11,17 @@ test('parses paths and defaults to today', () => {
   assert.equal(parseHash('#/login').path, 'login');
 });
 
+test('desk routes parse as known routes', () => {
+  for (const p of ['overview', 'routes']) {
+    const r = parseHash(`#/${p}`);
+    assert.equal(r.path, p);
+    assert.equal(r.known, true);
+  }
+  const r = parseHash('#/routes?km=10');
+  assert.equal(r.path, 'routes');
+  assert.equal(r.params.km, '10');
+});
+
 test('query parameters', () => {
   const r = parseHash('#/settings?strava=ok');
   assert.equal(r.path, 'settings');

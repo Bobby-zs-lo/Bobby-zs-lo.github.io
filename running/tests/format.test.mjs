@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   addDays, mondayOf, weekdayIndex, weekDates, diffDays, formatDate, formatWeekRange,
   formatPace, parsePace, paceRange, formatDistance, formatDuration, formatMmSs, parseMmSs,
-  workoutAmount, runKm, sportFamily, formatTimestamp,
+  workoutAmount, runKm, sportFamily, formatTimestamp, copenhagenToday,
 } from '../js/format.js';
 
 test('Danish week: Monday is day 0, Sunday day 6', () => {
@@ -21,6 +21,13 @@ test('date arithmetic crosses months, years and DST without drift', () => {
   assert.equal(addDays('2027-01-01', -1), '2026-12-31');
   assert.equal(diffDays('2026-10-13', '2027-09-26'), 348);
   assert.equal(mondayOf('2027-09-26'), '2027-09-20');
+});
+
+test('copenhagenToday: the Copenhagen date, which runs ahead of UTC around midnight', () => {
+  assert.equal(copenhagenToday(new Date('2026-10-05T22:30:00Z')), '2026-10-06'); // 00:30 CEST
+  assert.equal(copenhagenToday(new Date('2026-12-31T22:59:00Z')), '2026-12-31'); // 23:59 CET
+  assert.equal(copenhagenToday(new Date('2026-12-31T23:00:00Z')), '2027-01-01'); // midnight CET
+  assert.match(copenhagenToday(), /^\d{4}-\d{2}-\d{2}$/);
 });
 
 test('en-GB date text', () => {

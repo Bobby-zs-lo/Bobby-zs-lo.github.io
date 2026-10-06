@@ -30,6 +30,13 @@ export function weekDates(s) {
 export function diffDays(a, b) {
   return Math.round((parseDate(b) - parseDate(a)) / 86400000);
 }
+/**
+ * The date in Copenhagen, for a view whose /api/state (which carries the server's `today`)
+ * failed. Not toISODate(new Date()): that is the UTC date, a day behind until 01:00 or 02:00.
+ */
+export function copenhagenToday(now = new Date()) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Copenhagen' }).format(now);
+}
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const DAYS_LONG = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];

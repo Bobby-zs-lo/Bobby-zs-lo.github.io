@@ -1,0 +1,278 @@
+/* Running — desk layout (≥ 1100 px; js/layout.js sets html[data-layout="desk"]).
+   An editorial instrument panel: the phone's paper / ink / red tokens and its three faces
+   (Fraunces numerals, Inter text, JetBrains Mono labels) set with Swiss discipline: hairline
+   rules instead of heavy cards, one strong left rail, a rhythmic 12-column grid, tabular numbers.
+   This file is the shell (masthead, rail, view column) and the grammar the desk views share:
+   tiles, the filter bar, chips and the js/charts.js charts. Each view's own rules live beside it:
+   css/overview.css, css/routes.css, and css/map.css for the maps.
+   Every rule is scoped to html[data-layout="desk"] so the phone renders exactly as before; the
+   one exception hides the desk-only tabs, which must never show in the phone's tab bar. */
+
+/* display:none also drops them out of the phone bar's five grid columns. */
+.tab--desk { display: none; }
+
+html[data-layout="desk"] {
+  --rail-w: 232px;
+  --gutter: 32px;            /* also the bleed of .day.is-today / .wk.is-current highlights */
+  --view-w: 760px;           /* reading column for the phone-born views */
+  --dash-w: 1440px;          /* Overview and Routes */
+  --rail-bg: color-mix(in srgb, var(--paper-2) 55%, var(--paper));
+  --hover-wash: color-mix(in srgb, var(--ink) 5%, transparent);
+
+  /* Training-zone ramp, easy → repetition: accent mixed into paper in six even-ish steps. */
+  --zone-E: color-mix(in srgb, var(--accent) 16%, var(--paper));
+  --zone-M: color-mix(in srgb, var(--accent) 32%, var(--paper));
+  --zone-HM: color-mix(in srgb, var(--accent) 48%, var(--paper));
+  --zone-T: color-mix(in srgb, var(--accent) 64%, var(--paper));
+  --zone-I: color-mix(in srgb, var(--accent) 82%, var(--paper));
+  --zone-R: var(--accent);
+
+  /* Calendar heat map: empty day, then four distance bands (charts.js LEVEL_FLOORS_KM). */
+  --cal-0: var(--paper-2);
+  --cal-1: color-mix(in srgb, var(--accent) 25%, var(--paper-2));
+  --cal-2: color-mix(in srgb, var(--accent) 45%, var(--paper-2));
+  --cal-3: color-mix(in srgb, var(--accent) 70%, var(--paper-2));
+  --cal-4: var(--accent);
+}
+
+@media (prefers-color-scheme: dark) {
+  /* --paper-2 sits within a shade of --card in dark mode, so empty days would vanish. */
+  html[data-layout="desk"] { --cal-0: color-mix(in srgb, var(--ink) 7%, var(--paper-2)); }
+}
+
+/* ── shell: masthead across the top, rail on the left, view on the right ─────────────── */
+html[data-layout="desk"] #app {
+  display: grid;
+  grid-template-columns: var(--rail-w) minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  min-height: 100vh;
+  min-height: 100dvh;
+  /* The rail's tint and hairline are painted on the grid, not the sticky <nav>, so the column
+     runs the full page height however far the view scrolls (and in full-page screenshots). */
+  background: linear-gradient(to right,
+    var(--rail-bg) 0 calc(var(--rail-w) - 1px), var(--rule) 0 var(--rail-w), transparent 0);
+}
+
+/* The masthead shares the rail's column, so the brand sits at the top of the rail. */
+html[data-layout="desk"] .top {
+  grid-column: 1 / -1; grid-row: 1;
+  display: grid;
+  grid-template-columns: var(--rail-w) minmax(0, 1fr) auto auto;
+  align-items: center; column-gap: 12px;
+  height: var(--top-h);
+  padding: 0 var(--gutter) 0 0;
+}
+html[data-layout="desk"] .brand {
+  grid-column: 1; align-self: stretch;
+  margin: 0; padding: 0 24px;
+  font-size: 24px;
+  background: var(--rail-bg);
+  border-right: 1px solid var(--rule);
+}
+html[data-layout="desk"] .offline-badge { grid-column: 3; }
+html[data-layout="desk"] .gear { grid-column: 4; }
+
+/* The rail: sticky under the masthead and as tall as the window, so the links never scroll away. */
+html[data-layout="desk"] .tabs {
+  grid-column: 1; grid-row: 2;
+  position: sticky; top: var(--top-h); align-self: start; z-index: 10;
+  left: auto; right: auto; bottom: auto; width: auto; transform: none;
+  display: flex; flex-direction: column; gap: 2px;
+  height: calc(100vh - var(--top-h));
+  height: calc(100dvh - var(--top-h));
+  padding: 22px 0 24px;
+  overflow-y: auto;
+  background: transparent;   /* #app paints the column */
+  border: 0;
+}
+/* The nav's aria-label already says "Sections"; the empty alt text keeps it from being read twice. */
+html[data-layout="desk"] .tabs::before {
+  content: 'Sections' / '';
+  display: block; padding: 0 24px 12px;
+  font-family: var(--mono); font-size: 10.5px; font-weight: 500; line-height: 1;
+  letter-spacing: 1.8px; text-transform: uppercase; color: var(--ink-3);
+}
+html[data-layout="desk"] .tab {
+  flex-direction: row; justify-content: flex-start; gap: 12px; flex: none;
+  height: 40px; min-height: 40px; padding: 0 20px 0 24px;
+  font-size: 14px; font-weight: 500; letter-spacing: 0; color: var(--ink-2);
+  transition: background-color .15s ease, color .15s ease;
+}
+html[data-layout="desk"] .tab--desk { display: flex; }
+html[data-layout="desk"] .tab svg { width: 18px; height: 18px; flex: none; color: var(--ink-3); transition: color .15s ease; }
+html[data-layout="desk"] .tab:hover { color: var(--ink); background: var(--hover-wash); }
+html[data-layout="desk"] .tab:hover svg { color: var(--ink-2); }
+html[data-layout="desk"] .tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 0; }
+html[data-layout="desk"] .tab.is-active { color: var(--ink); font-weight: 600; background: var(--accent-soft); }
+html[data-layout="desk"] .tab.is-active svg { color: var(--accent); }
+/* The phone's top indicator becomes a 2 px bar on the rail's left edge. */
+html[data-layout="desk"] .tab.is-active::before { top: 0; bottom: 0; left: 0; right: auto; width: 2px; height: auto; }
+
+/* The view: a 760 px reading column, or the full instrument width for Overview and Routes. */
+html[data-layout="desk"] .view {
+  grid-column: 2; grid-row: 2;
+  width: 100%; max-width: var(--view-w);
+  margin: 0 auto;
+  padding: 36px var(--gutter) 72px;   /* no tab bar to clear at the bottom */
+}
+html[data-layout="desk"] body:is([data-route="overview"], [data-route="routes"]) .view {
+  max-width: var(--dash-w);
+  padding-top: 28px;
+}
+
+/* Toasts sit at the foot of the view column, clear of the rail. */
+html[data-layout="desk"] .toasts { left: calc(var(--rail-w) + var(--gutter)); right: var(--gutter); bottom: 24px; }
+
+/* Signed out: no masthead or rail, the login card centres on the whole page.
+   (These repeat running.css because the desk display values above outrank it.) */
+html[data-layout="desk"] body[data-route="login"] :is(.top, .tabs) { display: none; }
+html[data-layout="desk"] body[data-route="login"] #app { background: none; }
+html[data-layout="desk"] body[data-route="login"] .view { grid-column: 1 / -1; }
+/* Waiting for auth: keep the rail's frame so nothing jumps, but no links until we know who it is. */
+html[data-layout="desk"] body[data-route="boot"] .tabs { display: flex; }
+html[data-layout="desk"] body[data-route="boot"] .tabs > *,
+html[data-layout="desk"] body[data-route="boot"] .tabs::before { visibility: hidden; }
+
+/* ── dashboard grammar (Overview, Routes) ────────────────────────────────────────────── */
+html[data-layout="desk"] .dash {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
+}
+html[data-layout="desk"] .tile {
+  grid-column: span 12;      /* full width unless a span says otherwise */
+  min-width: 0;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+html[data-layout="desk"] .tile > * + * { margin-top: 10px; }
+html[data-layout="desk"] .tile--span-2 { grid-column: span 2; }
+html[data-layout="desk"] .tile--span-3 { grid-column: span 3; }
+html[data-layout="desk"] .tile--span-4 { grid-column: span 4; }
+html[data-layout="desk"] .tile--span-6 { grid-column: span 6; }
+html[data-layout="desk"] .tile--span-8 { grid-column: span 8; }
+html[data-layout="desk"] .tile--span-12 { grid-column: span 12; }
+/* Under 1280 px a 2-column tile is ~130 px: too narrow for a 32 px figure and its unit. */
+@media (max-width: 1279.98px) {
+  html[data-layout="desk"] .tile--span-2 { grid-column: span 4; }
+}
+
+html[data-layout="desk"] .tile-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px; min-width: 0;
+}
+html[data-layout="desk"] .tile-label {
+  font-family: var(--mono); font-size: 11px; font-weight: 500; line-height: 1.4;
+  letter-spacing: 1.8px; text-transform: uppercase; color: var(--ink-3);
+  min-width: 0; overflow-wrap: anywhere;
+}
+html[data-layout="desk"] .tile-meta {
+  font-size: 12px; line-height: 1.4; color: var(--ink-3); white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+html[data-layout="desk"] .kpi {
+  font-family: var(--serif); font-size: 32px; font-weight: 500; line-height: 1;
+  letter-spacing: -0.6px; color: var(--ink);
+  font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1;
+}
+html[data-layout="desk"] .kpi .unit {
+  font-family: var(--sans); font-size: 14px; font-weight: 500; letter-spacing: 0;
+  color: var(--ink-3); margin-left: 3px;
+}
+html[data-layout="desk"] .kpi-sub {
+  font-size: 12px; line-height: 1.4; color: var(--ink-3); margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+}
+html[data-layout="desk"] .tile-empty {
+  font-size: 13px; line-height: 1.45; color: var(--ink-3); padding: 4px 0;
+}
+html[data-layout="desk"] .tile-empty::before { content: '— '; }
+
+/* Filter bar: sticks under the masthead; each child is a chip group, divided by a hairline. */
+html[data-layout="desk"] .filters {
+  position: sticky; top: var(--top-h); z-index: 15;
+  display: flex; flex-wrap: wrap; align-items: center; row-gap: 8px;
+  margin-left: calc(-1 * var(--gutter)); margin-right: calc(-1 * var(--gutter));
+  padding: 10px var(--gutter);
+  background: color-mix(in srgb, var(--paper) 94%, transparent);
+  -webkit-backdrop-filter: saturate(1.4) blur(10px);
+  backdrop-filter: saturate(1.4) blur(10px);
+  border-bottom: 1px solid var(--rule);
+}
+html[data-layout="desk"] .filters > * { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+html[data-layout="desk"] .filters > * + * { margin-left: 16px; padding-left: 16px; border-left: 1px solid var(--rule); }
+html[data-layout="desk"] .filters-label {
+  font-family: var(--mono); font-size: 10.5px; font-weight: 500; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--ink-3); margin-right: 4px;
+}
+
+html[data-layout="desk"] .chip-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 30px; padding: 4px 12px;
+  border: 1px solid var(--edge); border-radius: 99px;
+  background: transparent; color: var(--ink-2);
+  font-size: 13px; font-weight: 500; line-height: 1.2; white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+html[data-layout="desk"] .chip-btn:hover { color: var(--ink); border-color: var(--ink-2); background: var(--hover-wash); }
+html[data-layout="desk"] .chip-btn:active { transform: translateY(1px); }
+html[data-layout="desk"] .chip-btn[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+html[data-layout="desk"] .chip-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 99px; }
+html[data-layout="desk"] .chip-btn[disabled] { opacity: .45; cursor: not-allowed; }
+
+/* ── charts (inline SVG from js/charts.js; it writes class names only) ──────────────── */
+html[data-layout="desk"] .chart { width: 100%; height: auto; display: block; overflow: visible; }
+html[data-layout="desk"] .chart .grid { stroke: var(--rule); stroke-width: 1; vector-effect: non-scaling-stroke; shape-rendering: crispEdges; }
+/* text-anchor is set in the markup per chart; never here. */
+html[data-layout="desk"] .chart .axis { font: 500 10px var(--mono); fill: var(--ink-3); font-variant-numeric: tabular-nums; }
+html[data-layout="desk"] .chart-empty .axis { font-size: 12px; }
+
+/* Bars: planned is a quiet ink wash, actual is the accent. A week is a pressable group. */
+html[data-layout="desk"] .chart .bar--planned { fill: color-mix(in srgb, var(--ink) 14%, transparent); }
+html[data-layout="desk"] .chart .bar--actual { fill: var(--accent); }
+html[data-layout="desk"] .chart .bar { transition: fill .15s ease; }
+html[data-layout="desk"] .chart .bars { cursor: pointer; outline: none; transition: opacity .15s ease; }
+html[data-layout="desk"] .chart .bars:hover .bar--planned { fill: color-mix(in srgb, var(--ink) 22%, transparent); }
+html[data-layout="desk"] .chart .bars.is-selected .bar--planned { fill: color-mix(in srgb, var(--ink) 30%, transparent); }
+/* "Stronger" = more contrast with the paper: darker red on light, brighter coral on dark. */
+html[data-layout="desk"] .chart .bars.is-selected .bar--actual { fill: color-mix(in srgb, var(--accent) 72%, var(--ink)); }
+/* An outline on <g> may not paint, so the focus ring is drawn on the bars themselves. */
+html[data-layout="desk"] .chart .bars:focus-visible .bar { stroke: var(--accent); stroke-width: 2; vector-effect: non-scaling-stroke; }
+html[data-layout="desk"] .chart .bars:focus-visible .bar--actual { stroke: var(--ink); }
+html[data-layout="desk"] .chart--bars.has-selection .bars:not(.is-selected) { opacity: .45; }
+html[data-layout="desk"] .chart--bars.has-selection .bars:not(.is-selected):hover,
+html[data-layout="desk"] .chart--bars.has-selection .bars:not(.is-selected):focus-visible { opacity: .8; }
+
+/* Lines: round caps, because an isolated point is drawn as a zero-length segment. */
+html[data-layout="desk"] .chart .line {
+  fill: none; stroke: var(--accent); stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke;
+}
+html[data-layout="desk"] .chart .line--muted { stroke: var(--ink-3); stroke-width: 1.5; }
+
+/* Zone shares (stackedBarSvg's .zone rects; not .seg, which running.css uses for the check-in's
+   segmented control). Fill for SVG parts; background so an HTML legend swatch can reuse the class.
+   A --card hairline between parts keeps neighbouring steps of the ramp apart. */
+/* :where keeps the fallback at the same weight as .zone--*, so the zone classes below win. */
+html[data-layout="desk"] :where(.chart) .zone { fill: var(--paper-2); stroke: var(--card); stroke-width: 1; vector-effect: non-scaling-stroke; }
+html[data-layout="desk"] .zone--E { fill: var(--zone-E); background-color: var(--zone-E); }
+html[data-layout="desk"] .zone--M { fill: var(--zone-M); background-color: var(--zone-M); }
+html[data-layout="desk"] .zone--HM { fill: var(--zone-HM); background-color: var(--zone-HM); }
+html[data-layout="desk"] .zone--T { fill: var(--zone-T); background-color: var(--zone-T); }
+html[data-layout="desk"] .zone--I { fill: var(--zone-I); background-color: var(--zone-I); }
+html[data-layout="desk"] .zone--R { fill: var(--zone-R); background-color: var(--zone-R); }
+
+html[data-layout="desk"] .cal--0 { fill: var(--cal-0); background-color: var(--cal-0); }
+html[data-layout="desk"] .cal--1 { fill: var(--cal-1); background-color: var(--cal-1); }
+html[data-layout="desk"] .cal--2 { fill: var(--cal-2); background-color: var(--cal-2); }
+html[data-layout="desk"] .cal--3 { fill: var(--cal-3); background-color: var(--cal-3); }
+html[data-layout="desk"] .cal--4 { fill: var(--cal-4); background-color: var(--cal-4); }
+
+html[data-layout="desk"] .chart .profile {
+  fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5;
+  stroke-linejoin: round; vector-effect: non-scaling-stroke;
+}

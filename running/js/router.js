@@ -1,6 +1,8 @@
 // Hash router: '#/settings?strava=ok' → { path: 'settings', params: { strava: 'ok' } }
 
-export const ROUTES = ['login', 'today', 'week', 'plan', 'health', 'reviews', 'settings', 'workout', 'activity'];
+// overview and routes are desk views (js/layout.js); they still parse on a phone, so a link
+// opened on a narrow screen renders instead of bouncing to Today.
+export const ROUTES = ['login', 'today', 'week', 'plan', 'health', 'reviews', 'settings', 'workout', 'activity', 'overview', 'routes'];
 export const DEFAULT_ROUTE = 'today';
 
 export function parseHash(hash) {

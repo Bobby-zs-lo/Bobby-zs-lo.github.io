@@ -1,5 +1,7 @@
-// App shell: header, bottom tabs, offline badge, toasts, hash routing.
-import { parseHash, navigate } from './router.js';
+// App shell: header, tabs (a bottom bar on a phone, a left rail on a desk), offline badge,
+// toasts, hash routing.
+import { parseHash, buildHash, navigate } from './router.js';
+import { initLayout, isDesk } from './layout.js';
 import { netStatus, clearApiCache } from './api.js';
 import { initAuth, onUser, currentUser } from './auth.js';
 import { invalidate } from './store.js';
@@ -18,9 +20,27 @@ const VIEWS = {
   settings: () => import('./views/settings.js'),
   workout: () => import('./views/workout.js'),
   activity: () => import('./views/activity.js'),
+  overview: () => import('./views/overview.js'),
+  routes: () => import('./views/routes.js'),
 };
-const TABS = [['today', 'Today'], ['week', 'Week'], ['plan', 'Plan'], ['health', 'Health'], ['reviews', 'Reviews']];
-const TITLES = { login: 'Sign in', today: 'Today', week: 'Week', plan: 'Plan', health: 'Health', reviews: 'Reviews', settings: 'Settings', workout: 'Session', activity: 'Activity' };
+// [route, label, deskOnly]. Desk-only tabs are always in the DOM but hidden by css/desk.css on a
+// phone, so the bottom bar keeps its five columns.
+const TABS = [
+  ['overview', 'Overview', true], ['today', 'Today'], ['week', 'Week'], ['plan', 'Plan'],
+  ['routes', 'Routes', true], ['health', 'Health'], ['reviews', 'Reviews'],
+];
+const TITLES = {
+  login: 'Sign in', today: 'Today', week: 'Week', plan: 'Plan', health: 'Health', reviews: 'Reviews',
+  settings: 'Settings', workout: 'Session', activity: 'Activity', overview: 'Overview', routes: 'Routes',
+};
+
+// Where a bare URL, an unknown route and a fresh sign-in land: the dashboard on a desk, the day
+// on a phone. The manifest's start_url is a bare './' for the same reason.
+const homeRoute = () => (isDesk() ? 'overview' : 'today');
+const BARE_HASHES = new Set(['', '#', '#/']);
+
+// Before the shell mounts, so the first paint already has the right data-layout.
+initLayout();
 
 const root = document.getElementById('app');
 mount(root, html`
@@ -32,13 +52,24 @@ mount(root, html`
   </header>
   <main id="view" class="view" tabindex="-1"></main>
   <nav class="tabs" id="tabs" aria-label="Sections">
-    ${TABS.map(([k, label]) => html`<a class="tab" href="#/${k}" data-tab="${k}">${raw(ICONS[k])}<span>${label}</span></a>`)}
+    ${TABS.map(([k, label, desk]) => html`<a class="${desk ? 'tab tab--desk' : 'tab'}" href="#/${k}" data-tab="${k}">${raw(ICONS[k])}<span>${label}</span></a>`)}
   </nav>
   <div class="toasts" id="toasts"></div>
 `);
 
 const view = document.getElementById('view');
 const offlineEl = document.getElementById('offline');
+const brand = document.querySelector('.brand');
+
+// The brand is the home link, so it follows the layout when the window crosses the breakpoint.
+function syncBrand() {
+  const home = homeRoute();
+  brand.setAttribute('href', `#/${home}`);
+  brand.setAttribute('aria-label', `Running, ${home}`);
+}
+window.addEventListener('layout:change', syncBrand);
+syncBrand();
+
 let renderSeq = 0;
 let cleanup = null;
 
@@ -65,7 +96,7 @@ function waitForAuth() {
 }
 
 async function route() {
-  const r = parseHash(location.hash);
+  let r = parseHash(location.hash);
   if (!authResolved) {
     const seq = ++renderSeq;
     document.body.dataset.route = 'boot';
@@ -78,8 +109,13 @@ async function route() {
   }
   const authed = !!currentUser();
   if (!authed && r.path !== 'login') return navigate('login');
-  if (authed && r.path === 'login') return navigate('today');
-  if (!r.known) return navigate('today');
+  if (authed && r.path === 'login') return navigate(homeRoute());
+  // A bare URL or an unknown route opens this layout's home view. replaceState, not navigate: a
+  // new history entry would send Back to the old URL, which would redirect straight forward again.
+  if (BARE_HASHES.has(location.hash) || !r.known) {
+    history.replaceState(null, '', buildHash(homeRoute()));
+    r = parseHash(location.hash);
+  }
 
   document.body.dataset.route = r.path;
   document.title = `${TITLES[r.path]} · Running`;
@@ -118,7 +154,7 @@ onUser(user => {
   if (!authResolved) return; // the first route() is still waiting and will decide
   const { path } = parseHash(location.hash);
   if (!user && path !== 'login') { clearApiCache(); navigate('login'); }
-  else if (user && path === 'login') navigate('today');
+  else if (user && path === 'login') navigate(homeRoute());
 });
 updateOffline();
 
