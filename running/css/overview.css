@@ -5,7 +5,7 @@
    Two registers: the KPI band sits on the paper under a strong ink rule, like a newspaper's
    figures box; every chart is a card. Inside a card the rhythm is label, lede figure, chart,
    footnote, so the eye lands on the number before the picture. Accent means "you, actually";
-   muted ink means plan or reference. */
+   muted ink means plan or reference. Customise mode's rules are css/overview-edit.css. */
 
 /* ── header and focus chip ── */
 html[data-layout="desk"] .ov-head {
@@ -469,6 +469,7 @@ html[data-layout="phone"] .ov-mapbox { position: relative; height: 260px; }
 html[data-layout="phone"] .ov-mapbox > .map { position: absolute; inset: 0; height: auto; min-height: 0; }
 html[data-layout="phone"] .ov-mapnote { position: absolute; inset: 0; z-index: 1; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--ink-3); pointer-events: none; }
 html[data-layout="phone"] .ov-enlarge { display: none; } /* focus mode is the desk's */
+html[data-layout="phone"] .ov-custom { display: none; } /* so is customise mode (css/overview-edit.css) */
 html[data-layout="phone"] .ov :is(.ov-health, .ov-zones, .ov-segs, .ov-then ol) { list-style: none; }
 html[data-layout="phone"] .ov-hrow { display: grid; grid-template-columns: 80px 100px minmax(0, 1fr); align-items: center; gap: 10px; }
 html[data-layout="phone"] .ov-table-wrap { overflow-x: auto; }

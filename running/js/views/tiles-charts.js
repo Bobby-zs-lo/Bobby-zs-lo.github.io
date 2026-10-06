@@ -93,6 +93,20 @@ export function volumeTile(m, id, width) {
     ${weekReadout(m)}`;
 }
 
+/**
+ * The week a click on the volume chart means. A week's bars are a few pixels wide on a
+ * year-long chart, with a gap between plan and actual: a click anywhere in the week's column
+ * counts, resolved to the nearest bar group (null outside every column).
+ */
+export function nearestBar(svg, x) {
+  const groups = [...svg.querySelectorAll('.bars[data-key]')];
+  const centres = groups.map(g => { const r = g.getBoundingClientRect(); return r.left + r.width / 2; });
+  const slot = centres.length > 1 ? Math.abs(centres[1] - centres[0]) : Infinity;
+  let best = -1;
+  centres.forEach((c, i) => { if (best < 0 || Math.abs(c - x) < Math.abs(centres[best] - x)) best = i; });
+  return best >= 0 && Math.abs(centres[best] - x) <= slot / 2 + 1 ? groups[best] : null;
+}
+
 // --- pace zones ----------------------------------------------------------------
 
 export function zonesTile(m, id, width) {

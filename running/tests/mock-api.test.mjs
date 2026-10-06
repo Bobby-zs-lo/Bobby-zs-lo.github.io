@@ -246,3 +246,27 @@ test('preview: the fake auth is injected before the module script', () => {
   assert.ok(out.includes('navigator.serviceWorker.register'));
   assert.throws(() => injectPreview('<p>no scripts</p>'), /module <script>/);
 });
+
+test('mock: a saved dashboard layout persists and is validated like the backend', async () => {
+  const api = newApi();
+  assert.equal((await call(api, 'GET', '/api/state')).json.settings.dashboard ?? null, null);
+  const layout = { version: 1, tiles: [{ id: 'heatmap', span: 8, hidden: false }, { id: 'kpi-race', span: 2, hidden: true }] };
+  assert.equal((await call(api, 'PUT', '/api/settings', { body: { dashboard: layout } })).status, 200);
+  assert.deepEqual((await call(api, 'GET', '/api/state')).json.settings.dashboard, layout);
+  for (const bad of [
+    { version: 2, tiles: layout.tiles },
+    { version: 1, tiles: [] },
+    { version: 1, tiles: [{ id: 'Heat', span: 8, hidden: false }] },
+    { version: 1, tiles: [{ id: 'a', span: 5, hidden: false }] },
+    { version: 1, tiles: [{ id: 'a', span: 4, hidden: false }, { id: 'a', span: 4, hidden: false }] },
+    { version: 1, tiles: [{ id: 'a', span: 4, hidden: 'no' }] },
+    { version: 1, tiles: layout.tiles, extra: true },
+  ]) {
+    const r = await call(api, 'PUT', '/api/settings', { body: { dashboard: bad } });
+    assert.equal(r.status, 400, JSON.stringify(bad));
+    assert.match(r.json.error, /^dashboard invalid/);
+  }
+  assert.deepEqual((await call(api, 'GET', '/api/state')).json.settings.dashboard, layout);
+  await call(api, 'PUT', '/api/settings', { body: { dashboard: null } });
+  assert.equal((await call(api, 'GET', '/api/state')).json.settings.dashboard, null);
+});

@@ -1,0 +1,124 @@
+/* Running — Overview, customise mode: js/views/overview-layout.js, with the markup from
+   js/views/tiles.js (toolbar, tray, mode bar). Loads after css/overview.css. Calm on purpose:
+   every card becomes an object with a hairline, its content steps back, and a mono toolbar sits
+   on top; the accent is kept for where a card will land. Desk only: on the phone the
+   Customise button is hidden (css/overview.css), so the mode never opens there. */
+
+html[data-layout="desk"] { --ov-lift-shadow: 0 28px 60px -22px rgba(26, 22, 20, .45); }
+@media (prefers-color-scheme: dark) {
+  html[data-layout="desk"] { --ov-lift-shadow: 0 28px 60px -18px rgba(0, 0, 0, .8); }
+}
+/* The Customise button closes the filter bar on the right; in the mode, the bar is the mode's. */
+html[data-layout="desk"] .ov-filters > .ov-custom { margin-left: auto; padding-left: 0; border-left: 0; }
+html[data-layout="desk"] .ov-filters.is-customising > :not(.ov-lay-bar) { display: none; }
+html[data-layout="desk"] .ov-filters > .ov-lay-bar {
+  flex: 1 1 auto; justify-content: space-between; gap: 6px 24px; margin-left: 0; padding-left: 0; border-left: 0;
+}
+html[data-layout="desk"] .ov-lay-title { display: flex; align-items: baseline; gap: 14px; min-width: 0; }
+html[data-layout="desk"] .ov-lay-kicker { font: 500 10.5px/1.4 var(--mono); letter-spacing: 1.5px; text-transform: uppercase; color: var(--accent); }
+html[data-layout="desk"] .ov-lay-hint { font-size: 13px; color: var(--ink-2); }
+html[data-layout="desk"] :is(.ov-lay-actions, .ov-lay-confirm) { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+html[data-layout="desk"] .ov-lay-confirm > span { margin-right: 6px; font-size: 13px; color: var(--ink); }
+/* As tall as the filter chips, so the sticky bar keeps its height when the mode opens. */
+html[data-layout="desk"] .ov-lay-bar .btn--sm { min-height: 30px; padding: 3px 14px; font-size: 13px; }
+
+/* The hidden cards: a dashed tray of chips, each a button and a handle. */
+html[data-layout="desk"] .ov-tray {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 10px 14px;
+  border: 1px dashed var(--rule-strong); border-radius: var(--radius);
+}
+html[data-layout="desk"] .ov-tray-h { font: 500 10.5px/1.4 var(--mono); letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-3); }
+html[data-layout="desk"] .ov-tray-list { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+html[data-layout="desk"] .ov-tray-empty { font-size: 13px; color: var(--ink-3); }
+html[data-layout="desk"] .ov-tray-chip {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 30px; padding: 3px 5px 3px 12px;
+  border: 1px solid var(--edge); border-radius: 99px; background: var(--card); color: var(--ink);
+  font-size: 13px; font-weight: 500; cursor: grab; touch-action: none;
+  transition: border-color .15s ease;
+}
+html[data-layout="desk"] .ov-tray-chip:hover { border-color: var(--accent); }
+html[data-layout="desk"] .ov-tray-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+html[data-layout="desk"] .ov-tray-add {
+  padding: 2px 8px; border-radius: 99px; background: var(--accent-soft); color: var(--accent);
+  font: 500 10px/1.4 var(--mono); letter-spacing: .8px; text-transform: uppercase;
+}
+html[data-layout="desk"] .ov-tray-ghost { pointer-events: none; box-shadow: var(--ov-lift-shadow); }
+
+/* Cards in the mode: a hairline ring (the KPIs, which have no border, become cards too), the
+   content quiet and inert underneath, and no Enlarge. */
+html[data-layout="desk"] .dash.ov.is-customising { user-select: none; -webkit-user-select: none; }
+html[data-layout="desk"] .dash.ov.is-customising > .ov-tile {
+  position: relative; container-type: inline-size;
+  background: var(--card); border-radius: var(--radius);
+  box-shadow: 0 0 0 1px var(--rule-strong);
+  transition: box-shadow .15s ease;
+}
+html[data-layout="desk"] .dash.ov.is-customising > .ov-tile:hover { box-shadow: 0 0 0 1px var(--edge); }
+html[data-layout="desk"] .dash.ov.is-customising > .ov-tile > :not(.ov-tbar) { opacity: .3; }
+html[data-layout="desk"] .dash.ov.is-customising .ov-enlarge { visibility: hidden; }
+
+html[data-layout="desk"] .ov-tbar {
+  position: absolute; top: 8px; left: 8px; right: 8px; z-index: 3;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  margin: 0; padding: 4px;
+  border: 1px solid var(--rule-strong); border-radius: 6px;
+  background: color-mix(in srgb, var(--card) 94%, transparent);
+  box-shadow: 0 1px 2px rgba(26, 22, 20, .06), 0 6px 18px -10px rgba(26, 22, 20, .25);
+}
+html[data-layout="desk"] :is(.ov-grip, .ov-hide) {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 24px; padding: 0;
+  border: 1px solid transparent; border-radius: 4px; background: transparent;
+  color: var(--ink-2); cursor: pointer;
+  transition: color .15s ease, background-color .15s ease, border-color .15s ease;
+}
+html[data-layout="desk"] .ov-grip { cursor: grab; touch-action: none; }
+html[data-layout="desk"] :is(.ov-grip, .ov-hide):hover { color: var(--ink); background: var(--paper-2); border-color: var(--rule-strong); }
+/* flex-basis 0: the name never makes the toolbar wrap; it takes what room is left, or none. */
+html[data-layout="desk"] .ov-tbar-name {
+  flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font: 500 10.5px/1.4 var(--mono); letter-spacing: 1.4px; text-transform: uppercase; color: var(--ink);
+}
+html[data-layout="desk"] .ov-tbar-tools { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+/* A narrow card (a KPI) has no room for name and tools in one row: the tools take a second. */
+@container (max-width: 260px) {
+  html[data-layout="desk"] .ov-tbar-name { flex-basis: calc(100% - 32px); }
+}
+html[data-layout="desk"] .ov-widths { display: inline-flex; gap: 2px; padding: 2px; border: 1px solid var(--rule-strong); border-radius: 5px; }
+html[data-layout="desk"] .ov-wchip {
+  min-width: 24px; height: 20px; padding: 0 4px;
+  border: 0; border-radius: 3px; background: transparent;
+  font: 500 10.5px/1 var(--mono); letter-spacing: .4px; color: var(--ink-3); cursor: pointer;
+  transition: color .15s ease, background-color .15s ease;
+}
+html[data-layout="desk"] .ov-wchip:hover { color: var(--ink); background: var(--hover-wash); }
+html[data-layout="desk"] .ov-wchip[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+html[data-layout="desk"] :is(.ov-grip, .ov-hide, .ov-wchip):focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* Where the card will land; it is as wide as the card and, up to a point, as tall. */
+html[data-layout="desk"] .ov-drop { min-width: 0; border: 1.5px dashed var(--accent); border-radius: var(--radius); background: var(--accent-soft); }
+/* The card in hand: lifted off the grid, a size that fits in the hand, the content showing through. */
+html[data-layout="desk"] .dash.ov > .ov-tile.is-lifted {
+  overflow: hidden; pointer-events: none;
+  box-shadow: 0 0 0 1px var(--accent), var(--ov-lift-shadow);
+  transition: scale .18s cubic-bezier(.2, .8, .2, 1), rotate .18s ease, box-shadow .18s ease;
+}
+html[data-layout="desk"] .dash.ov > .ov-tile.is-lifted.is-up { scale: var(--ov-lift-scale, 1); rotate: .6deg; }
+html[data-layout="desk"] .dash.ov > .ov-tile.is-lifted > :not(.ov-tbar) { opacity: .75; }
+html[data-layout="desk"] .ov-tile.is-clipped {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 72px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 72px), transparent);
+}
+html[data-layout="desk"] .dash.ov.is-dragging, html[data-layout="desk"] .dash.ov.is-dragging * { cursor: grabbing; }
+/* Picked up with the keyboard: the same accent ring, in place. */
+html[data-layout="desk"] .dash.ov.is-customising > .ov-tile.is-picked { z-index: 2; box-shadow: 0 0 0 2px var(--accent), var(--ov-lift-shadow); }
+html[data-layout="desk"] .dash.ov.is-customising > .ov-tile.is-picked > :not(.ov-tbar) { opacity: .5; }
+@media (prefers-reduced-motion: reduce) {
+  html[data-layout="desk"] .dash.ov > .ov-tile.is-lifted.is-up { rotate: none; }
+}
+/* Narrow desk: S and M KPIs are both a third of the row (desk.css widens S), and L half of it. */
+@media (max-width: 1279.98px) {
+  html[data-layout="desk"] .dash.ov > :is(.ov-tile--kpi, .ov-drop--kpi).tile--span-3 { grid-column: span 4; }
+  html[data-layout="desk"] .dash.ov > :is(.ov-tile--kpi, .ov-drop--kpi).tile--span-4 { grid-column: span 6; }
+  html[data-layout="desk"] .ov-lay-hint { display: none; }
+}

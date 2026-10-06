@@ -3,12 +3,11 @@
 // the preview server.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildModel, displayRange, densestFrame, MAX_BAR_WEEKS } from '../js/views/overview-model.js';
+import { buildModel, displayRange, densestFrame, createSession, MAX_BAR_WEEKS } from '../js/views/overview-model.js';
 import { sortActivities, firstDirection } from '../js/views/tiles-table.js';
 import { emptyView, framedLines, heatCount, heatEmptyText } from '../js/views/tiles-map.js';
 import { formWord } from '../js/views/tiles.js';
 import { volumeTile } from '../js/views/tiles-charts.js';
-import { createSession } from '../js/views/overview.js';
 import { toString } from '../js/dom.js';
 import { addDays } from '../js/format.js';
 import { haversineKm } from '../js/geo.js';
@@ -147,6 +146,32 @@ test('the densest frame: a tie goes to the cell with the most recent start', () 
   assert.deepEqual(densestFrame([cph[0], two[0], two[1], cph[1]]).members, [0, 3]);
   assert.deepEqual(densestFrame([two[0], cph[0], cph[1], two[1]]).members, [0, 3]);
   assert.ok(haversineKm(densestFrame([two[0], cph[0], cph[1], two[1]]).centre, aarhus) < 1);
+});
+
+test('the densest frame: a home cluster split over a cell corner beats a holiday that fits in one cell', () => {
+  // The model's grid: 0.045° rows, columns widened by the row's latitude. Home sits on a corner of it.
+  const CELL = 0.045;
+  const cellOf = ([lat, lng]) => {
+    const row = Math.floor(lat / CELL);
+    return `${row}:${Math.floor(lng / (CELL / Math.cos(((row + 0.5) * CELL * Math.PI) / 180)))}`;
+  };
+  const row = Math.round(55.665 / CELL);
+  const lat0 = row * CELL;
+  const colW = CELL / Math.cos(((row + 0.5) * CELL * Math.PI) / 180);
+  const lng0 = Math.round(12.55 / colW) * colW;
+  const home = Array.from({ length: 40 }, (_, i) => [
+    lat0 + (i % 2 ? 1 : -1) * (0.0004 + (i % 5) * 0.0002),
+    lng0 + (i % 4 < 2 ? 1 : -1) * (0.0005 + (i % 7) * 0.0002),
+  ]);
+  const PARIS = [48.8566, 2.3522];
+  const holiday = Array.from({ length: 25 }, (_, i) => [PARIS[0] + (i % 5) * 0.0001, PARIS[1] + (i % 3) * 0.0001]);
+  const counts = new Map();
+  home.forEach(p => counts.set(cellOf(p), (counts.get(cellOf(p)) || 0) + 1));
+  assert.ok(counts.size >= 3 && Math.max(...counts.values()) < 25, 'home is spread over cells: the fullest-cell rule picked Paris');
+  assert.equal(new Set(holiday.map(cellOf)).size, 1);
+  const frame = densestFrame([...holiday, ...home]); // the holiday is the newest
+  assert.deepEqual(frame.members, home.map((_, i) => 25 + i));
+  assert.ok(haversineKm(frame.centre, [lat0, lng0]) < 1, 'centred on home');
 });
 
 test('the densest frame of one start is that start; of none, null', () => {

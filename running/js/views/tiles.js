@@ -2,7 +2,8 @@
 // and the next run. Each renderer takes the model from overview-model.js plus the tile's DOM
 // id and returns the tile's inner markup; nothing here touches the DOM, so a filter change is
 // one string build per tile and one innerHTML write. Charts live in tiles-charts.js, the maps
-// in tiles-map.js and the activities table in tiles-table.js.
+// in tiles-map.js and the activities table in tiles-table.js. The markup of customise mode
+// (a card's toolbar, the hidden-cards tray, the mode bar) is here too; overview-layout.js runs it.
 import { html, raw } from '../dom.js';
 import {
   formatDate, formatDistance, formatNumber, formatPace, paceRange, PACE_NAMES, PHASE_NAMES, diffDays,
@@ -267,3 +268,54 @@ export function nextTile(m, id) {
     </div>`;
 }
 
+// --- customise mode (overview-layout.js) ------------------------------------------
+
+const GRIP_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true" focusable="false">'
+  + '<circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/>'
+  + '<circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>';
+const EYE_OFF_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+  + '<path d="M3 3l18 18"/><path d="M10.6 5.1Q11.3 5 12 5c5.5 0 9 7 9 7a16 16 0 0 1-2.6 3.6"/>'
+  + '<path d="M6.6 6.6C4.1 8.3 3 12 3 12s3.5 7 9 7a9 9 0 0 0 4.3-1.1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+
+/** The toolbar laid over a card in customise mode; `choices` are its widths (widthChoices). */
+export function toolbar(entry, span, choices) {
+  return html`<div class="ov-tbar">
+    <button type="button" class="ov-grip" data-grip="${entry.id}" aria-label="Move ${entry.title}" aria-describedby="ov-lay-help" title="Drag to move">${raw(GRIP_ICON)}</button>
+    <span class="ov-tbar-name" aria-hidden="true">${entry.title}</span>
+    <span class="ov-tbar-tools">
+      <span class="ov-widths" role="group" aria-label="Width of ${entry.title}">${choices.map(w =>
+        html`<button type="button" class="ov-wchip" data-span="${w.span}" data-for="${entry.id}" aria-pressed="${String(w.span === span)}" aria-label="${w.name}" title="${w.name}: ${w.share}">${w.size}</button>`)}</span>
+      <button type="button" class="ov-hide" data-hide="${entry.id}" aria-label="Hide ${entry.title}" title="Hide">${raw(EYE_OFF_ICON)}</button>
+    </span>
+  </div>`;
+}
+
+/** The hidden cards, as chips that put them back. */
+export function trayChips(entries) {
+  if (!entries.length) return html`<p class="ov-tray-empty">Nothing hidden. A card’s eye button puts it here.</p>`;
+  return entries.map(e => html`<button type="button" class="ov-tray-chip" data-add="${e.id}" aria-label="Add ${e.title}" title="Click to add at the end, or drag into place">
+    <span class="ov-tray-name">${e.title}</span><span class="ov-tray-add" aria-hidden="true">+ Add</span></button>`);
+}
+
+/** Customise mode's bar, at the end of the filter bar: the button that opens it, and what replaces the filters. */
+export const customiseBar = () => html`<div class="ov-custom"><button type="button" class="chip-btn ov-customise" data-customise disabled>Customise</button></div>
+  <div class="ov-lay-bar" data-lay-bar hidden>
+    <p class="ov-lay-title"><span class="ov-lay-kicker">Customise</span><span class="ov-lay-hint">Drag a card by its handle, pick its width, hide what you don’t need.</span></p>
+    <div class="ov-lay-actions" data-lay-actions>
+      <button type="button" class="btn btn--sm btn--quiet" data-lay-reset>Reset to default</button>
+      <button type="button" class="btn btn--sm" data-lay-cancel>Cancel</button>
+      <button type="button" class="btn btn--sm btn--primary" data-lay-done>Done</button>
+    </div>
+    <div class="ov-lay-confirm" data-lay-confirm role="group" aria-labelledby="ov-lay-q" hidden>
+      <span id="ov-lay-q">Reset to the default layout? It replaces the saved one.</span>
+      <button type="button" class="btn btn--sm btn--danger" data-lay-reset-yes>Reset</button>
+      <button type="button" class="btn btn--sm" data-lay-reset-no>Keep mine</button>
+    </div>
+  </div>`;
+/** The cards customise mode has hidden, under the filter bar. */
+export const hiddenTray = () => html`<section class="ov-tray" data-lay-tray aria-labelledby="ov-tray-h" hidden>
+    <h2 class="ov-tray-h" id="ov-tray-h">Hidden cards</h2><div class="ov-tray-list" data-lay-tray-list></div>
+  </section>`;
+/** What a screen reader hears: the handles' instructions, and each move as it happens. */
+export const customiseVoice = () => html`<p class="sr-only" id="ov-lay-help">Space or Enter picks the card up, the arrow keys move it, Space or Enter drops it, Escape cancels.</p>
+  <p class="sr-only" data-lay-live aria-live="assertive" aria-atomic="true"></p>`;

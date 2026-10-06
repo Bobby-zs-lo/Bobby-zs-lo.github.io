@@ -30,7 +30,7 @@ const KM_PER_DEG = 111.195;
 const DEFAULT_ROUTE_DELAY_MS = 600; // long enough that loading states are visible
 const DEFAULT_PLAN_DELAY_MS = 300;  // a re-plan after a drag: long enough to see the old line fade
 const ACTION_STATUS = { done: 'done', skip: 'skipped', move_tomorrow: 'moved', undo_status: 'planned' };
-const SETTINGS_KEYS = ['raceDate', 'raceName', 'fiveKSeconds', 'hasWatch', 'morningHour', 'eveningHour', 'home'];
+const SETTINGS_KEYS = ['raceDate', 'raceName', 'fiveKSeconds', 'hasWatch', 'morningHour', 'eveningHour', 'home', 'dashboard'];
 const NOTIFY_KEYS = ['morning', 'evening', 'activity', 'weekly'];
 
 class ApiError extends Error {
@@ -133,6 +133,27 @@ function placeVariant(variant, start, factor, seed) {
   };
 }
 
+// Mirrors validateDashboard in functions/src/service.js: the server checks the shape, the front end owns the catalogue.
+const DASHBOARD_SPANS = [2, 3, 4, 6, 8, 12];
+const isPlainObject = (x) => typeof x === 'object' && x !== null && !Array.isArray(x);
+const hasOnlyKeys = (o, keys) => Object.keys(o).length === keys.length && keys.every((k) => Object.hasOwn(o, k));
+function validateDashboard(d) {
+  if (d == null) return;
+  const bad = (why) => fail(400, `dashboard invalid: ${why}`);
+  if (!isPlainObject(d) || !hasOnlyKeys(d, ['version', 'tiles'])) bad('must be null or { version, tiles }');
+  if (d.version !== 1) bad('version must be 1');
+  if (!Array.isArray(d.tiles) || d.tiles.length < 1 || d.tiles.length > 40) bad('tiles must be a list of 1–40');
+  const seen = new Set();
+  for (const t of d.tiles) {
+    if (!isPlainObject(t) || !hasOnlyKeys(t, ['id', 'span', 'hidden'])) bad('each tile must be { id, span, hidden }');
+    if (typeof t.id !== 'string' || !/^[a-z][a-z0-9-]{0,31}$/.test(t.id)) bad('tile id must be lowercase letters, digits and dashes');
+    if (seen.has(t.id)) bad(`tile id ${t.id} is used twice`);
+    seen.add(t.id);
+    if (!DASHBOARD_SPANS.includes(t.span)) bad(`tile span must be one of ${DASHBOARD_SPANS.join(', ')}`);
+    if (typeof t.hidden !== 'boolean') bad('tile hidden must be true or false');
+  }
+}
+
 function validateHome(home) {
   if (home != null && !(Number.isFinite(home.lat) && Number.isFinite(home.lng) && Math.abs(home.lat) <= 90 && Math.abs(home.lng) <= 180)) {
     fail(400, 'home must be null or { lat, lng } within ±90 and ±180');
@@ -198,6 +219,7 @@ export function createMockApi({ fixturesDir, routeDelayMs = DEFAULT_ROUTE_DELAY_
     const next = { ...settings, ...pick(body, SETTINGS_KEYS) };
     if (body.notify) next.notify = { ...settings.notify, ...pick(body.notify, NOTIFY_KEYS) };
     validateHome(next.home);
+    validateDashboard(next.dashboard);
     if (next.home) next.home = { lat: round(next.home.lat, 5), lng: round(next.home.lng, 5) };
     settings = next;
     return structuredClone(settings);

@@ -4,6 +4,8 @@
 // into view or is enlarged. The tile maps are created once and kept across filter changes; only
 // their lines are swapped, so a filter click never rebuilds a map. An enlarged view draws a map
 // of its own in the focus dialog, made when the dialog opens and destroyed when it closes.
+// A map tile the layout hides is not drawn (and with both hidden the routes are never asked
+// for); relayout() re-measures the maps after the layout changes their boxes.
 import { html, raw, toString } from '../dom.js';
 import { decodePolyline } from '../polyline.js';
 import { createMap, addLine, addLines, addStart, fit, destroy } from '../map.js';
@@ -86,6 +88,21 @@ function focusShell(kind) {
   </div>`;
 }
 
+/** The focus dialog (overview.js): one for whichever tile is enlarged; filled on opening. */
+export const focusDialog = () => html`<dialog class="ov-focus" id="ov-focus" aria-labelledby="ov-focus-h">
+    <div class="ov-focus-frame">
+      <header class="ov-focus-head">
+        <div class="ov-focus-titles">
+          <p class="ov-focus-kicker" data-focus-scope></p>
+          <h2 class="ov-focus-title" id="ov-focus-h"></h2>
+        </div>
+        <p class="ov-focus-meta" data-focus-meta></p>
+        <button type="button" class="ov-focus-close" data-focus-close aria-label="Close" title="Close (Esc)"><span aria-hidden="true">✕</span></button>
+      </header>
+      <div class="ov-focus-body" data-focus-body></div>
+    </div>
+  </dialog>`;
+
 function lastBody(m) {
   if (m.errors.acts) return failed('activities', m.errors.acts);
   const a = m.last;
@@ -118,7 +135,9 @@ export function mapTiles(root, { loadRoutes, openActivity }) {
   let model = null, visible = false, disposed = false, seq = 0;
   let queue = Promise.resolve();
   let heat = null, heatPromise = null, heatKey = '', heatFrame = '', heatLayer = null, pickLayer = null;
-  let mini = null, miniId = null;
+  let mini = null, miniId = null, miniPoints = null;
+  const heatSec = $('#ov-heat'), lastSec = $('#ov-last');
+  const shown = sec => !!sec && !sec.hidden;
   let focus = null; // the enlarged view: { kind, wrap, box, note, meta, side, count, ctx, key }
 
   // Activity id → decoded points. Decoding is the costly step and a route never changes, so a
@@ -140,7 +159,7 @@ export function mapTiles(root, { loadRoutes, openActivity }) {
       schedule();
     }, { rootMargin: '200px 0px' })
     : null;
-  [$('#ov-heat'), $('#ov-last')].forEach(el => el && io && io.observe(el));
+  [heatSec, lastSec].forEach(el => el && io && io.observe(el));
   if (!io) visible = true;
 
   function reveal() {
@@ -216,7 +235,7 @@ export function mapTiles(root, { loadRoutes, openActivity }) {
     const a = m.last;
     const points = a ? pointsOf(byId.get(a.id)) : [];
     if (a && miniId === a.id && mini) return;
-    if (mini) { destroy(mini); mini = null; miniId = null; }
+    if (mini) { destroy(mini); mini = null; miniId = null; miniPoints = null; }
     // No route, no map: an empty box says so, where a map would have nothing to frame but the world.
     if (points.length < MIN_POINTS) { say(miniNote, a ? 'No route recorded.' : ''); return; }
     const ctx = await createMap(miniBox, { zoomControl: false, scrollWheelZoom: false });
@@ -224,6 +243,7 @@ export function mapTiles(root, { loadRoutes, openActivity }) {
     say(miniNote, '');
     mini = ctx;
     miniId = a.id;
+    miniPoints = points;
     addLine(ctx, points, { weight: 3 });
     addStart(ctx, points[0]);
     fit(ctx, points, { padding: MINI_PADDING });
@@ -277,6 +297,7 @@ export function mapTiles(root, { loadRoutes, openActivity }) {
 
   async function draw(my) {
     if (disposed || my !== seq || !model || model.errors.acts) return;
+    if (!focus && !shown(heatSec) && !shown(lastSec)) return;
     const m = model;
     let rows;
     try {
@@ -296,8 +317,8 @@ export function mapTiles(root, { loadRoutes, openActivity }) {
     // enlarged view goes first: it is the one in front.
     const report = e => e.message !== 'gone' && 'The map could not be loaded.';
     if (focus) { const f = focus; await drawFocus(m, byId, my).catch(e => say(f.note, report(e))); }
-    await drawHeat(m, byId, my).catch(e => say(heatNote, report(e)));
-    await drawMini(m, byId, my).catch(e => say(miniNote, report(e)));
+    if (shown(heatSec)) await drawHeat(m, byId, my).catch(e => say(heatNote, report(e)));
+    if (shown(lastSec)) await drawMini(m, byId, my).catch(e => say(miniNote, report(e)));
   }
 
   // Draws run one after another: two createMap calls on one box at once would collide.
@@ -319,7 +340,7 @@ export function mapTiles(root, { loadRoutes, openActivity }) {
       $('[data-heat-count]').textContent = heatCount(m.periodActs.length); // drawHeat says how many have a route
       $('[data-last-meta]').textContent = lastMeta(m);
       $('[data-last-body]').innerHTML = toString(lastBody(m));
-      root.querySelector('#ov-last').classList.toggle('is-empty', !m.last);
+      lastSec.classList.toggle('is-empty', !m.last);
       fillFocus(m);
       if (m.errors.acts) {
         say(heatNote, NO_ACTIVITIES);
@@ -347,6 +368,14 @@ export function mapTiles(root, { loadRoutes, openActivity }) {
     resize() {
       if (heat) heat.map.invalidateSize();
       if (mini) mini.map.invalidateSize();
+    },
+    /** After a layout change: the boxes may have a new size, or a map tile may be back. */
+    relayout() {
+      if (disposed) return;
+      if (mini) { mini.map.invalidateSize(); fit(mini, miniPoints, { padding: MINI_PADDING }); }
+      if (heat) heat.map.invalidateSize();
+      heatFrame = ''; // framed again at its new size on the next draw
+      schedule();
     },
     destroy() {
       disposed = true;

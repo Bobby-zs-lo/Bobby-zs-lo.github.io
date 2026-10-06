@@ -13,123 +13,66 @@
 // button in its head, which opens the tile large in a modal <dialog> above the dashboard. The
 // dialog is this view's; what it shows is the tile's own (the map tiles draw theirs in
 // tiles-map.js). Esc, the close button, the backdrop or a click through to an activity close it.
+//
+// Layout: the cards come in the order and widths of the owner's saved layout (settings.dashboard,
+// resolved by overview-model.js); a hidden card's section stays in the page, hidden and unpainted.
+// Customise mode, which edits and saves the layout, is overview-layout.js.
 import { html, mount, raw, toString } from '../dom.js';
 import { api } from '../api.js';
-import { getState, getPlan } from '../store.js';
+import { toast } from '../ui.js';
+import { getState, getPlan, patchState, peekState } from '../store.js';
 import { buildHash } from '../router.js';
-import { addDays, copenhagenToday, formatDate, mondayOf } from '../format.js';
-import { periodRange, YEAR_DAYS } from '../analytics.js';
-import { buildModel } from './overview-model.js';
+import { copenhagenToday, formatDate } from '../format.js';
+import {
+  buildModel, createSession, requestWindows, readFilters, PERIODS, SPORTS, CATALOGUE, resolveLayout,
+} from './overview-model.js';
 import {
   head, summaryLine, scopeLine, shortDate, raceKpi, weekKpi, hitKpi, easyKpi, formKpi, phaseKpi, healthTile, nextTile,
+  customiseBar, hiddenTray, customiseVoice,
 } from './tiles.js';
-import { volumeTile, zonesTile, efficiencyTile, loadTile, calendarTile } from './tiles-charts.js';
+import { volumeTile, zonesTile, efficiencyTile, loadTile, calendarTile, nearestBar } from './tiles-charts.js';
 import { tableTile, firstDirection, isSortKey, TABLE_PAGE } from './tiles-table.js';
-import { mapTiles, heatShell, lastShell, FOCUS_KINDS } from './tiles-map.js';
+import { mapTiles, heatShell, lastShell, focusDialog, FOCUS_KINDS } from './tiles-map.js';
+import { customiser } from './overview-layout.js';
 
-const PERIODS = [['4w', '4 weeks'], ['12w', '12 weeks'], ['season', 'Season'], ['1y', '1 year'], ['all', 'All']];
-const SPORTS = [['run', 'Running'], ['ride', 'Riding'], ['all', 'Everything']];
-const DEFAULTS = { p: '12w', s: 'run' };
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
-const WARMUP_DAYS = 90;   // fitness is a 42-day average: three months lets it settle before the period starts
-const ALL_FROM = '2000-01-01';
 const RESIZE_STEP_PX = 4; // smaller width changes are rounding noise, not worth a redraw
 
-// [id, span, label, painter]. DOM order is focus order: KPIs, then charts, then the table.
-const TILES = [
-  ['kpi-race', 2, 'Days to race', raceKpi], ['kpi-week', 2, 'This week', weekKpi], ['kpi-hit', 2, 'Plan hit', hitKpi],
-  ['kpi-easy', 2, 'Easy runs too fast', easyKpi], ['kpi-form', 2, 'Fitness · form', formKpi], ['kpi-phase', 2, 'Phase', phaseKpi],
-  ['volume', 8, 'Weekly volume', volumeTile], ['heat', 4, 'Heatmap', null],
-  ['zones', 4, 'Pace zones', zonesTile], ['eff', 4, 'Efficiency', efficiencyTile], ['load', 4, 'Fitness and form', loadTile],
-  ['cal', 8, 'Consistency', calendarTile], ['health', 4, 'Health', healthTile],
-  ['last', 6, 'Last activity', null], ['next', 6, 'Next run', nextTile],
-  ['table', 12, 'Activities', null],
-];
-const CHART_TILES = new Set(['volume', 'zones', 'eff', 'load', 'cal', 'health']);
-// The tiles that open in focus mode. A tile opts in here, and its enlarged view is drawn by
-// whatever owns it: today only the two maps, whose views tiles-map.js draws (FOCUS_KINDS).
-const FOCUSABLE = new Set(['heat', 'last']);
-
-// --- request session ---------------------------------------------------------------
-
-const PATHS = { acts: '/api/activities', health: '/api/health', routes: '/api/activities' };
-
-/**
- * The requests of one visit, made through `get(url)`. `load(kind, from, to)` resolves that
- * kind's rows between the dates, reusing a response that already covers them. render() makes
- * one per visit: a module-level cache outlived the visit, so it served the last visit's data
- * (after a sign-out, the last user's) and grew for as long as the tab stayed open.
- */
-export function createSession(get) {
-  const cache = new Map(); // URL → promise of the rows; a failure is dropped, so the next load retries
-  const spans = { acts: [], health: [], routes: [] }; // what each kind's responses cover
-
-  function fetchOnce(url) {
-    if (!cache.has(url)) cache.set(url, get(url).catch(e => { cache.delete(url); throw e; }));
-    return cache.get(url);
-  }
-
-  function load(kind, from, to) {
-    const hit = spans[kind].find(s => s.from <= from && s.to >= to);
-    const url = hit ? hit.url : `${PATHS[kind]}?from=${from}&to=${to}${kind === 'routes' ? '&with=polyline' : ''}`;
-    return fetchOnce(url).then(rows => {
-      if (!spans[kind].some(s => s.url === url)) spans[kind].push({ from, to, url });
-      return Array.isArray(rows) ? rows : [];
-    });
-  }
-
-  return { load };
-}
-
-const minDate = (a, b) => (a < b ? a : b);
-const maxDate = (a, b) => (a > b ? a : b);
-
-/** The dates each request must cover for these filters. */
-function windows(p, today, plan) {
-  const from = p === 'all' ? ALL_FROM : periodRange(p, today, plan).from;
-  return {
-    // A year and a quarter whatever the period: the calendar always shows a year, and the
-    // four short periods then share one cached response.
-    acts: minDate(addDays(from, -WARMUP_DAYS), addDays(today, -(YEAR_DAYS + WARMUP_DAYS))),
-    health: maxDate(from, addDays(today, -YEAR_DAYS)),
-  };
-}
-
-function readFilters(params = {}) {
-  const p = PERIODS.some(([k]) => k === params.p) ? params.p : DEFAULTS.p;
-  const s = SPORTS.some(([k]) => k === params.s) ? params.s : DEFAULTS.s;
-  const w = ISO.test(params.w || '') && mondayOf(params.w) === params.w ? params.w : null;
-  return { p, s, w };
-}
+// Catalogue id (overview-model.js) → [DOM key, painter]. The DOM keys are older than the
+// catalogue and stay, so the CSS, the map tiles and the smoke test keep their hooks (#ov-heat).
+// DOM order is focus order, and follows the layout. The tiles that open in focus mode are the
+// ones whose enlarged view has a drawer: today the two maps (tiles-map.js FOCUS_KINDS).
+const TILES = {
+  'kpi-race': ['kpi-race', raceKpi], 'kpi-week': ['kpi-week', weekKpi], 'kpi-plan': ['kpi-hit', hitKpi],
+  'kpi-easy': ['kpi-easy', easyKpi], 'kpi-form': ['kpi-form', formKpi], 'kpi-phase': ['kpi-phase', phaseKpi],
+  volume: ['volume', volumeTile], heatmap: ['heat', null], zones: ['zones', zonesTile],
+  efficiency: ['eff', efficiencyTile], fitness: ['load', loadTile], calendar: ['cal', calendarTile],
+  health: ['health', healthTile], last: ['last', null], next: ['next', nextTile], table: ['table', null],
+};
+const CHART_TILES = new Set(['volume', 'zones', 'efficiency', 'fitness', 'calendar', 'health']);
 
 // --- markup ----------------------------------------------------------------------
 
 const chips = (attr, options, current) => options.map(([key, label]) =>
-  html`<button type="button" class="chip-btn" data-${attr}="${key}" aria-pressed="${key === current}">${label}</button>`);
+  html`<button type="button" class="chip-btn" data-${attr}="${key}" aria-pressed="${String(key === current)}">${label}</button>`);
 
-function tileShell(id, label) {
-  const enlarge = FOCUSABLE.has(id);
-  if (id === 'heat') return heatShell(`ov-${id}`, { enlarge });
-  if (id === 'last') return lastShell(`ov-${id}`, { enlarge });
-  return html`${head(`ov-${id}`, label)}<p class="ov-loading">Loading…</p>`;
+function tileShell(key, label, hidden) {
+  const enlarge = FOCUS_KINDS.has(key);
+  if (key === 'heat') return heatShell(`ov-${key}`, { enlarge });
+  if (key === 'last') return lastShell(`ov-${key}`, { enlarge });
+  return html`${head(`ov-${key}`, label)}${hidden ? '' : html`<p class="ov-loading">Loading…</p>`}`;
 }
 
-// One dialog for whichever tile is enlarged; its title, scope and body are filled on opening.
-const focusDialog = () => html`<dialog class="ov-focus" id="ov-focus" aria-labelledby="ov-focus-h">
-    <div class="ov-focus-frame">
-      <header class="ov-focus-head">
-        <div class="ov-focus-titles">
-          <p class="ov-focus-kicker" data-focus-scope></p>
-          <h2 class="ov-focus-title" id="ov-focus-h"></h2>
-        </div>
-        <p class="ov-focus-meta" data-focus-meta></p>
-        <button type="button" class="ov-focus-close" data-focus-close aria-label="Close" title="Close (Esc)"><span aria-hidden="true">✕</span></button>
-      </header>
-      <div class="ov-focus-body" data-focus-body></div>
-    </div>
-  </dialog>`;
+function tileSection(entry, { span, hidden }) {
+  const [key] = TILES[entry.id];
+  return html`<section class="tile tile--span-${span} ov-tile ov-tile--${entry.kind === 'kpi' ? 'kpi' : key}" id="ov-${key}" data-tile="${entry.id}" aria-labelledby="ov-${key}-h"${raw(FOCUS_KINDS.has(key) ? ' data-focusable' : '')}${raw(hidden ? ' hidden' : '')}>
+    ${tileShell(key, entry.title, hidden)}
+  </section>`;
+}
 
-function shell(f) {
+function shell(f, layout) {
+  const byId = new Map(CATALOGUE.map(c => [c.id, c]));
+  const ordered = [...layout.filter(t => !t.hidden), ...layout.filter(t => t.hidden)];
   return html`
     <header class="ov-head">
       <div class="ov-head-main">
@@ -144,14 +87,14 @@ function shell(f) {
       <div role="group" aria-labelledby="ov-f-s"><span class="filters-label" id="ov-f-s">Sport</span>${chips('sport', SPORTS, f.s)}</div>
       <div role="group" aria-labelledby="ov-f-w" data-week-group hidden><span class="filters-label" id="ov-f-w">Focus</span>
         <button type="button" class="chip-btn ov-chip-week" data-clear-week="chip" aria-pressed="true"></button></div>
+      ${customiseBar()}
     </div>
+    ${hiddenTray()}
     <div class="dash ov" aria-busy="true">
-      ${TILES.map(([id, span, label]) => html`<section class="tile tile--span-${span} ov-tile ov-tile--${id.startsWith('kpi') ? 'kpi' : id}" id="ov-${id}" aria-labelledby="ov-${id}-h"${FOCUSABLE.has(id) ? raw(' data-focusable') : ''}>
-        ${tileShell(id, label)}
-      </section>`)}
+      ${ordered.map(t => tileSection(byId.get(t.id), t))}
     </div>
     <footer class="ov-foot">Powered by Strava · Maps © OpenStreetMap contributors</footer>
-    ${focusDialog()}`;
+    ${focusDialog()}${customiseVoice()}`;
 }
 
 // --- view --------------------------------------------------------------------------
@@ -165,9 +108,13 @@ export function render(el, ctx) {
   // Filter changes within this visit reuse its responses; the next visit asks again.
   const session = createSession(url => api.get(url));
 
-  mount(el, shell(filters));
+  // The saved layout, when the state is already in hand; else the default until it arrives.
+  const initial = resolveLayout(peekState()?.settings?.dashboard);
+  mount(el, shell(filters, initial));
   const dash = el.querySelector('.dash');
   const $ = sel => el.querySelector(sel);
+  const sections = new Map([...dash.querySelectorAll('[data-tile]')].map(s => [s.dataset.tile, s]));
+  const isHidden = id => sections.get(id).hidden;
   const dialog = $('#ov-focus');
   const focusParts = { title: $('#ov-focus-h'), scope: $('[data-focus-scope]'), meta: $('[data-focus-meta]'), body: $('[data-focus-body]') };
   let opener = null;          // the Enlarge button of the open dialog; focus goes back to it
@@ -180,6 +127,22 @@ export function render(el, ctx) {
       location.hash = `#/activity/${encodeURIComponent(id)}`;
     },
   });
+  const custom = customiser(el, {
+    sections, layout: initial, save: saveLayout,
+    // A card that came back or changed width is painted now, at its width; the maps re-measure.
+    onChange: (layout, { spans, shown }) => {
+      if (model) repaint(new Set([...spans, ...shown]));
+      maps.relayout();
+    },
+  });
+
+  async function saveLayout(dashboard) {
+    const saved = await api.put('/api/settings', { dashboard });
+    const got = saved && typeof saved === 'object' ? saved : {};
+    const settings = { ...base.settings, ...got, dashboard: Object.hasOwn(got, 'dashboard') ? got.dashboard : dashboard };
+    base = { ...base, settings };
+    patchState({ settings });
+  }
 
   async function loadBase() {
     const [st, pl] = await Promise.allSettled([getState(), getPlan()]);
@@ -193,8 +156,11 @@ export function render(el, ctx) {
   async function refresh(focus) {
     const my = ++seq;
     dash.setAttribute('aria-busy', 'true');
-    if (!base) base = await loadBase();
-    const need = windows(filters.p, base.today, base.plan);
+    if (!base) {
+      base = await loadBase();
+      custom.apply(resolveLayout(base.settings.dashboard));
+    }
+    const need = requestWindows(filters.p, base.today, base.plan);
     const [acts, health] = await Promise.allSettled([session.load('acts', need.acts, base.today), session.load('health', need.health, base.today)]);
     if (disposed || my !== seq || !ctx.isCurrent()) return;
     const errors = { ...base.errors };
@@ -207,6 +173,7 @@ export function render(el, ctx) {
     if (filters.w && !model.sel) { filters = { ...filters, w: null }; writeHash(); syncFilters(); }
     paint();
     dash.setAttribute('aria-busy', 'false');
+    $('[data-customise]').disabled = false;
     restoreFocus(focus);
   }
 
@@ -219,34 +186,46 @@ export function render(el, ctx) {
     });
   }
 
-  // One read pass (every tile's inner width), then the writes, so a repaint lays out once.
+  // One read pass (every shown chart's inner width), then the writes, so a repaint lays out once.
   function measure() {
-    const first = $('#ov-volume');
-    const cs = getComputedStyle(first);
-    const pad = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + parseFloat(cs.borderLeftWidth) + parseFloat(cs.borderRightWidth);
     const widths = {};
-    for (const id of CHART_TILES) widths[id] = Math.max(120, Math.floor($(`#ov-${id}`).offsetWidth - pad));
+    let pad = null; // the chart cards share their padding and border
+    for (const id of CHART_TILES) {
+      const sec = sections.get(id);
+      if (sec.hidden) continue;
+      if (pad == null) {
+        const cs = getComputedStyle(sec);
+        pad = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + parseFloat(cs.borderLeftWidth) + parseFloat(cs.borderRightWidth);
+      }
+      widths[id] = Math.max(120, Math.floor(sec.offsetWidth - pad));
+    }
     lastWidth = dash.offsetWidth;
     return widths;
   }
 
-  function paintTile(id, painter, width) {
-    const sec = $(`#ov-${id}`);
+  // The tile's content is replaced; customise mode's toolbar, if it has one, stays on top.
+  function paintTile(key, painter, width) {
+    const sec = $(`#ov-${key}`);
+    const bar = sec.querySelector(':scope > .ov-tbar');
     let markup;
-    try { markup = painter(model, `ov-${id}`, width); }
-    catch (e) { markup = html`${head(`ov-${id}`, sec.querySelector('.tile-label')?.textContent || '')}<p class="tile-empty">Couldn’t draw this tile: ${e.message}</p>`; }
+    try { markup = painter(model, `ov-${key}`, width); }
+    catch (e) { markup = html`${head(`ov-${key}`, sec.querySelector('.tile-label')?.textContent || '')}<p class="tile-empty">Couldn’t draw this tile: ${e.message}</p>`; }
     sec.innerHTML = toString(markup);
+    if (bar) sec.append(bar);
+    custom.dress(sec);
   }
 
   function paintTable() { paintTile('table', (m, id) => tableTile(m, id, table)); }
 
+  // A hidden card is not painted (it is when it comes back: repaint), and stops saying "Loading…".
   function paint({ chartsOnly = false } = {}) {
     const widths = measure();
-    for (const [id, , , painter] of TILES) {
-      if (painter && (!chartsOnly || CHART_TILES.has(id))) paintTile(id, painter, widths[id]);
+    for (const [id, [key, painter]] of Object.entries(TILES)) {
+      if (isHidden(id)) sections.get(id).querySelector(':scope > .ov-loading')?.remove();
+      else if (painter && (!chartsOnly || CHART_TILES.has(id))) paintTile(key, painter, widths[id]);
     }
     if (chartsOnly) return;
-    paintTable();
+    if (!isHidden('table')) paintTable();
     $('[data-dateline]').textContent = `Desk · ${formatDate(base.today, { long: true, year: true })}`;
     $('[data-summary]').innerHTML = toString(summaryLine(model));
     $('[data-scope]').innerHTML = toString(scopeLine(model));
@@ -254,12 +233,22 @@ export function render(el, ctx) {
     maps.update(model);
   }
 
+  function repaint(ids) {
+    if (!ids.size) return;
+    const widths = measure();
+    for (const id of ids) {
+      const [key, painter] = TILES[id];
+      if (id === 'table') paintTable();
+      else if (painter) paintTile(key, painter, widths[id]);
+    }
+  }
+
   // --- focus mode ---
 
   function openFocus(button) {
     const sec = button.closest('[data-focusable]');
     const id = sec ? sec.id.replace(/^ov-/, '') : '';
-    if (dialog.open || !FOCUS_KINDS.has(id)) return;
+    if (dialog.open || custom.active || !FOCUS_KINDS.has(id)) return;
     focusParts.title.textContent = sec.querySelector('.tile-label')?.textContent || '';
     focusParts.scope.innerHTML = model ? toString(scopeLine(model)) : '';
     opener = button;
@@ -321,17 +310,6 @@ export function render(el, ctx) {
     if (!focus) return;
     const target = $(focus);
     if (target) target.focus({ preventScroll: true });
-  }
-
-  // A week's bars are a few pixels wide on a year-long chart, with a gap between plan and
-  // actual: a click anywhere in the week's column counts, resolved to the nearest bar group.
-  function nearestBar(svg, x) {
-    const groups = [...svg.querySelectorAll('.bars[data-key]')];
-    const centres = groups.map(g => { const r = g.getBoundingClientRect(); return r.left + r.width / 2; });
-    const slot = centres.length > 1 ? Math.abs(centres[1] - centres[0]) : Infinity;
-    let best = -1;
-    centres.forEach((c, i) => { if (best < 0 || Math.abs(c - x) < Math.abs(centres[best] - x)) best = i; });
-    return best >= 0 && Math.abs(centres[best] - x) <= slot / 2 + 1 ? groups[best] : null;
   }
 
   const barSelector = key => `#ov-volume .bars[data-key="${CSS.escape(key)}"]`;
@@ -397,8 +375,18 @@ export function render(el, ctx) {
     });
   }) : null;
 
+  // Crossing the desk breakpoint closes the focus dialog (an open modal would leave the page
+  // under it inert) and, on the way to the phone, leaves customise mode (the phone has neither).
+  function onLayout() {
+    closeFocus({ restore: false });
+    if (!custom.active || document.documentElement.dataset.layout === 'desk') return;
+    custom.cancel();
+    toast('Customising needs a wider window. Nothing was saved.');
+  }
+
   el.addEventListener('click', onClick);
   el.addEventListener('keydown', onKey);
+  window.addEventListener('layout:change', onLayout);
   dialog.addEventListener('close', onFocusClose);
   dialog.addEventListener('pointerdown', onFocusPointerDown);
   if (ro) ro.observe(dash);
@@ -410,6 +398,8 @@ export function render(el, ctx) {
     cancelAnimationFrame(frame);
     el.removeEventListener('click', onClick);
     el.removeEventListener('keydown', onKey);
+    window.removeEventListener('layout:change', onLayout);
+    custom.destroy(); // unsaved changes go with the view
     dialog.removeEventListener('close', onFocusClose);
     dialog.removeEventListener('pointerdown', onFocusPointerDown);
     // A link in the dialog leaves the view with the dialog still open: close it, so the page

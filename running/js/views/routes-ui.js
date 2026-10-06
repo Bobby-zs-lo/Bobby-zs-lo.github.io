@@ -53,7 +53,7 @@ export function upcomingRuns(plan, today) {
 // a hint has both, and css/routes.css shows the one that fits the pointer: (pointer: coarse).
 const byPointer = (fine, coarse) => html`<span class="rt-on-fine">${fine}</span><span class="rt-on-coarse">${coarse}</span>`;
 
-const runChip = (w, on) => html`<button type="button" class="chip-btn" data-run="${w.id}" aria-pressed="${on}">${formatDate(w.date)} · ${w.title} · ${formatDistance(w.distanceKm)}</button>`;
+const runChip = (w, on) => html`<button type="button" class="chip-btn" data-run="${w.id}" aria-pressed="${String(!!on)}">${formatDate(w.date)} · ${w.title} · ${formatDistance(w.distanceKm)}</button>`;
 const checked = on => (on ? raw(' checked') : '');
 
 // The undo / redo / loop / clear bar on the map, shown while a route has handles. On a narrow
