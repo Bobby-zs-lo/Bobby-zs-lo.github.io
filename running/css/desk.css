@@ -610,6 +610,7 @@ html[data-layout="desk"] .ov-foot {
 html[data-layout="phone"] .ov-head { margin-bottom: 12px; }
 html[data-layout="phone"] .ov-summary { margin-top: 6px; font-size: 15px; }
 html[data-layout="phone"] .ov-scope { display: none; }
+html[data-layout="phone"] .kpi .unit { margin-left: 5px; }
 html[data-layout="phone"] .ov-filters { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-bottom: 14px; }
 html[data-layout="phone"] .ov-filters > * { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 html[data-layout="phone"] .ov-filters .filters-label { font: 500 10.5px var(--mono); letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-3); }
