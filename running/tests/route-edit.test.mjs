@@ -5,7 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   MAX_POINTS, UNDO_LIMIT, samePoint, addPoint, movePoint, insertPoint, canRemovePoint, removePoint,
-  neighbours, legForGeometryIndex, nearestOnPath, nearestGeometryIndex, nudge, nudgeForKey, isClosedPath,
+  neighbours, hasRepeat, legForGeometryIndex, nearestOnPath, nudge, nudgeForKey, isClosedPath,
   handlesFromRoute, viaPoints, matchWayPoints, planToRoute, emptyHistory, record, undo, redo,
   latest, createPlanner,
 } from '../js/route-edit.js';
@@ -84,6 +84,15 @@ test('neighbours: the points a dragged handle (or a pulled leg) is joined to, fo
   assert.deepEqual(neighbours([A], true, { point: 0 }), []);
 });
 
+test('hasRepeat: two points in a row in the same place, which the API refuses', () => {
+  assert.equal(hasRepeat([A, B, C], true), false);
+  assert.equal(hasRepeat([A, B, [...B]], false), true);
+  assert.equal(hasRepeat([A, B, [...A]], true), true, 'on a loop the last point and the start are neighbours');
+  assert.equal(hasRepeat([A, B, [...A]], false), false, 'not on a one-way route');
+  assert.equal(hasRepeat([A, [...A]], true), true);
+  assert.equal(hasRepeat([A], true), false);
+});
+
 // ── geometry ────────────────────────────────────────────────────────────────
 
 test('legForGeometryIndex maps a segment of the line to the leg it belongs to', () => {
@@ -106,11 +115,10 @@ test('nearestOnPath projects onto the closest segment, between its vertices', ()
   assert.equal(hit.index, 0);
   assert.ok(Math.abs(hit.point[0] - 55.7) < 1e-6 && Math.abs(hit.point[1] - 12.51) < 1e-6, `on the line: ${hit.point}`);
   assert.ok(Math.abs(hit.distanceM - 55.6) < 1, `about 56 m off (${hit.distanceM})`);
-  assert.equal(nearestGeometryIndex(line, [55.71, 12.5205]), 1);
-  assert.equal(nearestGeometryIndex(line, [55.8, 12.6]), 1, 'past the end clamps to the last segment');
+  assert.equal(nearestOnPath(line, [55.71, 12.5205]).index, 1);
+  assert.equal(nearestOnPath(line, [55.8, 12.6]).index, 1, 'past the end clamps to the last segment');
   assert.deepEqual(nearestOnPath([[55, 12]], [55.1, 12]).point, [55, 12], 'one vertex is its own nearest point');
   assert.equal(nearestOnPath([], A), null);
-  assert.equal(nearestGeometryIndex([], A), -1);
 });
 
 test('nudge moves a point by metres east and north', () => {

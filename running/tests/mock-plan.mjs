@@ -25,14 +25,23 @@ const round = (x, d) => Math.round(x * 10 ** d) / 10 ** d;
 const isLatLng = (p) => Array.isArray(p) && p.length === 2 && p.every((x) => typeof x === 'number' && Number.isFinite(x))
   && Math.abs(p[0]) <= 90 && Math.abs(p[1]) <= 180;
 
+const samePlace = (a, b) => a[0] === b[0] && a[1] === b[1];
+
+/** Same rules, same messages as parsePlanRequest in functions/src/routing.js. */
 function parsePlanRequest(b, fail) {
   if (!b || typeof b !== 'object') fail(400, 'Body must be a JSON object');
   const { points, profile, loop } = b;
-  if (!Array.isArray(points) || points.length < 2 || points.length > MAX_POINTS || !points.every(isLatLng)) {
-    fail(400, `points must be 2–${MAX_POINTS} [lat, lng] pairs`);
-  }
+  if (!Array.isArray(points) || points.length < 2 || points.length > MAX_POINTS) fail(400, `points must be 2–${MAX_POINTS} [lat, lng] pairs`);
+  points.forEach((p, i) => { if (!isLatLng(p)) fail(400, `point ${i + 1} must be [lat, lng]`); });
   if (typeof profile !== 'string' || !PROFILES.includes(profile)) fail(400, 'profile must be run, trail or ride');
   if (loop !== undefined && typeof loop !== 'boolean') fail(400, 'loop must be true or false');
+  // OpenRouteService fails on a zero-length leg; a loop makes the last point and the first neighbours.
+  for (let i = 1; i < points.length; i++) {
+    if (samePlace(points[i - 1], points[i])) fail(400, `points ${i} and ${i + 1} are the same place`);
+  }
+  if (loop === true && samePlace(points[points.length - 1], points[0])) {
+    fail(400, `points ${points.length} and 1 are the same place, and a loop already returns to the first`);
+  }
   return { points, profile, loop: loop === true };
 }
 

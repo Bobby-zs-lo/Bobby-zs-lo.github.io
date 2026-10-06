@@ -1,7 +1,7 @@
 // Tests for the pure geometry/export helpers (distance, sampling, GPX, map-app deep links).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { haversineKm, pathKm, cumulativeKm, bbox, samplePoints, buildGpx, googleMapsUrl, usableVia, cccUrl, gpxFilename } from '../js/geo.js';
+import { haversineKm, pathKm, cumulativeKm, bbox, samplePoints, buildGpx, googleMapsUrl, usableVia, cccUrl, gpxFilename, isLatLng } from '../js/geo.js';
 
 test('haversine: 1° of latitude ≈ 111.2 km', () => {
   assert.ok(Math.abs(haversineKm([55, 12], [56, 12]) - 111.19) < 0.05);
@@ -126,6 +126,13 @@ test('googleMapsUrl: a planned route’s own points replace the samples, up to 9
   assert.equal(new URL(googleMapsUrl(line, 'walking', { via: ten })).searchParams.get('waypoints').split('|').length, 9, 'too many: sampled after all');
   assert.equal(new URL(googleMapsUrl(line, 'walking', { via: [] })).searchParams.has('waypoints'), false, 'no points between the ends');
   assert.equal(usableVia([[55, 'x']]), false);
+});
+
+test('isLatLng: two finite numbers', () => {
+  assert.equal(isLatLng([55.7, 12.5]), true);
+  assert.equal(isLatLng([55.7, NaN]), false);
+  assert.equal(isLatLng(['55', 12]), false);
+  assert.equal(isLatLng(null), false);
 });
 
 test('cumulativeKm: distance from the start to each vertex', () => {

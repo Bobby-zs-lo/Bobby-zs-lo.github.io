@@ -37,6 +37,15 @@ export function insertPoint(handles, leg, point) {
   return [...handles.slice(0, leg + 1), roundPoint(point), ...handles.slice(leg + 1)];
 }
 
+/**
+ * Two points in a row in the same place (on a loop the last point and the start are in a row too):
+ * the API refuses them, as OpenRouteService fails on a zero-length leg, so they are never sent.
+ */
+export function hasRepeat(handles, loop) {
+  for (let i = 1; i < handles.length; i++) if (samePoint(handles[i - 1], handles[i])) return true;
+  return loop && handles.length > 1 && samePoint(handles[handles.length - 1], handles[0]);
+}
+
 /** The start is where the route begins, so it can only be moved; and a route needs two points. */
 export const canRemovePoint = (handles, i) => i > 0 && i < handles.length && handles.length > 2;
 
@@ -98,11 +107,6 @@ export function nearestOnPath(points, latlng) {
     if (!best || d < best.distanceM) best = { index: i, distanceM: d, point: [lat0 + py / M_PER_DEG, lng0 + px / kx] };
   }
   return best;
-}
-
-export function nearestGeometryIndex(points, latlng) {
-  const hit = nearestOnPath(points, latlng);
-  return hit ? hit.index : -1;
 }
 
 /** `point` moved east and north by the given metres. */

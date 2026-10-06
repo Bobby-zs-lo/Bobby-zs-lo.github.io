@@ -101,8 +101,9 @@ desk, Today on a phone. That is why the manifest's `start_url` is a bare `./` (i
   - **Edit**: any route with points can be reshaped, like CCC's shaping points. *Edit this route*
     turns an Auto variant into its start plus six points spread along it, re-planned once. Drag a
     point, or grab the line to pull a new point out of it; click a point to remove it (not the
-    start; two stay). From the keyboard, Tab to a point: arrows move it 20 m (Shift: 100 m), Delete
-    removes it. Each edit re-plans with one request in flight at most; the old line stays faded
+    start; two stay). With a finger, which cannot pull the line, a tap on the line adds a point
+    there. From the keyboard, Tab to a point: arrows move it 20 m (Shift: 100 m; presses close
+    together are one undo step and one plan), Delete removes it. Each edit re-plans with one request in flight at most; the old line stays faded
     until the new one arrives, and a point too far from any path is put back. Undo and Redo
     (Ctrl+Z, Ctrl+Shift+Z) keep 30 steps and step back to a planned state without a new request.
     A live readout on the map shows the distance against the target and the climb.

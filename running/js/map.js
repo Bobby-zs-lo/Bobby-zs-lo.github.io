@@ -8,6 +8,8 @@
 //   loadLeaflet() → Promise<L>; createMap(el, opts) → ctx { L, map, renderer, tiles };
 //   cssVar, addLine, addLines, addStart, addHandle, updateHandle, fit, destroy. Points are [lat, lng].
 
+import { isLatLng } from './geo.js';
+
 export const LEAFLET = {
   js: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',
   jsSri: 'sha512-puJW3E/qXDqYp9IfhAI54BJEaWIfloJ7JWs7OeD5i6ruC9JZL1gERT1wjtwXFlh7CjE7ZJ+/vcRZRkIYIb6p4g==',
@@ -120,10 +122,10 @@ export async function createMap(el, { zoomControl = true, scrollWheelZoom = true
     maxZoom: TILE_MAX_ZOOM,
     referrerPolicy: TILE_REFERRER,
   });
-  map.on('moveend', () => { if (!map.hasLayer(tiles)) tiles.addTo(map); });
-
   const mq = matchMedia(DARK_QUERY);
   const ctx = { L, map, renderer, tiles, themed: [], scheme: { mq, onChange: null }, destroyed: false };
+  // A resize can still be settling when the view leaves; a removed map takes no tiles.
+  map.on('moveend', () => { if (!ctx.destroyed && !map.hasLayer(tiles)) tiles.addTo(map); });
   ctx.scheme.onChange = () => ctx.themed.forEach(apply => apply());
   mq.addEventListener('change', ctx.scheme.onChange);
   return ctx;
@@ -235,8 +237,6 @@ export function updateHandle(marker, { label, kind } = {}) {
   if (kind) HANDLE_KINDS.forEach(k => el.classList.toggle(`map-handle--${k}`, k === kind));
   return marker;
 }
-
-const isLatLng = p => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]);
 
 /** Frame the points; accepts one array of points or an array of them (a list of routes). */
 export function fit(ctx, points, { padding = 24 } = {}) {

@@ -6,7 +6,7 @@ const MAX_GOOGLE_WAYPOINTS = 9; // Google Maps URLs ignore anything past 9 inter
 const toRad = deg => deg * Math.PI / 180;
 const coord = n => n.toFixed(5);
 const latLng = ([lat, lng]) => `${coord(lat)},${coord(lng)}`;
-const isLatLng = p => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]);
+export const isLatLng = p => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]);
 
 /** True when a planned route's own points can stand in for Google's waypoints. */
 export const usableVia = via => Array.isArray(via) && via.length <= MAX_GOOGLE_WAYPOINTS && via.every(isLatLng);
@@ -49,8 +49,7 @@ export function bbox(points) {
 // origin/destination — and none twice, so sparse geometry yields fewer than n, never repeats.
 export function samplePoints(points, n) {
   if (points.length < 3 || n < 1) return [];
-  const cum = [0];
-  for (let i = 1; i < points.length; i++) cum.push(cum[i - 1] + haversineKm(points[i - 1], points[i]));
+  const cum = cumulativeKm(points);
   const total = cum[cum.length - 1];
   const lastInterior = points.length - 2;
   const out = [];

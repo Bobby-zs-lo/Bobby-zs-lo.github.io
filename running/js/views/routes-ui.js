@@ -16,7 +16,7 @@ export const PROFILES = {
 export const LETTERS = ['A', 'B', 'C'];
 export const MODES = {
   auto: { label: 'Auto', help: 'Three round trips of the length you want, from your start.', km: 'Distance' },
-  draw: { label: 'Draw', help: 'Click the map to add points. The route follows paths and roads between them.', km: 'Target distance' },
+  draw: { label: 'Draw', help: 'Click or tap the map to add points. The route follows paths and roads between them.', km: 'Target distance' },
 };
 export const DEFAULT_KM = { run: 10, trail: 10, ride: 60 };
 const START_NAMES = { home: 'Home', location: 'Your location', map: 'Point on the map' };
@@ -49,15 +49,20 @@ export function upcomingRuns(plan, today) {
     .slice(0, 3);
 }
 
+// What works with a mouse and what works with a finger differ (a finger cannot pull the line), so
+// a hint has both, and css/routes.css shows the one that fits the pointer: (pointer: coarse).
+const byPointer = (fine, coarse) => html`<span class="rt-on-fine">${fine}</span><span class="rt-on-coarse">${coarse}</span>`;
+
 const runChip = (w, on) => html`<button type="button" class="chip-btn" data-run="${w.id}" aria-pressed="${on}">${formatDate(w.date)} · ${w.title} · ${formatDistance(w.distanceKm)}</button>`;
 const checked = on => (on ? raw(' checked') : '');
 
-// The undo / redo / loop / clear bar on the map, shown while a route has handles.
+// The undo / redo / loop / clear bar on the map, shown while a route has handles. On a narrow
+// screen the labels of the icon buttons are visually hidden (routes.css), so the bar stays one row.
 const toolsTpl = () => html`<div class="rt-tools" id="rt-tools" role="toolbar" aria-label="Edit the route" hidden>
-    <button type="button" class="rt-tool" id="rt-undo" aria-keyshortcuts="Control+Z" title="Undo (Ctrl+Z)" aria-disabled="true"><span class="rt-tool-icon" aria-hidden="true">↶</span>Undo</button>
-    <button type="button" class="rt-tool" id="rt-redo" aria-keyshortcuts="Control+Shift+Z" title="Redo (Ctrl+Shift+Z)" aria-disabled="true"><span class="rt-tool-icon" aria-hidden="true">↷</span>Redo</button>
+    <button type="button" class="rt-tool" id="rt-undo" aria-keyshortcuts="Control+Z" title="Undo (Ctrl+Z)" aria-disabled="true"><span class="rt-tool-icon" aria-hidden="true">↶</span><span class="rt-tool-label">Undo</span></button>
+    <button type="button" class="rt-tool" id="rt-redo" aria-keyshortcuts="Control+Shift+Z" title="Redo (Ctrl+Shift+Z)" aria-disabled="true"><span class="rt-tool-icon" aria-hidden="true">↷</span><span class="rt-tool-label">Redo</span></button>
     <button type="button" class="rt-tool rt-tool--toggle" id="rt-loop" aria-pressed="true">Back to start</button>
-    <button type="button" class="rt-tool" id="rt-clear">Clear</button>
+    <button type="button" class="rt-tool" id="rt-clear" title="Clear"><span class="rt-tool-icon rt-tool-icon--narrow" aria-hidden="true">✕</span><span class="rt-tool-label">Clear</span></button>
   </div>
   <p class="sr-only" id="rt-handle-help">Drag to move it. Arrow keys move it 20 metres, with Shift 100. Delete removes it.</p>`;
 
@@ -190,7 +195,7 @@ export function detailTpl(r, i, gpxName) {
   const letter = LETTERS[i];
   return html`<div class="rt-edit-cta">
       <button type="button" class="btn btn--block" data-edit>Edit this route</button>
-      <p class="help">Drag route ${letter} onto the paths you want; it re-routes as you go.</p>
+      <p class="help">Reshape route ${letter} by moving its points; it re-routes as you go.</p>
     </div>
     ${routeBody({ route: r.variants[i], profile: r.profile, start: r.start, targetKm: r.targetKm, via: null, gpxName, tag: letter, name: `route ${letter}` })}`;
 }
@@ -214,7 +219,7 @@ export function editTpl(e) {
     const first = e.handles.length === 0;
     return html`${head}<div class="rt-empty">
         <p class="rt-empty-h">${first ? 'Click the map to set a start' : e.handles.length === 1 ? 'Click the map to add the next point' : 'Finding a way between your points…'}</p>
-        <p class="help">${first ? 'Then keep clicking: each click adds a point, and the route follows paths and roads between them.' : 'Each click adds a point. With Back to start on, the route comes home at the end.'}</p>
+        <p class="help">${first ? byPointer('Then keep clicking: each click adds a point, and the route follows paths and roads between them.', 'Then keep tapping: each tap adds a point, and the route follows paths and roads between them.') : byPointer('Each click adds a point.', 'Each tap adds a point.')}${first ? '' : ' With Back to start on, the route comes home at the end.'}</p>
       </div>`;
   }
   const r = e.route, km = Number.isFinite(e.targetKm) && e.targetKm > 0 ? e.targetKm : null;
@@ -223,7 +228,7 @@ export function editTpl(e) {
       <p class="rt-total"><strong class="num">${formatDistance(r.distanceKm)}</strong>${km ? html`<span class="rt-delta num">${deltaText(r.distanceKm, km)} <span class="rt-vs">vs ${formatDistance(km)}</span></span>` : ''}</p>
       <p class="rt-facts num"><span><span aria-hidden="true">↑</span><span class="sr-only">climb</span> ${Math.round(r.ascentM || 0)} m</span><span>${pct(r.surface && r.surface.paved)} paved</span><span>${e.handles.length} points</span></p>
     </div>
-    <p class="rt-hint">Drag a point or the line to reshape. Click a point to remove it. <span class="rt-hint-keys">Tab to a point: arrow keys move it, Delete removes it.</span></p>
+    <p class="rt-hint">${byPointer('Drag a point or the line to reshape. Click a point to remove it.', 'Drag a point to move it. Tap the line to add a point there; tap a point to remove it.')} <span class="rt-hint-keys">Tab to a point: arrow keys move it, Delete removes it.</span></p>
     <div class="rt-detail${e.fresh ? '' : ' is-stale'}"${e.fresh ? '' : raw(' aria-busy="true"')}>
       ${routeBody({ route: r, profile: e.profile, start: e.start, targetKm: km, via: e.via, gpxName: e.gpxName, tag: '', name: e.letter ? 'this route' : 'the drawn route' })}
     </div>`;

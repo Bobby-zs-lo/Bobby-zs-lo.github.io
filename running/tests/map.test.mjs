@@ -354,6 +354,13 @@ test('updateHandle: a new name and kind, on the same marker', async () => {
   assert.ok(el.classes.has('map-handle--via') && !el.classes.has('map-handle--end'));
 });
 
+test('a map destroyed while a move is still settling adds no tiles to it', async () => {
+  const { lib, ctx } = await fakeMap();
+  lib.destroy(ctx);
+  assert.doesNotThrow(() => ctx.map.fire('moveend'));
+  assert.equal(ctx.map.hasLayer(ctx.tiles), false);
+});
+
 test('addLine: interactive on request, so a line can be grabbed without a click handler', async () => {
   const { lib, ctx } = await fakeMap();
   assert.equal(lib.addLine(ctx, ROUTE, { color: '#123456' }).options.interactive, false);

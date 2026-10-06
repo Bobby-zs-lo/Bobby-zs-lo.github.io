@@ -136,6 +136,7 @@
 .rt-tool[aria-disabled="true"]:active { transform: none; }
 .rt-tool[hidden] { display: none; }
 .rt-tool-icon { font-size: 16px; line-height: 1; }
+.rt-tool-icon--narrow { display: none; }
 /* Back to start: a toggle, with a box that fills when it is on. */
 .rt-tool--toggle::before {
   content: ''; flex: none; width: 14px; height: 14px; box-sizing: border-box;
@@ -260,5 +261,21 @@ html[data-layout="desk"] .rt .rt-map {
   min-height: 480px;
 }
 html[data-layout="desk"] .rt-head .sub { max-width: 34ch; }
-/* A phone has no Tab key to reach a handle with. */
+/* Hints for a mouse or for a finger (routes-ui.js byPointer); a finger has no Tab key either. */
+.rt-on-coarse { display: none; }
+@media (pointer: coarse) {
+  .rt-on-fine, .rt-hint-keys { display: none; }
+  .rt-on-coarse { display: inline; }
+}
 html[data-layout="phone"] .rt-hint-keys { display: none; }
+
+/* A narrow map: Undo, Redo and Clear keep their icons and hand their words to screen readers, so
+   the bar stays one row beside the zoom buttons. Back to start keeps its words: a box alone says nothing. */
+@media (max-width: 420px) {
+  .rt-tool { padding: 0 11px; }
+  .rt-tool-icon--narrow { display: inline; }
+  .rt-tool-label {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip-path: inset(50%); white-space: nowrap;
+  }
+}

@@ -2,9 +2,8 @@
 // round trips of a set length; Draw follows paths and roads between points clicked on the map; and
 // any route can be edited, its points and line dragged and re-routed (views/routes-edit.js). The
 // route on screen goes out as a GPX file, a Google Maps link, a Strava or Garmin import, or (a ride)
-// a Cake, Coffee & Cadence plan (views/routes-export.js). Desk first (a 380 px panel beside a
-// full-height map), stacked on a narrow screen. Markup is in routes-ui.js, the Start field in
-// routes-start.js, Auto's map layers in routes-map.js.
+// a Cake, Coffee & Cadence plan (routes-export.js). Desk first (a 380 px panel beside a full-height
+// map), stacked on a narrow screen. Markup: routes-ui.js; Start: routes-start.js; Auto's layers: routes-map.js.
 import { mount } from '../dom.js';
 import { api } from '../api.js';
 import { getState, getPlan } from '../store.js';
@@ -19,7 +18,8 @@ import {
   pageTpl, statusTpl, resultsTpl, detailTpl, editTpl, liveTpl,
 } from './routes-ui.js';
 import { bindStart } from './routes-start.js';
-import { createEditor, bindEditTools } from './routes-edit.js';
+import { createEditor } from './routes-edit.js';
+import { bindEditTools } from './routes-tools.js';
 import { createAutoLayers } from './routes-map.js';
 import { exportRoute, routeFilename } from './routes-export.js';
 import { createMap, destroy } from '../map.js';
@@ -274,12 +274,12 @@ export async function render(el, ctx) {
   function startEditing() {
     const r = st.result, v = selectedVariant();
     if (!v) return;
-    const { handles } = handlesFromRoute(v.points, EDIT_HANDLES, { start: r.start });
+    const { handles, loop } = handlesFromRoute(v.points, EDIT_HANDLES, { start: r.start }); // a round trip: a loop
     if (autoEd) autoEd.destroy();
     autoEd = newEditor();
     st.editing = true;
     // The variant shows, faded, until it comes back re-routed through the handles.
-    autoEd.load({ handles, loop: true, route: v, message: `Re-routed through ${handles.length - 1} handles — drag to reshape.` });
+    autoEd.load({ handles, loop, route: v, message: `Re-routed through ${handles.length - 1} handles — drag to reshape.` });
     syncMode();
     results.focus();
   }

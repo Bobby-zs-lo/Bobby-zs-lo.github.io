@@ -149,6 +149,12 @@ test('mock: plan requests are validated like the contract', async () => {
   assert.equal(await bad({ points: two, profile: 'swim' }), 400);
   assert.equal(await bad({ points: two, profile: 'run', loop: 'yes' }), 400);
   assert.equal(await bad(null), 400);
+  const same = async (points, loop) => (await call(api, 'POST', '/api/routes/plan', { body: { points, profile: 'run', loop } })).json.error;
+  assert.equal(await same([CENTRE, [55.71, 12.56], [55.71, 12.56]], false), 'points 2 and 3 are the same place');
+  assert.equal(await same([CENTRE, [55.71, 12.56], [...CENTRE]], true), 'points 3 and 1 are the same place, and a loop already returns to the first');
+  assert.equal((await call(api, 'POST', '/api/routes/plan', { body: { points: [CENTRE, [55.71, 12.56], [...CENTRE]], profile: 'run' } })).status, 200, 'one way, coming back to the start is fine');
+  const half = await call(api, 'POST', '/api/routes/plan', { body: { points: [CENTRE, [55.7]], profile: 'run' } });
+  assert.equal(half.json.error, 'point 2 must be [lat, lng]', 'the backend names the point');
   const ok = await call(api, 'POST', '/api/routes/plan', { body: { points: two, profile: 'ride' } });
   assert.equal(ok.status, 200);
   assert.equal(ok.json.loop, false, 'loop defaults to false');

@@ -33,7 +33,7 @@ const SHELL = [
   './css/desk.css', './css/overview.css', './css/map.css', './css/routes.css', './js/layout.js', './js/polyline.js', './js/geo.js',
   './js/analytics.js', './js/charts.js', './js/map.js', './js/geolocate.js', './js/route-edit.js',
   './js/views/overview.js', './js/views/tiles.js', './js/views/overview-model.js', './js/views/tiles-charts.js', './js/views/tiles-table.js', './js/views/tiles-map.js',
-  './js/views/routes.js', './js/views/routes-ui.js', './js/views/routes-start.js', './js/views/routes-map.js', './js/views/routes-edit.js', './js/views/routes-export.js',
+  './js/views/routes.js', './js/views/routes-ui.js', './js/views/routes-start.js', './js/views/routes-map.js', './js/views/routes-edit.js', './js/views/routes-tools.js', './js/views/routes-export.js',
   './assets/icon-192.png', './assets/icon-512.png', './assets/icon-maskable.png', './assets/badge-96.png',
 ];
 
