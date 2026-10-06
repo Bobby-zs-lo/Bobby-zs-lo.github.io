@@ -59,23 +59,66 @@ def draw_radial_glow(img, cx, cy, r, center_col, edge_col):
 # ════════════════════════════════════════════════════════════════════════════════
 def gen_mech():
     TW, TH = 96, 128
-    # ── Thumbnail ──
-    img = Image.new('RGBA', (TW, TH), (12, 14, 24, 255))
+    # ── Thumbnail ── (Dexter's Laboratory cool slate-blue & industrial gray secret lab)
+    img = Image.new('RGBA', (TW, TH), (65, 82, 107, 255))
     d = ImageDraw.Draw(img)
-    # Hangar Lab Wall & Diagnostic Panels
-    for y in range(TH):
-        t = y / TH
-        d.line([(0, y), (TW, y)], fill=lerp_color(h2c('#121626'), h2c('#1c2238'), t))
-    # Laboratory Server Racks & Diagnostics
-    for y_led in range(15, 60, 8):
-        d.rectangle([4, y_led, 14, y_led + 4], fill=h2c('#00f5d4', 200))
-        d.rectangle([TW - 16, y_led, TW - 6, y_led + 4], fill=h2c('#ffd166', 200))
-    # Stationary Floor Launch Pad with Caution Stripes
-    d.rectangle([10, TH - 22, TW - 10, TH - 8], fill=h2c('#22283a'))
-    for hx in range(14, TW - 14, 8):
-        d.polygon([(hx, TH - 12), (hx + 4, TH - 12), (hx + 2, TH - 8), (hx - 2, TH - 8)], fill=h2c('#ffd166'))
-    # Gundam RX-78
-    cx, cy = TW // 2, 68
+    # Hangar Lab Wall: Cool slate-blue modular wall panels
+    for y in range(int(TH * 0.70)):
+        t = y / (TH * 0.70)
+        d.line([(0, y), (TW, y)], fill=lerp_color(h2c('#495c76'), h2c('#36455b'), t))
+    # Modular wall panel vertical seams & rivets
+    for px in [22, 48, 74]:
+        d.line([(px, 0), (px, int(TH * 0.70))], fill=h2c('#253243'), width=1)
+        for ry in range(12, int(TH * 0.70), 16):
+            d.point((px - 2, ry), fill=h2c('#6f84a1'))
+            d.point((px + 2, ry), fill=h2c('#6f84a1'))
+
+    # Overhead ceiling girder & fluorescent light fixture
+    d.rectangle([0, 0, TW, 8], fill=h2c('#283546'))
+    d.rectangle([20, 2, TW - 20, 6], fill=h2c('#e8f4fc'))
+    # Downward fluorescent light cone
+    d.polygon([(24, 6), (TW - 24, 6), (TW - 8, int(TH * 0.70)), (8, int(TH * 0.70))], fill=(225, 245, 255, 25))
+
+    # Left Wall: Mainframe Computer Server Rack with Green Oscilloscope
+    d.rectangle([2, 14, 18, int(TH * 0.70) - 4], fill=h2c('#263446'))
+    d.rectangle([4, 18, 16, 28], fill=h2c('#121d2a'))
+    # Green oscilloscope sine wave
+    d.line([(5, 23), (8, 20), (11, 26), (15, 23)], fill=h2c('#39ff14'), width=1)
+    for y_led in range(32, 58, 6):
+        d.rectangle([4, y_led, 8, y_led + 3], fill=h2c('#00f5d4'))
+        d.rectangle([11, y_led, 15, y_led + 3], fill=h2c('#ffd166'))
+
+    # Right Wall: Diagnostics Rack & Bubbling Coolant Tube
+    d.rectangle([TW - 18, 14, TW - 2, int(TH * 0.70) - 4], fill=h2c('#263446'))
+    d.rectangle([TW - 16, 18, TW - 11, 54], fill=h2c('#00f5d4', 160)) # Cyan coolant tube
+    d.point((TW - 14, 26), fill=h2c('#ffffff'))
+    d.point((TW - 13, 38), fill=h2c('#ffffff'))
+    for y_led in range(18, 54, 7):
+        d.rectangle([TW - 9, y_led, TW - 4, y_led + 4], fill=h2c('#ff2a5f'))
+
+    # Solid Industrial Steel/Slate Floor (STATIONARY!)
+    floor_y = int(TH * 0.70)
+    d.rectangle([0, floor_y, TW, TH], fill=h2c('#546377'))
+    # Steel tile bevels & gridlines
+    for gy in range(floor_y + 10, TH, 10):
+        d.line([(0, gy), (TW, gy)], fill=h2c('#354050'), width=1)
+    for gx in range(14, TW, 18):
+        d.line([(gx, floor_y), (gx, TH)], fill=h2c('#354050'), width=1)
+
+    # Hazard Caution Stripe Perimeter on Floor
+    for hx in range(0, TW, 10):
+        d.polygon([(hx, floor_y), (hx + 5, floor_y), (hx + 3, floor_y + 4), (hx - 2, floor_y + 4)], fill=h2c('#ffd166'))
+        d.polygon([(hx + 5, floor_y), (hx + 10, floor_y), (hx + 8, floor_y + 4), (hx + 3, floor_y + 4)], fill=h2c('#1c2430'))
+
+    # Stationary Launch Cradle Pad on Floor
+    d.rectangle([TW // 2 - 28, floor_y + 2, TW // 2 + 28, floor_y + 14], fill=h2c('#3f5068'))
+    d.rectangle([TW // 2 - 26, floor_y + 4, TW // 2 + 26, floor_y + 10], fill=h2c('#50637e'))
+    # Foot clamp brackets
+    d.rectangle([TW // 2 - 18, floor_y - 2, TW // 2 - 10, floor_y + 6], fill=h2c('#ffd166'))
+    d.rectangle([TW // 2 + 10, floor_y - 2, TW // 2 + 18, floor_y + 6], fill=h2c('#ffd166'))
+
+    # Gundam RX-78 in Center
+    cx, cy = TW // 2, 62
     # Torso
     d.rectangle([cx - 10, cy - 8, cx + 10, cy + 12], fill=h2c('#2b55b8')) # Navy chest
     d.rectangle([cx - 8, cy + 12, cx + 8, cy + 22], fill=h2c('#e6e8f2')) # White waist
@@ -101,13 +144,13 @@ def gen_mech():
     d.rectangle([cx - 11, cy + 42, cx - 1, cy + 46], fill=h2c('#d92534'))
     d.rectangle([cx + 1, cy + 42, cx + 11, cy + 46], fill=h2c('#d92534'))
     # Welder Drone hovering
-    d.rectangle([cx - 30, cy - 22, cx - 18, cy - 14], fill=h2c('#505a72'))
+    d.rectangle([cx - 30, cy - 22, cx - 18, cy - 14], fill=h2c('#c0cad8'))
     d.point((cx - 24, cy - 18), fill=h2c('#00f5d4'))
     d.line([(cx - 20, cy - 14), (cx - 10, cy - 4)], fill=h2c('#ffd166'), width=2)
     draw_radial_glow(img, cx - 10, cy - 4, 8, (255, 255, 255, 255), (255, 150, 0, 0))
 
     img.save(os.path.join(ASSETS, 'thumb_mech.png'))
-    print("  Wrote thumb_mech.png (Gundam)")
+    print("  Wrote thumb_mech.png (Dexter's Lab Gundam)")
 
     # ── Spritesheet (mech.png + mech.json) ──
     SW, SH = 384, 128
@@ -117,11 +160,11 @@ def gen_mech():
 
     # 1. Inner Frame Skeleton (32x48) - Legs & Spine
     fx, fy = 0, 0
-    sd.rectangle([fx + 13, fy + 4, fx + 19, fy + 24], fill=h2c('#505868'))
-    sd.rectangle([fx + 10, fy + 24, fx + 14, fy + 46], fill=h2c('#3a4050'))
-    sd.rectangle([fx + 18, fy + 24, fx + 22, fy + 46], fill=h2c('#3a4050'))
-    sd.rectangle([fx + 7, fy + 44, fx + 14, fy + 47], fill=h2c('#282c38'))
-    sd.rectangle([fx + 18, fy + 44, fx + 25, fy + 47], fill=h2c('#282c38'))
+    sd.rectangle([fx + 13, fy + 4, fx + 19, fy + 24], fill=h2c('#606c80'))
+    sd.rectangle([fx + 10, fy + 24, fx + 14, fy + 46], fill=h2c('#444e5f'))
+    sd.rectangle([fx + 18, fy + 24, fx + 22, fy + 46], fill=h2c('#444e5f'))
+    sd.rectangle([fx + 7, fy + 44, fx + 14, fy + 47], fill=h2c('#303846'))
+    sd.rectangle([fx + 18, fy + 44, fx + 25, fy + 47], fill=h2c('#303846'))
     add_f('frame_legs', fx, fy, 32, 48)
 
     # 2. Torso Armor Module (32x32)
@@ -149,9 +192,9 @@ def gen_mech():
     sd.rectangle([ax + 6, ay + 22, ax + 18, ay + 34], fill=h2c('#3a4050'))
     add_f('arm_rifle', ax, ay, 24, 36)
 
-    # 5. Welder Drone (24x24)
+    # 5. Welder Drone (24x24) - Dexter Lab clean style
     dx, dy = 120, 0
-    sd.rectangle([dx + 4, dy + 4, dx + 20, dy + 14], fill=h2c('#4a5568'))
+    sd.rectangle([dx + 4, dy + 4, dx + 20, dy + 14], fill=h2c('#c0cad8'))
     sd.rectangle([dx + 9, dy + 7, dx + 15, dy + 11], fill=h2c('#00f5d4')) # Sensor lens
     sd.line([(dx + 12, dy + 14), (dx + 18, dy + 22)], fill=h2c('#ffd166'), width=2)
     add_f('weld_arm', dx, dy, 24, 24)
@@ -165,19 +208,22 @@ def gen_mech():
         sd.polygon([(vx + 12 - 2, vy + 2), (vx + 12 + 2, vy + 2), (vx + 12, vy + 10)], fill=h2c('#ffffff'))
         add_f(f'jet_flame{i}', vx, vy, 24, 36)
 
-    # 7. Massive Lab Blast Hangar Doors (36x64 each)
+    # 7. Massive Lab Blast Hangar Doors (36x64 each) - Titanium Slate-Blue
     door_x, door_y = 226, 0
-    sd.rectangle([door_x, door_y, door_x + 36, door_y + 64], fill=h2c('#1c2030'))
-    sd.rectangle([door_x + 4, door_y + 4, door_x + 32, door_y + 60], fill=h2c('#262d42'))
+    sd.rectangle([door_x, door_y, door_x + 36, door_y + 64], fill=h2c('#3f5068'))
+    sd.rectangle([door_x + 3, door_y + 4, door_x + 33, door_y + 60], fill=h2c('#516582'))
+    # Inner bevel trim
+    sd.rectangle([door_x + 6, door_y + 8, door_x + 30, door_y + 56], fill=h2c('#465772'))
     # Heavy lock bolts & hazard stripe
     for by in range(door_y + 8, door_y + 56, 12):
-        sd.rectangle([door_x + 28, by, door_x + 34, by + 4], fill=h2c('#ffd166'))
+        sd.rectangle([door_x + 27, by, door_x + 33, by + 4], fill=h2c('#ffd166'))
     add_f('hangar_door', door_x, door_y, 36, 64)
 
-    # 8. Fixed Floor Launch Cradle Pad (64x20)
+    # 8. Fixed Floor Launch Cradle Pad (64x20) - Industrial Slate-Gray
     lx, ly = 264, 0
-    sd.rectangle([lx, ly, lx + 64, ly + 14], fill=h2c('#2b3244'))
-    sd.rectangle([lx, ly + 14, lx + 64, ly + 18], fill=h2c('#1a1f2c'))
+    sd.rectangle([lx, ly, lx + 64, ly + 14], fill=h2c('#42536b'))
+    sd.rectangle([lx, ly + 14, lx + 64, ly + 18], fill=h2c('#2a3648'))
+    sd.rectangle([lx + 4, ly + 3, lx + 60, ly + 9], fill=h2c('#576a86'))
     # Foot clamp brackets
     sd.rectangle([lx + 16, ly - 4, lx + 24, ly + 8], fill=h2c('#ffd166'))
     sd.rectangle([lx + 40, ly - 4, lx + 48, ly + 8], fill=h2c('#ffd166'))
@@ -194,7 +240,7 @@ def gen_mech():
     simg.save(os.path.join(ASSETS, 'mech.png'))
     with open(os.path.join(ASSETS, 'mech.json'), 'w') as f:
         json.dump(frames, f, indent=2)
-    print("  Wrote mech.png+json (Gundam Lab & Hangar Sortie)")
+    print("  Wrote mech.png+json (Dexter's Lab Secret Hangar)")
 
 # ════════════════════════════════════════════════════════════════════════════════
 # 2. THEME 2: LIVING DEEP SEA AQUARIUM & LEVIATHAN CHOMP (abyss)

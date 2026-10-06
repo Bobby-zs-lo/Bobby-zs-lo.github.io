@@ -83,15 +83,31 @@ export function finalePhase(elapsedMs) {
 }
 
 const C = {
-  labWall: '#111524',
-  labFloor: '#1a1f30',
-  gridLine: '#242b42',
+  labWallTop: '#495d7a',      // Dexter's Lab cool slate-blue upper wall
+  labWallBot: '#37475d',      // Mid slate-blue lower wall
+  wallPanelBevel: '#5c708e',  // Modular panel highlight bevel
+  wallPanelGrout: '#243142',  // Modular panel dark seam
+  wallRivet: '#748aa8',       // Steel panel rivet dots
+  girder: '#2a3748',          // Ceiling girder trusses
+  ceilingLight: '#e8f4fc',    // Overhead fluorescent tube
+  labFloor: '#546377',        // Industrial concrete/slate steel floor
+  floorTileLight: '#65768c',  // Floor tile bevel highlight
+  gridLine: '#364353',        // Floor tile grout line
+  cautionYellow: '#ffd166',   // High-vis hazard yellow
+  cautionBlack: '#1c2430',    // Hazard black
+  consoleBody: '#263446',     // Dexter mainframe console chassis
+  consoleBevel: '#3c4e66',    // Console highlight bevel
+  screenOscillo: '#121d2a',   // CRT screen frame
+  screenGreen: '#39ff14',     // Dexter radioactive green oscilloscope waveform
+  doorPlate: '#40516b',       // Titanium slate blast door plate
+  doorPlateLight: '#536785',  // Blast door beveled armor panel
+  doorBevel: '#233040',       // Blast door seam seal
+  doorBrace: '#2e3d50',       // Horizontal structural reinforcement rib
   cyan: '#00f5d4',
   gold: '#ffd166',
   crimson: '#ff2a5f',
   white: '#ffffff',
-  nightSky: '#050714',
-  doorEdge: '#3a4460',
+  nightSky: '#040612',        // Outer night sky revealed through doors
 };
 
 export class MechScene extends Scene {
@@ -225,9 +241,48 @@ export class MechScene extends Scene {
     const parts = assemblyPartsVisible(p);
     const thrust = thrusterPower(p);
 
-    // 1. Stationary Lab Wall Background
-    c.fillStyle = C.labWall;
-    c.fillRect(0, 0, W, H);
+    const floorY = Math.round(H * 0.70);
+
+    // 1. Dexter's Lab Cool Slate-Blue Modular Wall Background
+    const wallGrad = c.createLinearGradient(0, 0, 0, floorY);
+    wallGrad.addColorStop(0, C.labWallTop);
+    wallGrad.addColorStop(1, C.labWallBot);
+    c.fillStyle = wallGrad;
+    c.fillRect(0, 0, W, floorY);
+
+    // Modular Wall Panel Seams & Rivets (Dexter Lab Clean Architecture)
+    for (let px = cx - 80; px <= cx + 80; px += 40) {
+      if (px > 24 && px < W - 24) {
+        c.strokeStyle = C.wallPanelGrout;
+        c.lineWidth = 1;
+        c.beginPath(); c.moveTo(px, 12); c.lineTo(px, floorY); c.stroke();
+        c.strokeStyle = C.wallPanelBevel;
+        c.beginPath(); c.moveTo(px + 1, 12); c.lineTo(px + 1, floorY); c.stroke();
+
+        c.fillStyle = C.wallRivet;
+        for (let ry = 20; ry < floorY; ry += 24) {
+          c.fillRect(px - 2, ry, 2, 2);
+          c.fillRect(px + 2, ry, 2, 2);
+        }
+      }
+    }
+
+    // Overhead Ceiling Girder & Fluorescent Light Fixture
+    c.fillStyle = C.girder;
+    c.fillRect(0, 0, W, 12);
+    c.fillStyle = '#1c2532';
+    c.fillRect(0, 10, W, 2);
+    // Fluorescent Tube Fixture
+    c.fillStyle = C.ceilingLight;
+    c.fillRect(cx - 38, 3, 76, 5);
+    // Downward Soft Fluorescent Light Cone Illuminating Bay
+    c.save();
+    c.fillStyle = 'rgba(230, 246, 255, 0.08)';
+    c.beginPath();
+    c.moveTo(cx - 34, 8); c.lineTo(cx + 34, 8);
+    c.lineTo(cx + 64, floorY); c.lineTo(cx - 64, floorY);
+    c.fill();
+    c.restore();
 
     // 2. Blast Hangar Doors Behind Mech (Slide open in finale!)
     let doorSlideX = 0;
@@ -240,7 +295,7 @@ export class MechScene extends Scene {
     if (doorGap > 0) {
       c.save();
       c.fillStyle = C.nightSky;
-      c.fillRect(cx - doorGap, 0, doorGap * 2, Math.round(H * 0.72));
+      c.fillRect(cx - doorGap, 0, doorGap * 2, floorY + 4);
 
       // Distant stars & combat beacons outside
       c.fillStyle = C.white;
@@ -260,73 +315,145 @@ export class MechScene extends Scene {
       c.restore();
     }
 
-    // Heavy Sliding Blast Door Plates
+    // Heavy Sliding Blast Door Plates (Titanium Slate-Blue with Beveled Armor)
     const leftDoorRight = Math.max(0, cx - doorGap);
     const rightDoorLeft = cx + doorGap;
     if (leftDoorRight > 0) {
-      c.fillStyle = '#1c2236';
-      c.fillRect(0, 0, leftDoorRight, Math.round(H * 0.72));
-      c.strokeStyle = C.doorEdge;
-      c.strokeRect(0, 0, leftDoorRight, Math.round(H * 0.72));
-      // Outer seam seal
-      c.fillStyle = '#0c0f18';
-      c.fillRect(leftDoorRight - 2, 0, 2, Math.round(H * 0.72));
+      c.fillStyle = C.doorPlate;
+      c.fillRect(0, 0, leftDoorRight, floorY);
+      // Inner beveled armor plate
+      if (leftDoorRight > 8) {
+        c.fillStyle = C.doorPlateLight;
+        c.fillRect(6, 14, leftDoorRight - 12, floorY - 20);
+        c.fillStyle = C.doorPlate;
+        c.fillRect(8, 16, leftDoorRight - 16, floorY - 24);
+      }
+      c.strokeStyle = C.doorBevel;
+      c.strokeRect(0, 0, leftDoorRight, floorY);
+      // Vertical seam seal
+      c.fillStyle = '#1e2836';
+      c.fillRect(leftDoorRight - 3, 0, 3, floorY);
     }
     if (rightDoorLeft < W) {
-      c.fillStyle = '#1c2236';
-      c.fillRect(rightDoorLeft, 0, W - rightDoorLeft, Math.round(H * 0.72));
-      c.strokeStyle = C.doorEdge;
-      c.strokeRect(rightDoorLeft, 0, W - rightDoorLeft, Math.round(H * 0.72));
-      c.fillStyle = '#0c0f18';
-      c.fillRect(rightDoorLeft, 0, 2, Math.round(H * 0.72));
+      c.fillStyle = C.doorPlate;
+      c.fillRect(rightDoorLeft, 0, W - rightDoorLeft, floorY);
+      // Inner beveled armor plate
+      if (W - rightDoorLeft > 8) {
+        c.fillStyle = C.doorPlateLight;
+        c.fillRect(rightDoorLeft + 6, 14, W - rightDoorLeft - 12, floorY - 20);
+        c.fillStyle = C.doorPlate;
+        c.fillRect(rightDoorLeft + 8, 16, W - rightDoorLeft - 16, floorY - 24);
+      }
+      c.strokeStyle = C.doorBevel;
+      c.strokeRect(rightDoorLeft, 0, W - rightDoorLeft, floorY);
+      // Vertical seam seal
+      c.fillStyle = '#1e2836';
+      c.fillRect(rightDoorLeft, 0, 3, floorY);
     }
 
     // Door horizontal structural braces & hydraulic lock bolts
-    c.strokeStyle = '#262f46';
+    c.strokeStyle = C.doorBrace;
     c.lineWidth = 1;
-    for (let py = 32; py < H * 0.70; py += 28) {
+    for (let py = 32; py < floorY - 10; py += 28) {
       if (leftDoorRight > 0) {
-        c.beginPath(); c.moveTo(0, py); c.lineTo(leftDoorRight - 2, py); c.stroke();
+        c.beginPath(); c.moveTo(0, py); c.lineTo(leftDoorRight - 3, py); c.stroke();
         c.fillStyle = C.gold;
-        c.fillRect(leftDoorRight - 5, py - 2, 3, 5);
+        c.fillRect(leftDoorRight - 6, py - 2, 3, 5);
       }
       if (rightDoorLeft < W) {
-        c.beginPath(); c.moveTo(rightDoorLeft + 2, py); c.lineTo(W, py); c.stroke();
+        c.beginPath(); c.moveTo(rightDoorLeft + 3, py); c.lineTo(W, py); c.stroke();
         c.fillStyle = C.gold;
-        c.fillRect(rightDoorLeft + 2, py - 2, 3, 5);
+        c.fillRect(rightDoorLeft + 3, py - 2, 3, 5);
       }
     }
 
-    // 3. Stationary Lab Wall Diagnostics & Server Racks
+    // 3. Dexter-Style Secret Lab Consoles, Oscilloscope & Mainframes
+    // (a) Left Wall: Computer Mainframe & Dancing Green Oscilloscope (x = 0..24)
+    c.fillStyle = C.consoleBody;
+    c.fillRect(0, 14, 24, floorY - 14);
+    c.strokeStyle = C.consoleBevel;
+    c.strokeRect(0, 14, 24, floorY - 14);
+
+    // Green CRT Oscilloscope Screen
+    c.fillStyle = C.screenOscillo;
+    c.fillRect(3, 18, 18, 16);
+    c.strokeStyle = '#0a121c';
+    c.strokeRect(3, 18, 18, 16);
+    // Dancing green sine waveform
+    c.strokeStyle = C.screenGreen;
+    c.lineWidth = 1;
+    c.beginPath();
+    for (let ox = 4; ox <= 20; ox++) {
+      const oy = 26 + Math.round(Math.sin((ox + this.time * 0.01) * 0.6) * 4);
+      if (ox === 4) c.moveTo(ox, oy);
+      else c.lineTo(ox, oy);
+    }
+    c.stroke();
+
+    // Blinking LED status indicator bank
     for (let r = 0; r < 4; r++) {
-      const ry = 40 + r * 16;
-      // Left terminal
-      c.fillStyle = (Math.floor(this.time / 300 + r) % 2 === 0) ? C.cyan : '#153835';
-      c.fillRect(6, ry, 10, 3);
-      // Right terminal
-      c.fillStyle = (Math.floor(this.time / 250 + r) % 2 === 0) ? C.gold : '#383015';
-      c.fillRect(W - 16, ry, 10, 3);
+      const ly = 38 + r * 14;
+      const onCyan = (Math.floor(this.time / 280 + r) % 2 === 0);
+      c.fillStyle = onCyan ? C.cyan : '#0d3230';
+      c.fillRect(4, ly, 6, 4);
+      const onGold = (Math.floor(this.time / 340 + r) % 2 === 0);
+      c.fillStyle = onGold ? C.gold : '#382a10';
+      c.fillRect(14, ly, 6, 4);
     }
 
-    // 4. Solid Industrial Lab Floor (STATIONARY!)
-    const floorY = Math.round(H * 0.70);
+    // (b) Right Wall: Diagnostics Rack & Bubbling Coolant Conduit (x = W - 24..W)
+    c.fillStyle = C.consoleBody;
+    c.fillRect(W - 24, 14, 24, floorY - 14);
+    c.strokeStyle = C.consoleBevel;
+    c.strokeRect(W - 24, 14, 24, floorY - 14);
+
+    // Vertical Glass Coolant Conduit Tube
+    c.fillStyle = 'rgba(0, 245, 212, 0.25)';
+    c.fillRect(W - 20, 18, 8, floorY - 36);
+    c.strokeStyle = C.cyan;
+    c.strokeRect(W - 20, 18, 8, floorY - 36);
+    // Rising bubbles in tube
+    for (let b = 0; b < 4; b++) {
+      const by = Math.round(floorY - 22 - ((this.time * 0.04 + b * 22) % (floorY - 42)));
+      c.fillStyle = C.white;
+      c.fillRect(W - 17, by, 2, 2);
+    }
+
+    // Power Level Bar Graph (Scales with timer progress!)
+    const numBars = 6;
+    const filledBars = Math.round(p * numBars);
+    for (let b = 0; b < numBars; b++) {
+      const by = floorY - 24 - b * 10;
+      const isFilled = (numBars - 1 - b) < filledBars;
+      c.fillStyle = isFilled ? C.cyan : '#12242e';
+      c.fillRect(W - 9, by, 6, 6);
+    }
+
+    // 4. Solid Industrial Slate Floor (STATIONARY!)
     c.fillStyle = C.labFloor;
     c.fillRect(0, floorY, W, H - floorY);
 
-    // Hazard Caution Perimeter Line on Floor
+    // Hazard Caution Perimeter Line on Floor (Yellow & Black Stripes)
     for (let hx = 0; hx < W; hx += 16) {
-      c.fillStyle = C.gold;
+      c.fillStyle = C.cautionYellow;
       c.fillRect(hx, floorY, 8, 3);
-      c.fillStyle = '#0a0d14';
+      c.fillStyle = C.cautionBlack;
       c.fillRect(hx + 8, floorY, 8, 3);
     }
 
-    // Floor Steel Gridlines
-    c.strokeStyle = C.gridLine;
-    c.lineWidth = 1;
-    for (let gx = 20; gx < W; gx += 28) {
-      c.beginPath();
-      c.moveTo(gx, floorY); c.lineTo(gx, H);
+    // Steel Floor Tile Gridlines with Highlight Bevels
+    for (let gy = floorY + 12; gy < H; gy += 14) {
+      c.strokeStyle = C.gridLine;
+      c.beginPath(); c.moveTo(0, gy); c.lineTo(W, gy); c.stroke();
+      c.strokeStyle = C.floorTileLight;
+      c.beginPath(); c.moveTo(0, gy + 1); c.lineTo(W, gy + 1); c.stroke();
+    }
+    for (let gx = 20; gx < W; gx += 26) {
+      c.strokeStyle = C.gridLine;
+      c.beginPath(); c.moveTo(gx, floorY); c.lineTo(gx, H);
+      c.stroke();
+      c.strokeStyle = C.floorTileLight;
+      c.beginPath(); c.moveTo(gx + 1, floorY); c.lineTo(gx + 1, H);
       c.stroke();
     }
 
@@ -424,9 +551,9 @@ export class MechScene extends Scene {
 
   _renderHUD(c, W, H, cx, p, phase, parts) {
     c.save();
-    c.strokeStyle = '#2b344e';
+    c.strokeStyle = C.consoleBevel;
     c.strokeRect(W - 76, 8, 70, 28);
-    c.fillStyle = 'rgba(12, 16, 26, 0.85)';
+    c.fillStyle = 'rgba(38, 52, 70, 0.90)';
     c.fillRect(W - 75, 9, 68, 26);
 
     c.fillStyle = (phase === 'catapult_lock') ? C.crimson : C.cyan;

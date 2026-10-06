@@ -42,13 +42,13 @@ Deployed live at **[bobbylo.dk/timer/](https://bobbylo.dk/timer/)**.
 
 7. **Gundam Mech Assembly & Sortie** (`mech`)
    - Progressive construction of an RX-78 style mobile suit inside a grounded subterranean research lab:
-     - **Stationary Lab Environment**: Solid checkered steel floor with hazard perimeter lines, server rack LED diagnostics, overhead hoist crane cables, and a heavy floor cradle pad that stays firmly grounded throughout. (No moving background during assembly).
+     - **Stationary Secret Lab (Dexter's Lab Aesthetic)**: Cool slate-blue modular wall panels with rivet seams, CRT oscilloscope with dancing green waveforms, bubbling cyan coolant conduit, solid industrial steel floor tiles with hazard caution perimeter lines, and a heavy floor cradle pad that stays firmly grounded throughout. (No moving background during assembly).
      - **0% – 25% (Frame Assembly)**: Inner skeleton & legs locked into the floor cradle; hovering repair drone welds joint actuators with bright plasma sparks.
      - **25% – 50% (Torso Armor)**: Heavy navy/red/yellow chest armor descends from ceiling hoist cable and locks into place, sealing the cockpit.
      - **50% – 75% (Weapons & Arms)**: Beam rifle and red/white shield mount to articulated shoulders; vernier thrusters test-fire.
      - **75% – 95% (Head & System Online)**: Head with golden V-fin locks in; dual emerald-green visor eyes flash bright with an activation power surge!
      - **95% – 100% (Sortie Prep)**: Warning klaxons pulse, base steam vents hiss, and system reports all green.
-   - **Finale (0:00)**: Massive armored blast doors slide open behind the Gundam to reveal the starry night sky and crescent moon! Foot clamps decouple, rocket thrusters roar with cyan flame exhaust, and the Gundam leaps out into the sky to fight while exhaust smoke rolls across the stationary floor cradle!
+   - **Finale (0:00)**: Massive armored blast doors slide open behind the Gundam to reveal the contrasting starry night sky and crescent moon! Foot clamps decouple, rocket thrusters roar with cyan flame exhaust, and the Gundam leaps out into the sky to fight while exhaust smoke rolls across the stationary floor cradle!
 
 8. **Living Leviathan Abyss** (`abyss`)
    - An atmospheric descent from a vibrant living coral aquarium down to the 11,000m Mariana Trench:
