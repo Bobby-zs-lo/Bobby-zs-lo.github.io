@@ -3,14 +3,15 @@
 // the preview server.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildModel, displayRange, MAX_BAR_WEEKS } from '../js/views/overview-model.js';
+import { buildModel, displayRange, densestFrame, MAX_BAR_WEEKS } from '../js/views/overview-model.js';
 import { sortActivities, firstDirection } from '../js/views/tiles-table.js';
-import { coreLines, heatCount } from '../js/views/tiles-map.js';
+import { emptyView, framedLines, heatCount, heatEmptyText } from '../js/views/tiles-map.js';
 import { formWord } from '../js/views/tiles.js';
 import { volumeTile } from '../js/views/tiles-charts.js';
 import { createSession } from '../js/views/overview.js';
 import { toString } from '../js/dom.js';
 import { addDays } from '../js/format.js';
+import { haversineKm } from '../js/geo.js';
 
 const TODAY = '2026-10-13'; // a Tuesday
 let nextId = 1;
@@ -121,13 +122,74 @@ test('sorting keeps missing values last in both directions', () => {
   assert.equal(firstDirection('pace'), 'asc');
 });
 
-test('the heatmap frames the central starts and leaves a far-away trip out', () => {
-  const home = Array.from({ length: 20 }, (_, i) => ({ id: i, points: [[55.68 + i * 0.001, 12.55 + i * 0.001], [55.69, 12.56]] }));
-  const trip = { id: 'trip', points: [[48.85, 2.35], [48.86, 2.36]] };
-  const core = coreLines([...home, trip]);
-  assert.ok(!core.includes(trip));
-  assert.ok(core.length >= 17);
-  assert.deepEqual(coreLines(home.slice(0, 3)), home.slice(0, 3)); // too few to call anything an outlier
+// --- the heatmap's framing ----------------------------------------------------------
+
+const KM_PER_DEG = 6371.0088 * Math.PI / 180;
+/** A point `north` and `east` km from `from`. */
+const offset = ([lat, lng], north, east = 0) => [lat + north / KM_PER_DEG, lng + east / (KM_PER_DEG * Math.cos(lat * Math.PI / 180))];
+const CPH = [55.68, 12.57];
+const TOKYO = [35.68, 139.69];
+const NEW_YORK = [40.71, -74.0];
+// Eight runs from around home (within 3 km), newest first, with the newest of all a trip abroad.
+const HOME_STARTS = [[0, 0], [1, 1], [-2, 0.5], [0.5, -2], [2.5, 1], [-1, -1], [1.5, 2], [-2.5, -1.5]].map(([n, e]) => offset(CPH, n, e));
+const WITH_TRIPS = [TOKYO, ...HOME_STARTS.slice(0, 4), NEW_YORK, ...HOME_STARTS.slice(4)];
+
+test('the densest frame is the home cluster, however recent or far a trip abroad', () => {
+  const frame = densestFrame(WITH_TRIPS);
+  assert.deepEqual(frame.members, [1, 2, 3, 4, 6, 7, 8, 9]);
+  assert.ok(haversineKm(frame.centre, CPH) < 3, 'centred on home');
+});
+
+test('the densest frame: a tie goes to the cell with the most recent start', () => {
+  const aarhus = [56.157, 10.21]; // clear of a cell edge (56.16 / 0.045 is a whole number)
+  const cph = [CPH, offset(CPH, 0.1, 0.1)];
+  const two = [aarhus, offset(aarhus, 0.1, 0.1)];
+  assert.deepEqual(densestFrame([cph[0], two[0], two[1], cph[1]]).members, [0, 3]);
+  assert.deepEqual(densestFrame([two[0], cph[0], cph[1], two[1]]).members, [0, 3]);
+  assert.ok(haversineKm(densestFrame([two[0], cph[0], cph[1], two[1]]).centre, aarhus) < 1);
+});
+
+test('the densest frame of one start is that start; of none, null', () => {
+  assert.deepEqual(densestFrame([TOKYO]), { centre: TOKYO, members: [0] });
+  assert.equal(densestFrame([]), null);
+  assert.equal(densestFrame(null), null);
+  assert.equal(densestFrame([null, [NaN, 12], 'x']), null);
+  assert.deepEqual(densestFrame([null, CPH]).members, [1]); // a start that is not a point is skipped
+});
+
+test('the densest frame takes every start within the radius of the cluster, and no further', () => {
+  const centre = [55.6, 12.5];
+  const inside = offset(centre, 14.9);
+  const outside = offset(centre, -15.1);
+  assert.ok(haversineKm(inside, centre) < 15 && haversineKm(outside, centre) > 15);
+  const starts = [inside, centre, centre, centre, centre, centre, outside];
+  assert.deepEqual(densestFrame(starts).members, [0, 1, 2, 3, 4, 5]);
+  assert.deepEqual(densestFrame(starts, { radiusKm: 16 }).members, [0, 1, 2, 3, 4, 5, 6]);
+  // A radius inside the cell still frames something: the cell's newest start.
+  assert.deepEqual(densestFrame([offset(centre, 1), offset(centre, -1)], { radiusKm: 0.1 }).members, [0]);
+});
+
+test('the heatmap frames whole routes from home, the picked week first', () => {
+  // Oldest first, as the period lists them: the trips are the newest two.
+  const lines = HOME_STARTS.map((s, i) => ({ id: `h${i}`, points: [s, offset(s, 20)] }))
+    .concat([{ id: 'ny', points: [NEW_YORK, offset(NEW_YORK, 1)] }, { id: 'tokyo', points: [TOKYO, offset(TOKYO, 1)] }]);
+  const framed = framedLines(lines);
+  assert.deepEqual(framed.map(l => l.id).sort(), HOME_STARTS.map((_, i) => `h${i}`).sort());
+  assert.ok(framed.every(l => l.points.length === 2), 'the routes go to the map whole, not just their starts');
+  const week = [lines[8]];
+  assert.equal(framedLines(lines, week), week);
+  assert.deepEqual(framedLines(lines, []).length, 8);
+  assert.deepEqual(framedLines([]), []);
+});
+
+test('an empty heatmap opens on home or Copenhagen, and says why it is empty', () => {
+  assert.deepEqual(emptyView([55.7, 12.55]), { centre: [55.7, 12.55], zoom: 11 });
+  assert.deepEqual(emptyView(null), { centre: [55.68, 12.57], zoom: 11 });
+  assert.equal(heatEmptyText(0), 'No routes in this period.');
+  assert.equal(heatEmptyText(4), 'No route lines yet — Settings › Import past activities fetches them.');
+  assert.deepEqual(model([], {}, { settings: { home: { lat: 55.7, lng: 12.55 } } }).home, [55.7, 12.55]);
+  assert.equal(model([], {}, { settings: { home: { lat: 'x', lng: 12 } } }).home, null);
+  assert.equal(model([]).home, null);
 });
 
 test('the heatmap footnote counts the period, then says how many of it are on the map', () => {

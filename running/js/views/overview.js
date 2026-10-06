@@ -8,7 +8,12 @@
 // lines for the maps. Each response is kept for the visit (the next visit, or another user
 // after a sign-out, starts afresh), a narrower period reuses a wider one, and a failing request
 // empties only the tiles that need it.
-import { html, mount, toString } from '../dom.js';
+//
+// Focus mode (Power BI's name for it): a tile whose section carries data-focusable has an Enlarge
+// button in its head, which opens the tile large in a modal <dialog> above the dashboard. The
+// dialog is this view's; what it shows is the tile's own (the map tiles draw theirs in
+// tiles-map.js). Esc, the close button, the backdrop or a click through to an activity close it.
+import { html, mount, raw, toString } from '../dom.js';
 import { api } from '../api.js';
 import { getState, getPlan } from '../store.js';
 import { buildHash } from '../router.js';
@@ -20,7 +25,7 @@ import {
 } from './tiles.js';
 import { volumeTile, zonesTile, efficiencyTile, loadTile, calendarTile } from './tiles-charts.js';
 import { tableTile, firstDirection, isSortKey, TABLE_PAGE } from './tiles-table.js';
-import { mapTiles, heatShell, lastShell } from './tiles-map.js';
+import { mapTiles, heatShell, lastShell, FOCUS_KINDS } from './tiles-map.js';
 
 const PERIODS = [['4w', '4 weeks'], ['12w', '12 weeks'], ['season', 'Season'], ['1y', '1 year'], ['all', 'All']];
 const SPORTS = [['run', 'Running'], ['ride', 'Riding'], ['all', 'Everything']];
@@ -41,6 +46,9 @@ const TILES = [
   ['table', 12, 'Activities', null],
 ];
 const CHART_TILES = new Set(['volume', 'zones', 'eff', 'load', 'cal', 'health']);
+// The tiles that open in focus mode. A tile opts in here, and its enlarged view is drawn by
+// whatever owns it: today only the two maps, whose views tiles-map.js draws (FOCUS_KINDS).
+const FOCUSABLE = new Set(['heat', 'last']);
 
 // --- request session ---------------------------------------------------------------
 
@@ -99,6 +107,28 @@ function readFilters(params = {}) {
 const chips = (attr, options, current) => options.map(([key, label]) =>
   html`<button type="button" class="chip-btn" data-${attr}="${key}" aria-pressed="${key === current}">${label}</button>`);
 
+function tileShell(id, label) {
+  const enlarge = FOCUSABLE.has(id);
+  if (id === 'heat') return heatShell(`ov-${id}`, { enlarge });
+  if (id === 'last') return lastShell(`ov-${id}`, { enlarge });
+  return html`${head(`ov-${id}`, label)}<p class="ov-loading">Loading…</p>`;
+}
+
+// One dialog for whichever tile is enlarged; its title, scope and body are filled on opening.
+const focusDialog = () => html`<dialog class="ov-focus" id="ov-focus" aria-labelledby="ov-focus-h">
+    <div class="ov-focus-frame">
+      <header class="ov-focus-head">
+        <div class="ov-focus-titles">
+          <p class="ov-focus-kicker" data-focus-scope></p>
+          <h2 class="ov-focus-title" id="ov-focus-h"></h2>
+        </div>
+        <p class="ov-focus-meta" data-focus-meta></p>
+        <button type="button" class="ov-focus-close" data-focus-close aria-label="Close" title="Close (Esc)"><span aria-hidden="true">✕</span></button>
+      </header>
+      <div class="ov-focus-body" data-focus-body></div>
+    </div>
+  </dialog>`;
+
 function shell(f) {
   return html`
     <header class="ov-head">
@@ -116,11 +146,12 @@ function shell(f) {
         <button type="button" class="chip-btn ov-chip-week" data-clear-week="chip" aria-pressed="true"></button></div>
     </div>
     <div class="dash ov" aria-busy="true">
-      ${TILES.map(([id, span, label]) => html`<section class="tile tile--span-${span} ov-tile ov-tile--${id.startsWith('kpi') ? 'kpi' : id}" id="ov-${id}" aria-labelledby="ov-${id}-h">
-        ${id === 'heat' ? heatShell(`ov-${id}`) : id === 'last' ? lastShell(`ov-${id}`) : html`${head(`ov-${id}`, label)}<p class="ov-loading">Loading…</p>`}
+      ${TILES.map(([id, span, label]) => html`<section class="tile tile--span-${span} ov-tile ov-tile--${id.startsWith('kpi') ? 'kpi' : id}" id="ov-${id}" aria-labelledby="ov-${id}-h"${FOCUSABLE.has(id) ? raw(' data-focusable') : ''}>
+        ${tileShell(id, label)}
       </section>`)}
     </div>
-    <footer class="ov-foot">Powered by Strava · Maps © OpenStreetMap contributors</footer>`;
+    <footer class="ov-foot">Powered by Strava · Maps © OpenStreetMap contributors</footer>
+    ${focusDialog()}`;
 }
 
 // --- view --------------------------------------------------------------------------
@@ -137,9 +168,17 @@ export function render(el, ctx) {
   mount(el, shell(filters));
   const dash = el.querySelector('.dash');
   const $ = sel => el.querySelector(sel);
+  const dialog = $('#ov-focus');
+  const focusParts = { title: $('#ov-focus-h'), scope: $('[data-focus-scope]'), meta: $('[data-focus-meta]'), body: $('[data-focus-body]') };
+  let opener = null;          // the Enlarge button of the open dialog; focus goes back to it
+  let restoreOnClose = true;  // false when the dialog closes on the way to another page
+  let downOnBackdrop = false; // a press that began on the backdrop: only then does its click close
   const maps = mapTiles(el, {
     loadRoutes: from => session.load('routes', from, base.today),
-    openActivity: id => { location.hash = `#/activity/${encodeURIComponent(id)}`; },
+    openActivity: id => {
+      closeFocus({ restore: false });
+      location.hash = `#/activity/${encodeURIComponent(id)}`;
+    },
   });
 
   async function loadBase() {
@@ -211,8 +250,46 @@ export function render(el, ctx) {
     $('[data-dateline]').textContent = `Desk · ${formatDate(base.today, { long: true, year: true })}`;
     $('[data-summary]').innerHTML = toString(summaryLine(model));
     $('[data-scope]').innerHTML = toString(scopeLine(model));
+    if (dialog.open) focusParts.scope.innerHTML = toString(scopeLine(model));
     maps.update(model);
   }
+
+  // --- focus mode ---
+
+  function openFocus(button) {
+    const sec = button.closest('[data-focusable]');
+    const id = sec ? sec.id.replace(/^ov-/, '') : '';
+    if (dialog.open || !FOCUS_KINDS.has(id)) return;
+    focusParts.title.textContent = sec.querySelector('.tile-label')?.textContent || '';
+    focusParts.scope.innerHTML = model ? toString(scopeLine(model)) : '';
+    opener = button;
+    restoreOnClose = true;
+    downOnBackdrop = false;
+    dialog.showModal(); // first: the enlarged map is made in a box that already has its size
+    button.setAttribute('aria-expanded', 'true');
+    maps.focus(id, { body: focusParts.body, meta: focusParts.meta });
+  }
+
+  function closeFocus({ restore = true } = {}) {
+    if (!dialog.open) return;
+    restoreOnClose = restore;
+    dialog.close();
+  }
+
+  // Every way of closing (Esc, the close button, the backdrop, a line clicked) ends here.
+  function onFocusClose() {
+    if (disposed) return;
+    maps.unfocus();
+    focusParts.body.replaceChildren();
+    focusParts.meta.textContent = '';
+    if (opener) {
+      opener.setAttribute('aria-expanded', 'false');
+      if (restoreOnClose && opener.isConnected) opener.focus({ preventScroll: true });
+    }
+    opener = null;
+  }
+
+  const onFocusPointerDown = e => { downOnBackdrop = e.target === dialog; };
 
   function writeHash() {
     history.replaceState(null, '', buildHash('overview', { p: filters.p, s: filters.s, w: filters.w }));
@@ -262,6 +339,11 @@ export function render(el, ctx) {
 
   function onClick(e) {
     const t = e.target;
+    // The dialog's box is filled by its frame, so a click on the dialog itself is on the backdrop.
+    if (t === dialog) { if (downOnBackdrop) closeFocus(); return; }
+    if (t.closest('[data-focus-close]')) return closeFocus();
+    const enlarge = t.closest('[data-enlarge]');
+    if (enlarge) return openFocus(enlarge);
     const chip = t.closest('[data-period], [data-sport]');
     if (chip) {
       const next = chip.dataset.period ? { ...filters, p: chip.dataset.period } : { ...filters, s: chip.dataset.sport };
@@ -317,6 +399,8 @@ export function render(el, ctx) {
 
   el.addEventListener('click', onClick);
   el.addEventListener('keydown', onKey);
+  dialog.addEventListener('close', onFocusClose);
+  dialog.addEventListener('pointerdown', onFocusPointerDown);
   if (ro) ro.observe(dash);
   syncFilters();
   update();
@@ -326,6 +410,11 @@ export function render(el, ctx) {
     cancelAnimationFrame(frame);
     el.removeEventListener('click', onClick);
     el.removeEventListener('keydown', onKey);
+    dialog.removeEventListener('close', onFocusClose);
+    dialog.removeEventListener('pointerdown', onFocusPointerDown);
+    // A link in the dialog leaves the view with the dialog still open: close it, so the page
+    // under it is not left inert, and let the maps take its map with theirs.
+    if (dialog.open) dialog.close();
     if (ro) ro.disconnect();
     maps.destroy();
   };

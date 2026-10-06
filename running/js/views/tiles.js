@@ -28,9 +28,21 @@ export const signed = (v, digits = 1) => {
 };
 export const pct = share => Math.round(share * 100);
 
-export function head(id, label, meta = '') {
+// Four arrows out to the corners, drawn like js/icons.js (24-unit grid, round caps, currentColor)
+// and shown at 16 px.
+const EXPAND_ICON = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'
+  + '<path d="M14.5 4H20v5.5M20 4l-6 6M9.5 20H4v-5.5M4 20l6-6M4 9.5V4h5.5M4 4l6 6M20 14.5V20h-5.5M20 20l-6-6"/></svg>';
+
+/**
+ * A tile's head: its label, an optional meta line and, with `enlarge`, the button that opens the
+ * tile in focus mode (overview.js; the tile's section must carry data-focusable). The button is
+ * named "Enlarge" and described by the tile's label, so a screen reader hears which tile.
+ */
+export function head(id, label, meta = '', { enlarge = false } = {}) {
   return html`<div class="tile-head">
-    <h2 class="tile-label" id="${id}-h">${label}</h2>${meta ? html`<span class="tile-meta">${meta}</span>` : ''}
+    <h2 class="tile-label" id="${id}-h">${label}</h2>${meta ? html`<span class="tile-meta">${meta}</span>` : ''}${enlarge
+      ? html`<button type="button" class="ov-enlarge" data-enlarge aria-label="Enlarge" aria-describedby="${id}-h" aria-haspopup="dialog" aria-expanded="false" title="Enlarge">${raw(EXPAND_ICON)}</button>`
+      : ''}
   </div>`;
 }
 export const empty = text => html`<p class="tile-empty">${text}</p>`;

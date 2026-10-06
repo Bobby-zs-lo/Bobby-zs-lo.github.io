@@ -3,6 +3,7 @@
 // here and the tiles only format what it returns. Every aggregate comes from analytics.js;
 // this file decides which slice of the data each tile looks at.
 import { addDays, diffDays, mondayOf, parsePace } from '../format.js';
+import { haversineKm } from '../geo.js';
 import {
   periodRange, filterActivities, weeklyVolume, planHitRate, easyTooFast, paceZoneShares,
   efficiencySeries, rollingMedian, hrDefaults, loadSeries, dailyKm, weekOf, firstActivityDate,
@@ -16,6 +17,44 @@ const EASY_SLACK_SEC = 10;
 const RECENT_DAYS = 28;             // "in the last 4 weeks", today included
 const UPCOMING_RUNS = 3;            // listed under the next run
 const CLOSED = new Set(['done', 'skipped']);
+const CELL_DEG = 0.045;             // a frame cell: 0.045° of latitude is about 5 km
+const MIN_COS_LAT = 0.01;           // keeps a cell finite near the poles
+const FRAME_RADIUS_KM = 15;
+
+const isLatLng = p => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1]);
+
+/**
+ * Where most of the running is: `starts` is one [lat, lng] per activity, newest first. The starts
+ * are binned into cells about 5 km square (the longitude step widens with the latitude); the
+ * fullest cell wins, a tie going to the cell with the most recent start. Every start within
+ * `radiusKm` of that cell's mean start is a member, so a holiday abroad never stretches the frame
+ * however few runs there are at home. → { centre: [lat, lng], members: indices into `starts` },
+ * or null when no start is a point.
+ */
+export function densestFrame(starts, { radiusKm = FRAME_RADIUS_KM } = {}) {
+  const cells = new Map(); // key → { first, n, lat, lng }: the newest index in it, and its running sums
+  (starts || []).forEach((p, i) => {
+    if (!isLatLng(p)) return;
+    const row = Math.floor(p[0] / CELL_DEG);
+    const cos = Math.max(MIN_COS_LAT, Math.cos(((row + 0.5) * CELL_DEG * Math.PI) / 180));
+    const key = `${row}:${Math.floor(p[1] / (CELL_DEG / cos))}`;
+    const cell = cells.get(key) || { first: i, n: 0, lat: 0, lng: 0 };
+    cells.set(key, { first: cell.first, n: cell.n + 1, lat: cell.lat + p[0], lng: cell.lng + p[1] });
+  });
+  let best = null;
+  for (const cell of cells.values()) {
+    if (!best || cell.n > best.n || (cell.n === best.n && cell.first < best.first)) best = cell;
+  }
+  if (!best) return null;
+  const centre = [best.lat / best.n, best.lng / best.n];
+  const members = [];
+  (starts || []).forEach((p, i) => { if (isLatLng(p) && haversineKm(p, centre) <= radiusKm) members.push(i); });
+  // A radius smaller than the cell could leave even the winning cell out; frame its newest start then.
+  return { centre, members: members.length ? members : [best.first] };
+}
+
+/** settings.home ({ lat, lng }) as a point, or null. */
+const homePoint = home => (home && isLatLng([home.lat, home.lng]) ? [home.lat, home.lng] : null);
 
 const byStart = (a, b) => String(a.startUtc || a.date).localeCompare(String(b.startUtc || b.date));
 const byDate = (a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
@@ -167,6 +206,7 @@ export function buildModel({ today, settings, plan, acts, health, filters, error
     next: nextRun(plan, today, sel),
     sessions: new Map((plan?.weeks || []).flatMap(w => w.workouts || []).map(w => [w.id, w])),
     recentKm: sumKm(recent),
+    home: homePoint(settings?.home), // where an empty map opens
   };
 }
 
