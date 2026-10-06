@@ -59,16 +59,21 @@ Deployed live at **[bobbylo.dk/timer/](https://bobbylo.dk/timer/)**.
      - **95% – 100% (Leviathan Stalk)**: Massive silhouette ascends directly beneath the diving bell.
    - **Finale (0:00)**: The colossal Ancient Leviathan jaws surge upward, gaping wide with rows of razor fangs, and CHOMP the diving bell whole with crunching impact, swallowing it into its glowing belly!
 
-9. **Chrono-Warp (Reverse Hourglass & Living Eras)** (`alchemy`)
-   - A grand, unmistakable ornate celestial hourglass (44x70) that flows in **REVERSE**, rewinding entropy through living animated historical epochs:
-     - **Reverse Stardust Flow**: Golden sand grains cascade UPWARD from the bottom bulb through the narrow capillary waist into the top bulb, defying gravity.
-     - **0% – 20% (Cyberpunk 2026 AD)**: Neon skyscraper skyline, holographic billboards, flying hover-cars zooming backwards across the sky, and digital neon matrix code rain floating upward in reverse.
-     - **20% – 40% (Victorian Steam Age 1880 AD)**: Cobblestone streets, gaslamps, Big Ben clocktower with clock hands spinning rapidly backwards, and an iron steam locomotive chugging in reverse puffing coal smoke clouds.
-     - **40% – 60% (Ancient Egypt 2500 BC)**: Great Pyramids of Giza rising across desert dunes, desert winds, and a walking camel caravan under the blazing golden Sun of Ra.
-     - **60% – 80% (Jurassic Dinosaurs 150M BC)**: Prehistoric cycad jungle, smoking volcanic peaks, flying Pterodactyls flapping wings across the sky, and a roaring T-Rex with snapping jaws.
-     - **80% – 95% (Primordial Molten Earth 4.5B BC)**: Surging Hadean boiling magma sea and swarms of flaming meteors crashing down into the molten crust.
-     - **95% – 100% (Cosmic Singularity, T = 0)**: Earth dissolves and all space-time contracts into an ultra-dense, vibrating white Singularity inside the hourglass.
-   - **Finale (0:00)**: The hourglass shatters and space detonates into **THE BIG BANG**! Blinding cosmic inflation explosion, prismatic expanding rings of light, and the cosmic dawn of newborn galaxies and stars.
+9. **Chrono-Warp (The Celestial Astrolabe & Living Eras)** (`alchemy`)
+   - An ornate, sharp 16-bit celestial astrolabe hourglass that flows in **REVERSE**, rewinding entropy through living animated historical epochs:
+     - **The Astrolabe Hourglass Mechanism**:
+       - Grand ornate brass & crystal frame with sun and moon filigree crests.
+       - 3D rotating Astrolabe / Armillary rings projected around the waist, spinning counter-clockwise with zodiac tick markers.
+       - Interlocking brass clockwork gears ticking in reverse near the plinths.
+       - Translucent crystal bulbs with specular highlights & caustics: bottom bulb drains from full to empty while the top bulb fills with a swirling newborn proto-galaxy.
+       - Quantum stardust geyser: Golden and cyan spark particles surging upward through the narrow neck with pulsating plasma arcs.
+     - **0% – 20% (Cyberpunk Neo-Tokyo 2026 AD)**: Multi-layer neon skyscraper skyline, flashing holographic billboards, sleek dual-lane hover-cruisers zooming backwards with cyan/magenta ion exhaust trails, and reverse matrix code rain floating upward into the sky.
+     - **20% – 40% (Victorian London 1888 AD)**: Gaslit street fog with warm lamppost halos, Big Ben with counter-clockwise spinning clock hands, arched brick railway viaduct, and an iron 4-4-0 steam express chugging in reverse with billowing coal smoke puffs and pumping drive pistons.
+     - **40% – 60% (Ancient Egypt 2500 BC)**: Blazing golden Sun of Ra with solar corona rays, shining Great Pyramids with radiant gold electrum capstones, Great Sphinx with flickering fire braziers, shimmering Nile river with a sailing felucca boat, swaying date palms, and a royal camel caravan trekking across undulating dunes.
+     - **60% – 80% (Jurassic Primeval 150M BC)**: Erupting volcano (Mt. Doom) with active molten caldera and flowing lava veins, soaring Pterodactyls flapping wings across sulfurous skies, midground Brachiosaurus sauropod, and a roaring T-Rex with snapping white fangs and amber eye.
+     - **80% – 95% (Primordial Molten Earth 4.5B BC)**: Boiling Hadean magma ocean with surging incandescent lava waves and fiery bolide meteors crashing down with explosive spark sprays.
+     - **95% – 100% (Cosmic Singularity, T = 0)**: Reality gravitational lensing, violent structural vibration, crackling white-blue glass fissures, and hyper-dense quantum core.
+   - **Finale (0:00)**: The hourglass shatters into spinning prismatic crystal shards flying outward, space detonates into **THE BIG BANG**! Blinding multi-spectral inflation flash, concentric relativistic shockwaves, expanding spiral nebula, and the cosmic dawn of newborn galaxies and stars.
 
 10. **Mouse Timer** (`mouse`)
    - Inspired by the classic visual timer. An HD cartoon mouse nibbles through a grid of apples (1 apple per ~10s, uncapped for any duration) toward the final cheese wedge.

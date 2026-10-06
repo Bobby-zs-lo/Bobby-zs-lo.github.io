@@ -386,132 +386,415 @@ def gen_abyss():
 # ════════════════════════════════════════════════════════════════════════════════
 def gen_alchemy():
     TW, TH = 96, 128
-    img = Image.new('RGBA', (TW, TH), (18, 10, 24, 255))
+    # ── Thumbnail: Grand Ornate Celestial Hourglass across Time & Space ──
+    img = Image.new('RGBA', (TW, TH), (12, 6, 20, 255))
     d = ImageDraw.Draw(img)
+
+    # Cosmic gradient sky transitioning from deep violet-indigo to cosmic dawn gold
     for y in range(TH):
         t = y / TH
-        col = lerp_color(h2c('#2b1038'), h2c('#0a0312'), t)
+        col = lerp_color(h2c('#1a082b'), h2c('#07020d'), t)
         d.line([(0, y), (TW, y)], fill=col)
 
-    # Big unmistakable Ornate Celestial Hourglass
-    cx, cy = TW // 2, 54
-    hw, hh = 20, 36
-    # Brass top & bottom arch caps
-    d.rectangle([cx - hw, cy - hh, cx + hw, cy - hh + 6], fill=h2c('#d4af37'))
-    d.rectangle([cx - hw, cy + hh - 6, cx + hw, cy + hh], fill=h2c('#d4af37'))
-    # Golden finials
-    draw_circle_fill(d, cx, cy - hh - 3, 4, h2c('#ffd166'))
-    draw_circle_fill(d, cx, cy + hh + 3, 4, h2c('#ffd166'))
-    # Side filigree pillars
-    d.line([(cx - hw + 2, cy - hh), (cx - hw + 2, cy + hh)], fill=h2c('#aa820a'), width=2)
-    d.line([(cx + hw - 2, cy - hh), (cx + hw - 2, cy + hh)], fill=h2c('#aa820a'), width=2)
-    # Glass Bulbs
-    d.polygon([(cx - 14, cy - hh + 6), (cx + 14, cy - hh + 6), (cx + 3, cy - 2), (cx - 3, cy - 2)], fill=h2c('#ffffff', 40))
-    d.polygon([(cx - 3, cy + 2), (cx + 3, cy + 2), (cx + 14, cy + hh - 6), (cx - 14, cy + hh - 6)], fill=h2c('#ffffff', 40))
-    # Reverse Upward Flowing Sand
-    d.polygon([(cx - 10, cy + 18), (cx + 10, cy + 18), (cx + 2, cy + 4), (cx - 2, cy + 4)], fill=h2c('#ffd166'))
-    d.line([(cx, cy + 18), (cx, cy - 18)], fill=h2c('#00f5d4'), width=2) # Upward beam
-    d.polygon([(cx - 2, cy - 4), (cx + 2, cy - 4), (cx + 10, cy - 20), (cx - 10, cy - 20)], fill=h2c('#ffd166'))
+    # Distant cosmic nebula clouds
+    draw_radial_glow(img, TW // 2, 45, 36, (120, 30, 160, 90), (0, 0, 0, 0))
+    draw_radial_glow(img, TW // 2, 55, 24, (0, 245, 212, 70), (0, 0, 0, 0))
 
-    # Pyramids & Prehistoric silhouettes at bottom
-    d.polygon([(8, TH), (26, TH - 20), (44, TH)], fill=h2c('#d4af37', 180))
-    d.polygon([(52, TH), (74, TH - 28), (96, TH)], fill=h2c('#9c2828', 180))
+    # Background Epoch Vignettes on horizon (Bottom):
+    # Left: Cyberpunk skyscrapers with glowing neon windows
+    d.rectangle([0, TH - 36, 16, TH], fill=h2c('#0d1226'))
+    d.rectangle([14, TH - 48, 30, TH], fill=h2c('#141834'))
+    d.rectangle([18, TH - 42, 21, TH - 40], fill=h2c('#00f5d4'))
+    d.rectangle([24, TH - 36, 27, TH - 34], fill=h2c('#ff007f'))
+    d.rectangle([6, TH - 28, 9, TH - 26], fill=h2c('#ffd166'))
+    # Right: Great Golden Pyramid & Desert Dunes
+    d.polygon([(TW - 38, TH), (TW - 20, TH - 30), (TW - 2, TH)], fill=h2c('#d4af37'))
+    d.polygon([(TW - 20, TH - 30), (TW - 2, TH), (TW - 10, TH)], fill=h2c('#aa820a'))
+    d.polygon([(TW - 20, TH - 30), (TW - 16, TH - 24), (TW - 24, TH - 24)], fill=h2c('#fff3aa')) # electrum cap
+    # Undulating sand dune foreground
+    d.polygon([(0, TH - 8), (40, TH - 14), (TW, TH - 6), (TW, TH), (0, TH)], fill=h2c('#855d14'))
+
+    # Center: The Grand Celestial Hourglass
+    cx, cy = TW // 2, 52
+    hw, hh = 24, 40
+
+    # Rotating Astrolabe Rings (Sinusoidal perspective projection)
+    # Ring 1: tilted 30 deg
+    d.ellipse([cx - 28, cy - 8, cx + 28, cy + 8], outline=h2c('#ffd166', 220), width=1)
+    # Ring 2: tilted counter
+    d.ellipse([cx - 24, cy - 18, cx + 24, cy + 18], outline=h2c('#00f5d4', 160), width=1)
+    d.point((cx - 26, cy), fill=h2c('#ffffff'))
+    d.point((cx + 26, cy), fill=h2c('#ffffff'))
+
+    # Top & Bottom Ornate Plinths (Brass & Gold)
+    # Top Cap
+    d.rectangle([cx - hw + 2, cy - hh, cx + hw - 2, cy - hh + 4], fill=h2c('#ffe082'))
+    d.rectangle([cx - hw, cy - hh + 4, cx + hw, cy - hh + 9], fill=h2c('#d4af37'))
+    d.rectangle([cx - hw + 4, cy - hh + 9, cx + hw - 4, cy - hh + 11], fill=h2c('#aa820a'))
+    draw_circle_fill(d, cx, cy - hh - 4, 4, h2c('#ffd166')) # Sun finial
+    d.point((cx, cy - hh - 4), fill=h2c('#ffffff'))
+
+    # Bottom Cap
+    d.rectangle([cx - hw + 4, cy + hh - 11, cx + hw - 4, cy + hh - 9], fill=h2c('#aa820a'))
+    d.rectangle([cx - hw, cy + hh - 9, cx + hw, cy + hh - 4], fill=h2c('#d4af37'))
+    d.rectangle([cx - hw + 2, cy + hh - 4, cx + hw - 2, cy + hh], fill=h2c('#ffe082'))
+    draw_circle_fill(d, cx, cy + hh + 4, 4, h2c('#ffd166')) # Moon finial
+    d.point((cx, cy + hh + 4), fill=h2c('#ffffff'))
+
+    # Spiral Carved Brass Columns
+    for col_x in [cx - hw + 3, cx + hw - 3]:
+        d.line([(col_x, cy - hh + 11), (col_x, cy + hh - 11)], fill=h2c('#ffd166'), width=3)
+        d.line([(col_x - 1, cy - hh + 11), (col_x - 1, cy + hh - 11)], fill=h2c('#aa820a'), width=1)
+        for gy in range(cy - hh + 14, cy + hh - 12, 8):
+            d.point((col_x, gy), fill=h2c('#fff3aa'))
+
+    # Center Astrolabe Gimbal Waist Ring
+    d.rectangle([cx - 8, cy - 3, cx + 8, cy + 3], fill=h2c('#ffd166'))
+    d.point((cx, cy), fill=h2c('#00f5d4'))
+
+    # Glass Crystal Bulbs (Top & Bottom)
+    top_bulb = [(cx - 18, cy - hh + 11), (cx + 18, cy - hh + 11), (cx + 5, cy - 3), (cx - 5, cy - 3)]
+    d.polygon(top_bulb, fill=h2c('#122a3a', 90), outline=h2c('#ffffff', 140))
+    d.line([(cx - 15, cy - hh + 14), (cx - 7, cy - 10)], fill=h2c('#ffffff', 180), width=1)
+
+    bot_bulb = [(cx - 5, cy + 3), (cx + 5, cy + 3), (cx + 18, cy + hh - 11), (cx - 18, cy + hh - 11)]
+    d.polygon(bot_bulb, fill=h2c('#122a3a', 90), outline=h2c('#ffffff', 140))
+    d.line([(cx - 15, cy + hh - 14), (cx - 7, cy + 10)], fill=h2c('#ffffff', 180), width=1)
+
+    # Reverse Upward Flowing Sand / Quantum Plasma
+    d.polygon([(cx - 12, cy + 18), (cx + 12, cy + 18), (cx + 4, cy + 4), (cx - 4, cy + 4)], fill=h2c('#d4af37', 220))
+    d.line([(cx, cy + 22), (cx, cy - 22)], fill=h2c('#00f5d4'), width=2)
+    d.line([(cx, cy + 14), (cx, cy - 14)], fill=h2c('#ffffff'), width=1)
+    d.polygon([(cx - 4, cy - 4), (cx + 4, cy - 4), (cx + 14, cy - 22), (cx - 14, cy - 22)], fill=h2c('#ffe082', 230))
+    d.ellipse([cx - 8, cy - 26, cx + 8, cy - 16], fill=h2c('#ffd166'))
+    d.point((cx - 3, cy - 21), fill=h2c('#00f5d4'))
+    d.point((cx + 3, cy - 21), fill=h2c('#ff007f'))
+
+    draw_radial_glow(img, cx, cy, 14, (0, 245, 212, 140), (0, 0, 0, 0))
 
     img.save(os.path.join(ASSETS, 'thumb_alchemy.png'))
-    print("  Wrote thumb_alchemy.png (Chrono-Warp)")
+    print("  Wrote elevated thumb_alchemy.png")
 
     # ── Spritesheet (alchemy.png + alchemy.json) ──
-    SW, SH = 384, 128
+    SW, SH = 512, 160
     simg, sd = new_sheet(SW, SH)
     frames = {}
     def add_f(n, x, y, w, h): frames[n] = [x, y, w, h]
 
-    # 1. Grand Ornate Celestial Hourglass (44x70) - Unmistakable hourglass
+    # 1. Grand Ornate Celestial Hourglass Frame (64x92)
     gx, gy = 0, 0
-    # Top & bottom brass plates
-    sd.rectangle([gx + 4, gy + 4, gx + 40, gy + 10], fill=h2c('#d4af37'))
-    sd.rectangle([gx + 4, gy + 60, gx + 40, gy + 66], fill=h2c('#d4af37'))
-    draw_circle_fill(sd, gx + 22, gy + 3, 3, h2c('#ffd166')) # Top finial
-    draw_circle_fill(sd, gx + 22, gy + 67, 3, h2c('#ffd166')) # Bottom finial
-    # Support pillars
-    sd.line([(gx + 6, gy + 10), (gx + 6, gy + 60)], fill=h2c('#aa820a'), width=3)
-    sd.line([(gx + 38, gy + 10), (gx + 38, gy + 60)], fill=h2c('#aa820a'), width=3)
-    # Glass bulbs contour
-    sd.polygon([(gx + 10, gy + 11), (gx + 34, gy + 11), (gx + 24, gy + 32), (gx + 20, gy + 32)], outline=h2c('#ffffff', 180))
-    sd.polygon([(gx + 20, gy + 38), (gx + 24, gy + 38), (gx + 34, gy + 59), (gx + 10, gy + 59)], outline=h2c('#ffffff', 180))
-    add_f('hourglass_frame', gx, gy, 44, 70)
+    gw, gh = 64, 92
+    cx_f, cy_f = gx + gw // 2, gy + gh // 2
+    hw_f, hh_f = 26, 42
 
-    # 2. Cyberpunk Hover-Car (28x14) - Epoch 1
-    cx1, cy1 = 48, 0
-    sd.polygon([(cx1 + 2, cy1 + 7), (cx1 + 10, cy1 + 2), (cx1 + 24, cy1 + 2), (cx1 + 27, cy1 + 7), (cx1 + 22, cy1 + 12), (cx1 + 6, cy1 + 12)], fill=h2c('#1a1c2e'))
-    sd.rectangle([cx1 + 10, cy1 + 4, cx1 + 18, cy1 + 7], fill=h2c('#00f5d4')) # cockpit
-    sd.line([(cx1 + 26, cy1 + 6), (cx1 + 28, cy1 + 6)], fill=h2c('#ff007f'), width=2) # jet trail
-    add_f('hover_car', cx1, cy1, 28, 14)
+    # Top Cap Filigree & Moldings
+    sd.rectangle([cx_f - hw_f + 4, cy_f - hh_f, cx_f + hw_f - 4, cy_f - hh_f + 3], fill=h2c('#ffe082'))
+    sd.rectangle([cx_f - hw_f, cy_f - hh_f + 3, cx_f + hw_f, cy_f - hh_f + 9], fill=h2c('#d4af37'))
+    sd.rectangle([cx_f - hw_f + 3, cy_f - hh_f + 9, cx_f + hw_f - 3, cy_f - hh_f + 12], fill=h2c('#aa820a'))
+    # Sun Crest finial
+    draw_circle_fill(sd, cx_f, cy_f - hh_f - 3, 4, h2c('#ffd166'))
+    sd.point((cx_f, cy_f - hh_f - 3), fill=h2c('#ffffff'))
+    sd.point((cx_f - 2, cy_f - hh_f - 4), fill=h2c('#fff3aa'))
+    sd.point((cx_f + 2, cy_f - hh_f - 4), fill=h2c('#fff3aa'))
 
-    # 3. Victorian Steam Train (40x26) - Epoch 2
-    vx, vy = 80, 0
-    sd.rectangle([vx + 6, vy + 8, vx + 36, vy + 22], fill=h2c('#1a1c22'))
-    sd.rectangle([vx + 28, vy + 2, vx + 38, vy + 12], fill=h2c('#3a2418'))
-    sd.rectangle([vx + 10, vy + 2, vx + 15, vy + 8], fill=h2c('#d4af37'))
-    draw_circle_fill(sd, vx + 14, vy + 22, 3, h2c('#8c5923'))
-    draw_circle_fill(sd, vx + 26, vy + 22, 3, h2c('#8c5923'))
-    add_f('steam_train', vx, vy, 40, 26)
+    # Bottom Cap Filigree & Moldings
+    sd.rectangle([cx_f - hw_f + 3, cy_f + hh_f - 12, cx_f + hw_f - 3, cy_f + hh_f - 9], fill=h2c('#aa820a'))
+    sd.rectangle([cx_f - hw_f, cy_f + hh_f - 9, cx_f + hw_f, cy_f + hh_f - 3], fill=h2c('#d4af37'))
+    sd.rectangle([cx_f - hw_f + 4, cy_f + hh_f - 3, cx_f + hw_f - 4, cy_f + hh_f], fill=h2c('#ffe082'))
+    # Moon Crest finial
+    draw_circle_fill(sd, cx_f, cy_f + hh_f + 3, 4, h2c('#ffd166'))
+    sd.point((cx_f, cy_f + hh_f + 3), fill=h2c('#ffffff'))
 
-    # 4. Egyptian Great Pyramid (44x32) - Epoch 3
-    px, py = 124, 0
-    sd.polygon([(px + 2, py + 30), (px + 22, py + 4), (px + 42, py + 30)], fill=h2c('#d4af37'))
-    sd.polygon([(px + 22, py + 4), (px + 42, py + 30), (px + 30, py + 30)], fill=h2c('#9c7816'))
-    add_f('pyramid', px, py, 44, 32)
+    # Ornate Brass Side Columns with carved spiral fluting
+    for col_x in [cx_f - hw_f + 4, cx_f + hw_f - 4]:
+        sd.line([(col_x - 1, cy_f - hh_f + 12), (col_x - 1, cy_f + hh_f - 12)], fill=h2c('#aa820a'), width=1)
+        sd.line([(col_x, cy_f - hh_f + 12), (col_x, cy_f + hh_f - 12)], fill=h2c('#ffd166'), width=2)
+        sd.line([(col_x + 1, cy_f - hh_f + 12), (col_x + 1, cy_f + hh_f - 12)], fill=h2c('#fff3aa'), width=1)
+        for ry in range(cy_f - hh_f + 16, cy_f + hh_f - 14, 10):
+            sd.line([(col_x - 2, ry), (col_x + 2, ry)], fill=h2c('#d4af37'), width=2)
 
-    # 5. Desert Camel (28x22) - Epoch 3
-    mx, my = 172, 0
-    sd.rectangle([mx + 6, my + 6, mx + 20, my + 14], fill=h2c('#b8860b'))
-    draw_circle_fill(sd, mx + 13, my + 4, 4, h2c('#9c6e08')) # hump
-    sd.line([(mx + 8, my + 14), (mx + 8, my + 21)], fill=h2c('#9c6e08'), width=2) # legs
-    sd.line([(mx + 18, my + 14), (mx + 18, my + 21)], fill=h2c('#9c6e08'), width=2)
-    sd.line([(mx + 20, my + 8), (mx + 26, my + 3)], fill=h2c('#b8860b'), width=2) # neck & head
-    add_f('camel', mx, my, 28, 22)
+    # Astrolabe Waist Joint
+    sd.rectangle([cx_f - 10, cy_f - 4, cx_f + 10, cy_f + 4], fill=h2c('#ffd166'))
+    sd.rectangle([cx_f - 8, cy_f - 2, cx_f + 8, cy_f + 2], fill=h2c('#ffe082'))
+    draw_circle_fill(sd, cx_f, cy_f, 2, h2c('#00f5d4'))
 
-    # 6. Roaring T-Rex Dinosaur (40x40) - Epoch 4
-    dx, dy = 204, 0
-    sd.rectangle([dx + 16, dy + 6, dx + 36, dy + 18], fill=h2c('#4a6c38'))
-    sd.polygon([(dx + 24, dy + 14), (dx + 36, dy + 14), (dx + 28, dy + 22)], fill=h2c('#2d4420'))
-    sd.point((dx + 26, dy + 9), fill=h2c('#ffd166'))
-    sd.rectangle([dx + 8, dy + 14, dx + 24, dy + 30], fill=h2c('#4a6c38'))
-    sd.polygon([(dx + 2, dy + 22), (dx + 8, dy + 18), (dx + 10, dy + 26)], fill=h2c('#4a6c38'))
-    sd.rectangle([dx + 12, dy + 28, dx + 20, dy + 38], fill=h2c('#3a542b'))
-    add_f('trex', dx, dy, 40, 40)
+    # Crystal Glass Bulb Profiles (Crisp double bevel)
+    sd.polygon([(cx_f - 20, cy_f - hh_f + 12), (cx_f + 20, cy_f - hh_f + 12),
+                (cx_f + 5, cy_f - 4), (cx_f - 5, cy_f - 4)],
+               outline=h2c('#ffffff', 200))
+    sd.polygon([(cx_f - 18, cy_f - hh_f + 14), (cx_f + 18, cy_f - hh_f + 14),
+                (cx_f + 4, cy_f - 5), (cx_f - 4, cy_f - 5)],
+               outline=h2c('#a0e6ff', 120))
+    sd.line([(cx_f - 16, cy_f - hh_f + 16), (cx_f - 7, cy_f - 12)], fill=h2c('#ffffff', 220), width=2)
 
-    # 7. Flying Pterodactyl (32x20) - Epoch 4
-    ptx, pty = 248, 0
-    sd.polygon([(ptx + 2, pty + 4), (ptx + 16, pty + 10), (ptx + 30, pty + 4), (ptx + 18, pty + 16), (ptx + 14, pty + 16)], fill=h2c('#5c4033'))
-    sd.point((ptx + 16, pty + 8), fill=h2c('#ffd166'))
-    add_f('pterodactyl', ptx, pty, 32, 20)
+    sd.polygon([(cx_f - 5, cy_f + 4), (cx_f + 5, cy_f + 4),
+                (cx_f + 20, cy_f + hh_f - 12), (cx_f - 20, cy_f + hh_f - 12)],
+               outline=h2c('#ffffff', 200))
+    sd.polygon([(cx_f - 4, cy_f + 5), (cx_f + 4, cy_f + 5),
+                (cx_f + 18, cy_f + hh_f - 14), (cx_f - 18, cy_f + hh_f - 14)],
+               outline=h2c('#a0e6ff', 120))
+    sd.line([(cx_f - 16, cy_f + hh_f - 16), (cx_f - 7, cy_f + 12)], fill=h2c('#ffffff', 220), width=2)
 
-    # 8. Primordial Flaming Meteor (24x24) - Epoch 5
-    fx, fy = 284, 0
-    draw_circle_fill(sd, fx + 12, fy + 12, 6, h2c('#ff5500'))
-    sd.point((fx + 12, fy + 12), fill=h2c('#ffffff'))
-    sd.line([(fx + 4, fy + 4), (fx + 10, fy + 10)], fill=h2c('#ffd166'), width=2)
-    add_f('meteor', fx, fy, 24, 24)
+    add_f('hourglass_frame', gx, gy, gw, gh)
 
-    # 9. Cosmic Singularity (28x28) - Pre-Bang
-    sx, sy = 312, 0
-    draw_radial_glow(simg, sx + 14, sy + 14, 12, (255, 255, 255, 255), (0, 245, 212, 0))
-    draw_circle_fill(sd, sx + 14, sy + 14, 4, h2c('#ffffff'))
-    add_f('singularity', sx, sy, 28, 28)
+    # 2. Great Pyramid of Giza (64x40) - Epoch 3 (Egypt)
+    px, py = 68, 0
+    sd.polygon([(px + 2, py + 38), (px + 32, py + 2), (px + 62, py + 38)], fill=h2c('#e5b842'))
+    sd.polygon([(px + 32, py + 2), (px + 62, py + 38), (px + 40, py + 38)], fill=h2c('#aa8214'))
+    for ty in range(py + 8, py + 38, 5):
+        sd.line([(px + 2 + int((ty - py) * 0.75), ty), (px + 62 - int((ty - py) * 0.75), ty)], fill=h2c('#8a680e'), width=1)
+    sd.polygon([(px + 29, py + 7), (px + 32, py + 2), (px + 35, py + 7)], fill=h2c('#ffffff'))
+    sd.polygon([(px + 32, py + 2), (px + 36, py + 7), (px + 35, py + 7)], fill=h2c('#ffd166'))
+    add_f('pyramid', px, py, 64, 40)
 
-    # Cosmic Sparks (16x16)
+    # 3. Companion Pyramid (40x26)
+    p2x, p2y = 136, 0
+    sd.polygon([(p2x + 2, p2y + 24), (p2x + 20, p2y + 2), (p2x + 38, p2y + 24)], fill=h2c('#d4af37'))
+    sd.polygon([(p2x + 20, p2y + 2), (p2x + 38, p2y + 24), (p2x + 26, p2y + 24)], fill=h2c('#9c7816'))
+    sd.polygon([(p2x + 18, p2y + 6), (p2x + 20, p2y + 2), (p2x + 22, p2y + 6)], fill=h2c('#fff3aa'))
+    add_f('pyramid_small', p2x, p2y, 40, 26)
+
+    # 4. Volcano with Molten Caldera & Lava Rivers (60x44) - Epoch 4 (Jurassic)
+    vx, vy = 180, 0
+    sd.polygon([(vx + 4, vy + 42), (vx + 22, vy + 6), (vx + 38, vy + 6), (vx + 56, vy + 42)], fill=h2c('#221a1f'))
+    sd.polygon([(vx + 30, vy + 6), (vx + 38, vy + 6), (vx + 56, vy + 42), (vx + 40, vy + 42)], fill=h2c('#141014'))
+    sd.ellipse([vx + 22, vy + 4, vx + 38, vy + 9], fill=h2c('#ff3300'))
+    sd.ellipse([vx + 25, vy + 5, vx + 35, vy + 8], fill=h2c('#ffee44'))
+    sd.line([(vx + 28, vy + 8), (vx + 24, vy + 18), (vx + 20, vy + 30), (vx + 16, vy + 42)], fill=h2c('#ff4400'), width=2)
+    sd.line([(vx + 27, vy + 9), (vx + 24, vy + 18), (vx + 21, vy + 28)], fill=h2c('#ffee44'), width=1)
+    sd.line([(vx + 34, vy + 8), (vx + 38, vy + 22), (vx + 44, vy + 42)], fill=h2c('#ff2200'), width=2)
+    add_f('volcano', vx, vy, 60, 44)
+
+    # 5. Roaring T-Rex Dino - Frame 1 (48x44) - Epoch 4
+    tx1, ty1 = 244, 0
+    sd.rectangle([tx1 + 14, ty1 + 14, tx1 + 34, ty1 + 30], fill=h2c('#3d6632'))
+    sd.rectangle([tx1 + 24, ty1 + 4, tx1 + 44, ty1 + 16], fill=h2c('#3d6632'))
+    sd.polygon([(tx1 + 32, ty1 + 16), (tx1 + 44, ty1 + 16), (tx1 + 36, ty1 + 24)], fill=h2c('#284520'))
+    for i in range(4):
+        sd.point((tx1 + 34 + i * 2, ty1 + 15), fill=h2c('#ffffff'))
+        sd.point((tx1 + 34 + i * 2, ty1 + 17), fill=h2c('#ffffff'))
+    sd.point((tx1 + 32, ty1 + 8), fill=h2c('#ffd166'))
+    sd.point((tx1 + 33, ty1 + 8), fill=h2c('#000000'))
+    sd.polygon([(tx1 + 2, ty1 + 18), (tx1 + 16, ty1 + 18), (tx1 + 14, ty1 + 26)], fill=h2c('#3d6632'))
+    sd.line([(tx1 + 28, ty1 + 22), (tx1 + 32, ty1 + 26)], fill=h2c('#284520'), width=2)
+    sd.rectangle([tx1 + 18, ty1 + 28, tx1 + 26, ty1 + 42], fill=h2c('#284520'))
+    sd.rectangle([tx1 + 22, ty1 + 40, tx1 + 30, ty1 + 43], fill=h2c('#1e3318'))
+    sd.rectangle([tx1 + 8, ty1 + 26, tx1 + 16, ty1 + 38], fill=h2c('#3d6632'))
+    sd.rectangle([tx1 + 10, ty1 + 36, tx1 + 18, ty1 + 39], fill=h2c('#1e3318'))
+    add_f('trex_walk1', tx1, ty1, 48, 44)
+
+    # 6. Roaring T-Rex Dino - Frame 2 (48x44)
+    tx2, ty2 = 296, 0
+    sd.rectangle([tx2 + 14, ty2 + 14, tx2 + 34, ty2 + 30], fill=h2c('#3d6632'))
+    sd.rectangle([tx2 + 24, ty2 + 3, tx2 + 45, ty2 + 15], fill=h2c('#3d6632'))
+    sd.polygon([(tx2 + 30, ty2 + 15), (tx2 + 45, ty2 + 15), (tx2 + 34, ty2 + 26)], fill=h2c('#284520'))
+    for i in range(5):
+        sd.point((tx2 + 33 + i * 2, ty2 + 14), fill=h2c('#ffffff'))
+        sd.point((tx2 + 33 + i * 2, ty2 + 17), fill=h2c('#ffffff'))
+    sd.point((tx2 + 32, ty2 + 7), fill=h2c('#ff5500'))
+    sd.polygon([(tx2 + 2, ty2 + 14), (tx2 + 16, ty2 + 18), (tx2 + 14, ty2 + 26)], fill=h2c('#3d6632'))
+    sd.line([(tx2 + 28, ty2 + 21), (tx2 + 33, ty2 + 24)], fill=h2c('#284520'), width=2)
+    sd.rectangle([tx2 + 12, ty2 + 28, tx2 + 20, ty2 + 42], fill=h2c('#284520'))
+    sd.rectangle([tx2 + 14, ty2 + 40, tx2 + 22, ty2 + 43], fill=h2c('#1e3318'))
+    sd.rectangle([tx2 + 24, ty2 + 26, tx2 + 32, ty2 + 38], fill=h2c('#3d6632'))
+    sd.rectangle([tx2 + 26, ty2 + 36, tx2 + 34, ty2 + 39], fill=h2c('#1e3318'))
+    add_f('trex_walk2', tx2, ty2, 48, 44)
+
+    # 7. Brachiosaurus Sauropod Silhouette (44x40) - Epoch 4
+    bx, by = 348, 0
+    sd.line([(bx + 30, by + 4), (bx + 20, by + 22)], fill=h2c('#1e301e'), width=4)
+    draw_circle_fill(sd, bx + 32, by + 4, 3, h2c('#1e301e'))
+    sd.ellipse([bx + 4, by + 18, bx + 28, by + 34], fill=h2c('#1e301e'))
+    sd.line([(bx + 4, by + 24), (bx + 0, by + 30)], fill=h2c('#1e301e'), width=2)
+    sd.line([(bx + 8, by + 30), (bx + 8, by + 39)], fill=h2c('#142214'), width=3)
+    sd.line([(bx + 14, by + 30), (bx + 14, by + 39)], fill=h2c('#142214'), width=3)
+    sd.line([(bx + 22, by + 28), (bx + 22, by + 39)], fill=h2c('#142214'), width=3)
+    add_f('brachiosaur', bx, by, 44, 40)
+
+    # 8. Victorian Iron Steam Locomotive 4-4-0 (52x28) - Epoch 2
+    lx, ly = 396, 0
+    sd.rectangle([lx + 12, ly + 8, lx + 44, ly + 20], fill=h2c('#1b2026'))
+    sd.rectangle([lx + 34, ly + 4, lx + 50, ly + 20], fill=h2c('#4a2211'))
+    sd.rectangle([lx + 38, ly + 6, lx + 44, ly + 12], fill=h2c('#ffe082'))
+    sd.rectangle([lx + 16, ly + 2, lx + 20, ly + 8], fill=h2c('#1b2026'))
+    sd.rectangle([lx + 14, ly + 1, lx + 22, ly + 3], fill=h2c('#ffd166'))
+    draw_circle_fill(sd, lx + 28, ly + 6, 3, h2c('#ffd166'))
+    sd.polygon([(lx + 4, ly + 22), (lx + 12, ly + 14), (lx + 12, ly + 22)], fill=h2c('#9c2828'))
+    sd.rectangle([lx + 6, ly + 10, lx + 12, ly + 16], fill=h2c('#ffd166'))
+    sd.point((lx + 8, ly + 13), fill=h2c('#ffffff'))
+    draw_circle_fill(sd, lx + 18, ly + 22, 4, h2c('#8c5923'))
+    draw_circle_fill(sd, lx + 30, ly + 22, 4, h2c('#8c5923'))
+    draw_circle_fill(sd, lx + 42, ly + 22, 4, h2c('#8c5923'))
+    sd.line([(lx + 18, ly + 22), (lx + 42, ly + 22)], fill=h2c('#d4af37'), width=2)
+    add_f('steam_train', lx, ly, 52, 28)
+
+    # 9. Victorian Railway Carriage (36x22) - Epoch 2
+    rc_x, rc_y = 452, 0
+    sd.rectangle([rc_x + 2, rc_y + 4, rc_x + 34, rc_y + 16], fill=h2c('#3a1f18'))
+    sd.rectangle([rc_x + 4, rc_y + 2, rc_x + 32, rc_y + 4], fill=h2c('#1b2026'))
+    for wx in range(rc_x + 6, rc_x + 30, 6):
+        sd.rectangle([wx, rc_y + 6, wx + 4, rc_y + 11], fill=h2c('#ffe082'))
+    draw_circle_fill(sd, rc_x + 8, rc_y + 18, 3, h2c('#1b2026'))
+    draw_circle_fill(sd, rc_x + 28, rc_y + 18, 3, h2c('#1b2026'))
+    add_f('carriage', rc_x, rc_y, 36, 22)
+
+    # Row 1 (y=44..100)
+    # 10. Great Sphinx of Giza (40x24) - Epoch 3 (Egypt)
+    sx, sy = 68, 44
+    sd.rectangle([sx + 4, sy + 10, sx + 32, sy + 22], fill=h2c('#c99834'))
+    sd.rectangle([sx + 26, sy + 18, sx + 38, sy + 22], fill=h2c('#b07f24'))
+    sd.rectangle([sx + 20, sy + 2, sx + 32, sy + 12], fill=h2c('#c99834'))
+    sd.polygon([(sx + 18, sy + 4), (sx + 34, sy + 4), (sx + 30, sy + 12), (sx + 22, sy + 12)], fill=h2c('#204488'))
+    sd.point((sx + 26, sy + 6), fill=h2c('#ffd166'))
+    sd.point((sx + 28, sy + 6), fill=h2c('#000000'))
+    add_f('sphinx', sx, sy, 40, 24)
+
+    # 11. Desert Camel with Royal Saddle Rug (32x26) - Epoch 3
+    mx, my = 112, 44
+    sd.rectangle([mx + 6, my + 8, mx + 22, my + 16], fill=h2c('#b8860b'))
+    draw_circle_fill(sd, mx + 14, my + 6, 5, h2c('#9c6e08'))
+    sd.rectangle([mx + 10, my + 7, mx + 18, my + 13], fill=h2c('#d92534'))
+    sd.line([(mx + 10, my + 13), (mx + 18, my + 13)], fill=h2c('#ffd166'), width=1)
+    sd.line([(mx + 22, my + 12), (mx + 28, my + 4)], fill=h2c('#b8860b'), width=3)
+    sd.rectangle([mx + 26, my + 2, mx + 31, my + 6], fill=h2c('#9c6e08'))
+    sd.line([(mx + 8, my + 16), (mx + 8, my + 24)], fill=h2c('#9c6e08'), width=2)
+    sd.line([(mx + 12, my + 16), (mx + 12, my + 24)], fill=h2c('#785505'), width=2)
+    sd.line([(mx + 18, my + 16), (mx + 18, my + 24)], fill=h2c('#9c6e08'), width=2)
+    sd.line([(mx + 22, my + 16), (mx + 22, my + 24)], fill=h2c('#785505'), width=2)
+    add_f('camel', mx, my, 32, 26)
+
+    # 12. Nile Date Palm Tree (24x36) - Epoch 3
+    plx, ply = 148, 44
+    sd.line([(plx + 12, ply + 34), (plx + 10, ply + 14)], fill=h2c('#7a4f1a'), width=3)
+    sd.polygon([(plx + 10, ply + 14), (plx + 2, ply + 6), (plx + 4, ply + 16)], fill=h2c('#2d6a2e'))
+    sd.polygon([(plx + 10, ply + 14), (plx + 22, ply + 6), (plx + 20, ply + 16)], fill=h2c('#2d6a2e'))
+    sd.polygon([(plx + 10, ply + 14), (plx + 12, ply + 2), (plx + 15, ply + 12)], fill=h2c('#3e8a3f'))
+    sd.polygon([(plx + 10, ply + 14), (plx + 4, ply + 20), (plx + 9, ply + 22)], fill=h2c('#1e4f20'))
+    sd.polygon([(plx + 10, ply + 14), (plx + 20, ply + 20), (plx + 15, ply + 22)], fill=h2c('#1e4f20'))
+    add_f('palm_tree', plx, ply, 24, 36)
+
+    # 13. Nile River Felucca Sailboat (28x28) - Epoch 3
+    flx, fly = 176, 46
+    sd.polygon([(flx + 2, fly + 22), (flx + 26, fly + 22), (flx + 22, fly + 26), (flx + 6, fly + 26)], fill=h2c('#6a401a'))
+    sd.polygon([(flx + 8, fly + 22), (flx + 24, fly + 2), (flx + 22, fly + 22)], fill=h2c('#f4ebd0'))
+    sd.line([(flx + 8, fly + 22), (flx + 24, fly + 2)], fill=h2c('#3a2410'), width=1)
+    add_f('felucca', flx, fly, 28, 28)
+
+    # 14. Cyberpunk Spinner / Cruiser (36x14) - Epoch 1
+    spx, spy = 208, 48
+    sd.polygon([(spx + 2, spy + 7), (spx + 8, spy + 2), (spx + 30, spy + 2),
+                (spx + 35, spy + 7), (spx + 28, spy + 12), (spx + 6, spy + 12)], fill=h2c('#12162a'))
+    sd.rectangle([spx + 10, spy + 3, spx + 24, spy + 7], fill=h2c('#00f5d4'))
+    sd.point((spx + 14, spy + 4), fill=h2c('#ffffff'))
+    sd.rectangle([spx + 32, spy + 4, spx + 35, spy + 9], fill=h2c('#ff007f'))
+    sd.line([(spx + 35, spy + 6), (spx + 38, spy + 6)], fill=h2c('#ff80bf'), width=2)
+    add_f('hover_car', spx, spy, 36, 14)
+
+    # 15. Cyberpunk High-Speed Skimmer (30x12) - Epoch 1
+    skx, sky = 248, 48
+    sd.polygon([(skx + 2, sky + 6), (skx + 10, sky + 2), (skx + 26, sky + 2),
+                (skx + 29, sky + 6), (skx + 22, sky + 10), (skx + 6, sky + 10)], fill=h2c('#26183a'))
+    sd.rectangle([skx + 8, sky + 3, skx + 18, sky + 6], fill=h2c('#ffd166'))
+    sd.rectangle([skx + 26, sky + 4, skx + 29, sky + 8], fill=h2c('#00f5d4'))
+    add_f('hover_car2', skx, sky, 30, 12)
+
+    # 16. Cyberpunk Neon Holographic Billboard 1 (32x20) - Epoch 1
+    hg1_x, hg1_y = 282, 46
+    sd.rectangle([hg1_x + 2, hg1_y + 2, hg1_x + 30, hg1_y + 18], fill=h2c('#0a0618'), outline=h2c('#ff007f'))
+    sd.line([(hg1_x + 8, hg1_y + 6), (hg1_x + 24, hg1_y + 6)], fill=h2c('#00f5d4'), width=1)
+    sd.line([(hg1_x + 16, hg1_y + 6), (hg1_x + 16, hg1_y + 15)], fill=h2c('#00f5d4'), width=1)
+    sd.line([(hg1_x + 10, hg1_y + 11), (hg1_x + 22, hg1_y + 11)], fill=h2c('#ffd166'), width=1)
+    sd.point((hg1_x + 12, hg1_y + 14), fill=h2c('#ff007f'))
+    sd.point((hg1_x + 20, hg1_y + 14), fill=h2c('#ff007f'))
+    add_f('hologram_ad1', hg1_x, hg1_y, 32, 20)
+
+    # 17. Cyberpunk Neon Billboard 2 (28x16) - Epoch 1
+    hg2_x, hg2_y = 318, 46
+    sd.rectangle([hg2_x + 2, hg2_y + 2, hg2_x + 26, hg2_y + 14], fill=h2c('#080d22'), outline=h2c('#00f5d4'))
+    sd.ellipse([hg2_x + 6, hg2_y + 5, hg2_x + 22, hg2_y + 11], outline=h2c('#ffd166'))
+    draw_circle_fill(sd, hg2_x + 14, hg2_y + 8, 2, h2c('#ff007f'))
+    add_f('hologram_ad2', hg2_x, hg2_y, 28, 16)
+
+    # 18. Flying Pterodactyl Wings Up (36x20) - Epoch 4
+    pt1_x, pt1_y = 350, 44
+    sd.polygon([(pt1_x + 14, pt1_y + 8), (pt1_x + 28, pt1_y + 6), (pt1_x + 20, pt1_y + 12)], fill=h2c('#6b4226'))
+    sd.point((pt1_x + 22, pt1_y + 8), fill=h2c('#ffd166'))
+    sd.polygon([(pt1_x + 4, pt1_y + 1), (pt1_x + 18, pt1_y + 8), (pt1_x + 12, pt1_y + 14)], fill=h2c('#8c5934'))
+    sd.polygon([(pt1_x + 32, pt1_y + 1), (pt1_x + 18, pt1_y + 8), (pt1_x + 24, pt1_y + 14)], fill=h2c('#8c5934'))
+    add_f('pterodactyl', pt1_x, pt1_y, 36, 20)
+
+    # 19. Flying Pterodactyl Wings Down (36x20) - Epoch 4
+    pt2_x, pt2_y = 390, 44
+    sd.polygon([(pt2_x + 14, pt2_y + 8), (pt2_x + 28, pt2_y + 6), (pt2_x + 20, pt2_y + 12)], fill=h2c('#6b4226'))
+    sd.point((pt2_x + 22, pt2_y + 8), fill=h2c('#ffd166'))
+    sd.polygon([(pt2_x + 4, pt2_y + 18), (pt2_x + 18, pt2_y + 8), (pt2_x + 10, pt2_y + 8)], fill=h2c('#8c5934'))
+    sd.polygon([(pt2_x + 32, pt2_y + 18), (pt2_x + 18, pt2_y + 8), (pt2_x + 26, pt2_y + 8)], fill=h2c('#8c5934'))
+    add_f('pterodactyl_down', pt2_x, pt2_y, 36, 20)
+
+    # 20. Primordial Fiery Bolide Meteor (32x24) - Epoch 5
+    mx1, my1 = 430, 36
+    sd.polygon([(mx1 + 2, my1 + 2), (mx1 + 18, my1 + 10), (mx1 + 10, my1 + 18)], fill=h2c('#ff2200', 180))
+    sd.polygon([(mx1 + 6, my1 + 6), (mx1 + 20, my1 + 12), (mx1 + 14, my1 + 16)], fill=h2c('#ff8800'))
+    draw_circle_fill(sd, mx1 + 22, my1 + 14, 6, h2c('#ffee44'))
+    draw_circle_fill(sd, mx1 + 24, my1 + 14, 3, h2c('#ffffff'))
+    add_f('meteor', mx1, my1, 32, 24)
+
+    # Row 2 (y=96..160) - Gears, Shards & Big Bang Singularities
+    # 21. Small Clockwork Brass Gear (16x16)
+    g1x, g1y = 0, 96
+    draw_circle_fill(sd, g1x + 8, g1y + 8, 5, h2c('#d4af37'))
+    draw_circle_fill(sd, g1x + 8, g1y + 8, 2, h2c('#3a2410'))
+    sd.point((g1x + 8, g1y + 1), fill=h2c('#ffd166'))
+    sd.point((g1x + 8, g1y + 15), fill=h2c('#ffd166'))
+    sd.point((g1x + 1, g1y + 8), fill=h2c('#ffd166'))
+    sd.point((g1x + 15, g1y + 8), fill=h2c('#ffd166'))
+    add_f('gear_small', g1x, g1y, 16, 16)
+
+    # 22. Medium Clockwork Brass Gear (24x24)
+    g2x, g2y = 20, 96
+    draw_circle_fill(sd, g2x + 12, g2y + 12, 8, h2c('#d4af37'))
+    draw_circle_fill(sd, g2x + 12, g2y + 12, 3, h2c('#221406'))
+    for ang_deg in range(0, 360, 45):
+        rad = math.radians(ang_deg)
+        tx = int(g2x + 12 + math.cos(rad) * 10)
+        ty = int(g2y + 12 + math.sin(rad) * 10)
+        sd.point((tx, ty), fill=h2c('#ffd166'))
+    add_f('gear_med', g2x, g2y, 24, 24)
+
+    # 23-26. Prismatic Shattered Crystal Shards (16x16 each)
+    shards = [
+        [(2, 2), (14, 6), (8, 14)],
+        [(4, 14), (12, 2), (14, 12)],
+        [(2, 8), (14, 2), (10, 14), (4, 12)],
+        [(6, 2), (14, 14), (2, 10)],
+    ]
+    for idx, poly in enumerate(shards):
+        sx_s, sy_s = 48 + idx * 20, 96
+        abs_poly = [(sx_s + pt[0], sy_s + pt[1]) for pt in poly]
+        sd.polygon(abs_poly, fill=h2c('#ffffff', 180), outline=h2c('#00f5d4'))
+        sd.point((sx_s + 7, sy_s + 7), fill=h2c('#ffffff'))
+        add_f(f'crystal_shard{idx}', sx_s, sy_s, 16, 16)
+
+    # 27. Quantum Singularity Core (28x28)
+    sqx, sqy = 128, 96
+    draw_radial_glow(simg, sqx + 14, sqy + 14, 13, (255, 255, 255, 255), (0, 245, 212, 0))
+    draw_circle_fill(sd, sqx + 14, sqy + 14, 5, h2c('#ffffff'))
+    draw_circle_fill(sd, sqx + 14, sqy + 14, 2, h2c('#000000'))
+    add_f('singularity', sqx, sqy, 28, 28)
+
+    # 28-30. Multi-spectral Cosmic Sparks (16x16)
     for i in range(3):
-        cs_x, cs_y = 344 + i * 13, 0
-        draw_circle_fill(sd, cs_x + 6, cs_y + 6, 2 + i, h2c('#00f5d4'))
-        sd.point((cs_x + 6, cs_y + 6), fill=h2c('#ffffff'))
+        cs_x, cs_y = 160 + i * 18, 96
+        r = 2 + i * 2
+        col = [h2c('#ffd166'), h2c('#00f5d4'), h2c('#ff007f')][i]
+        draw_circle_fill(sd, cs_x + 8, cs_y + 8, r, col)
+        sd.point((cs_x + 8, cs_y + 8), fill=h2c('#ffffff'))
         add_f(f'cosmic_spark{i}', cs_x, cs_y, 16, 16)
 
     simg.save(os.path.join(ASSETS, 'alchemy.png'))
     with open(os.path.join(ASSETS, 'alchemy.json'), 'w') as f:
         json.dump(frames, f, indent=2)
-    print("  Wrote alchemy.png+json (Chrono-Warp Living Eras & Grand Hourglass)")
+    print("  Wrote elevated alchemy.png + alchemy.json (Chrono-Warp Living Eras & Grand Hourglass)")
 
 if __name__ == '__main__':
     print("Generating elevated narrative assets for 3 themes...")
