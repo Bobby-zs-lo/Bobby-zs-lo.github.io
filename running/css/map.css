@@ -1,3 +1,134 @@
-/* Running — map styles for the Routes view (desk only).
-   Empty for now: index.html links it and the service worker precaches it, so it must exist
-   before the map styles are written. Scope every rule to html[data-layout="desk"], as in desk.css. */
+/* Running — maps, and the Activity page that carries one.
+   Leaflet's stylesheet is appended to <head> at run time (js/map.js), after this file, so every
+   Leaflet rule restyled below is given one extra class of weight (.map.leaflet-container) rather
+   than relying on source order. Colours come from the app's tokens, so both schemes follow. */
+
+/* ── map box ──────────────────────────────────────────────────────────────────────────── */
+/* z-index 0 makes the box a stacking context: Leaflet's panes (z-index 400+) stay under the sticky header. */
+.map {
+  position: relative; z-index: 0;
+  border-radius: var(--radius); overflow: hidden;
+  background: var(--paper-2);
+}
+.map--activity { height: 300px; }
+.map--tile { height: 100%; min-height: 240px; }
+.map--routes { height: 360px; }
+html[data-layout="desk"] .map--activity { height: 420px; }
+html[data-layout="desk"] .map--routes { height: calc(100vh - var(--top-h) - 48px); min-height: 480px; }
+
+.map.leaflet-container { font-family: var(--sans); background: var(--paper-2); }
+.map.leaflet-container:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--radius); }
+
+/* Leaflet failed to load (offline, blocked): the box says so instead of staying a blank grey block. */
+.map-error {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px; text-align: center;
+  font-size: 13.5px; line-height: 1.45; color: var(--ink-3);
+}
+
+/* The tiles are OpenStreetMap's own, in full colour and light only (js/map.js says why). Desaturated,
+   the route is the one colour on the map; in dark mode the same tiles are inverted. Only the tile pane
+   is filtered, never the canvas that carries the routes. */
+.map.leaflet-container .leaflet-tile-pane { filter: grayscale(.85) brightness(1.03) contrast(.94); }
+@media (prefers-color-scheme: dark) {
+  .map.leaflet-container .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) grayscale(.75) brightness(.95) contrast(.88); }
+}
+
+/* ── zoom buttons ─────────────────────────────────────────────────────────────────────── */
+.map.leaflet-container .leaflet-bar {
+  border: 1px solid var(--edge); border-radius: var(--radius);
+  box-shadow: none; overflow: hidden;
+}
+.map.leaflet-container .leaflet-bar a {
+  width: 36px; height: 36px;
+  background-color: var(--card); color: var(--ink);
+  border-bottom: 1px solid var(--rule); border-radius: 0;
+  font: 500 20px/34px var(--sans); text-indent: 0;
+}
+.map.leaflet-container .leaflet-bar a:last-child { border-bottom: 0; }
+.map.leaflet-container .leaflet-bar a:hover,
+.map.leaflet-container .leaflet-bar a:focus { background-color: var(--paper-2); color: var(--ink); }
+.map.leaflet-container .leaflet-bar a:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.map.leaflet-container .leaflet-bar a.leaflet-disabled {
+  background-color: var(--card); color: var(--ink-3); opacity: .55; cursor: default;
+}
+
+/* ── attribution and tooltips ─────────────────────────────────────────────────────────── */
+.map.leaflet-container .leaflet-control-attribution {
+  font-size: 10px; line-height: 1.5; color: var(--ink-3);
+  background: color-mix(in srgb, var(--card) 85%, transparent);
+  padding: 1px 6px;
+}
+.map.leaflet-container .leaflet-control-attribution a { color: var(--ink-2); text-decoration: none; }
+.map.leaflet-container .leaflet-control-attribution a:hover { color: var(--accent); text-decoration: underline; }
+
+.map.leaflet-container .leaflet-tooltip {
+  background: var(--card); color: var(--ink);
+  border: 1px solid var(--edge); border-radius: 4px; box-shadow: none;
+  font: 500 12px/1.3 var(--sans); padding: 3px 7px;
+}
+.map.leaflet-container .leaflet-tooltip::before { display: none; }
+
+/* ── Activity page ────────────────────────────────────────────────────────────────────── */
+.act-grid > * + * { margin-top: 20px; }
+
+/* The map sits flush in its card: the card's hairline is the map's frame. */
+.card--map { padding: 0; overflow: hidden; }
+.card--map > * + * { margin-top: 0; }
+.card--map .map { border-radius: 0; }
+.map-hint {
+  margin: 0; padding: 8px 16px;
+  border-top: 1px solid var(--rule);
+  font-size: 12.5px; color: var(--ink-3);
+}
+
+/* Footer of the stats card. #FC5200 is Strava's brand orange, used for this one link and nowhere else. */
+.act-foot { padding-top: 12px; border-top: 1px solid var(--rule); }
+.strava-link {
+  display: inline-block; padding: 6px 0;
+  /* Strava orange, darkened on light cards so the text clears 4.5:1 (#FC5200 is ~3.3:1 on white). */
+  color: #D24A00; font-size: 15px; font-weight: 700;
+  text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px;
+}
+.strava-link:hover { text-decoration-thickness: 2px; }
+@media (prefers-color-scheme: dark) { .strava-link { color: #FC5200; } }
+
+/* Streams: pace, heart rate and elevation against distance, from js/charts.js lineSvg.
+   charts.js writes class names only, and desk.css styles .chart on a desk only, so the
+   phone's look is defined here. */
+.streams-ask { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.streams-ask .help, .streams-ask .form-error { margin-top: 0; }
+.streams-ask .btn { margin-top: 10px; }
+.streams-card > * + * { margin-top: 0; }
+.stream + .stream { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--rule); }
+.stream-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.stream-h {
+  font-family: var(--mono); font-size: 11px; font-weight: 500; line-height: 1.4;
+  letter-spacing: 1.8px; text-transform: uppercase; color: var(--ink-3);
+}
+.stream-range { font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.stream .chart { width: 100%; height: auto; display: block; overflow: visible; }
+.stream .chart .axis { font: 500 10px var(--mono); fill: var(--ink-3); font-variant-numeric: tabular-nums; }
+.stream .chart .line {
+  fill: none; stroke: var(--accent); stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke;
+}
+.stream--elev .chart .line { stroke: var(--ink-2); stroke-width: 1.5; }
+
+/* Desk: a wider column in two parts. On the left the stats, the matched session and the splits; on the
+   right the map beside the first two, and the streams beside the splits. :has() keeps this to
+   activities that have a map; without it, or without a map, the page stays in the reading column. */
+html[data-layout="desk"] body[data-route="activity"] .view:has(.act-map) { max-width: 1080px; }
+html[data-layout="desk"] .act-grid:has(> .act-map) {
+  display: grid; grid-template-columns: minmax(300px, 4fr) minmax(0, 6fr);
+  column-gap: 20px; row-gap: 20px; align-items: start;
+}
+html[data-layout="desk"] .act-grid:has(> .act-map) > * { margin-top: 0; }
+html[data-layout="desk"] .act-grid > :is(.act-stats, .act-match, .act-splits) { grid-column: 1; }
+html[data-layout="desk"] .act-grid > .act-map { grid-column: 2; grid-row: 1 / span 2; align-self: stretch; display: flex; flex-direction: column; }
+html[data-layout="desk"] .act-grid > .act-streams { grid-column: 2; }
+html[data-layout="desk"] .act-grid > .act-streams--wide { grid-column: 1 / -1; }
+html[data-layout="desk"] .act-map .map { flex: 1 1 auto; height: auto; min-height: 420px; }
+/* The stats card is ~400 px here, so its labels get room to stay on one line. */
+html[data-layout="desk"] .act-stats .kv--wide { grid-template-columns: 152px minmax(0, 1fr); }
