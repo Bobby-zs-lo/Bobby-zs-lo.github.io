@@ -24,10 +24,10 @@ const VIEWS = {
   routes: () => import('./views/routes.js'),
 };
 // [route, label, deskOnly]. Desk-only tabs are always in the DOM but hidden by css/desk.css on a
-// phone, so the bottom bar keeps its five columns.
+// phone, so the bottom bar shows the other six. Routes is on both: planning a run happens on the go too.
 const TABS = [
   ['overview', 'Overview', true], ['today', 'Today'], ['week', 'Week'], ['plan', 'Plan'],
-  ['routes', 'Routes', true], ['health', 'Health'], ['reviews', 'Reviews'],
+  ['routes', 'Routes'], ['health', 'Health'], ['reviews', 'Reviews'],
 ];
 const TITLES = {
   login: 'Sign in', today: 'Today', week: 'Week', plan: 'Plan', health: 'Health', reviews: 'Reviews',

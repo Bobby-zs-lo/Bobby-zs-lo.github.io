@@ -412,7 +412,7 @@ try {
       assert.equal(await page.getAttribute('html', 'data-layout'), 'desk');
       assert.equal(await page.textContent('#view h1'), 'Overview');
       await railLeftOfView();
-      assert.equal(await page.locator('.tab--desk:visible').count(), 2);
+      assert.equal(await page.locator('.tab--desk:visible').count(), 1);
       assert.equal(await page.locator('.tab:visible').count(), 7);
       assert.equal(await page.getAttribute('.tab[data-tab=overview]', 'aria-current'), 'page');
       assert.equal(await page.getAttribute('.brand', 'href'), '#/overview');
@@ -668,15 +668,19 @@ try {
     await ctx.close();
   });
 
-  await step('phone (390 px): Today by default, bottom tab bar, no desk tabs', async () => {
+  await step('phone (390 px): Today by default, bottom tab bar with Routes, no desk tabs', async () => {
     const { ctx, page, errors } = await newPage();
     await page.goto(APP);
     await page.waitForSelector('.workout-title');
     assert.equal(new URL(page.url()).hash, '#/today');
     assert.equal(await page.getAttribute('html', 'data-layout'), 'phone');
-    assert.equal(await page.locator('.tab--desk').count(), 2);
+    assert.equal(await page.locator('.tab--desk').count(), 1);
     assert.equal(await page.locator('.tab--desk:visible').count(), 0);
-    assert.equal(await page.locator('.tab:visible').count(), 5);
+    assert.equal(await page.locator('.tab:visible').count(), 6);
+    assert.ok(await page.isVisible('.tab[data-tab=routes]'), 'Routes is in the phone tab bar');
+    // Six tabs must still fit a small phone: every label inside its own column.
+    const tabs = await page.$$eval('.tab:not(.tab--desk)', ts => ts.map(t => ({ w: t.getBoundingClientRect().width, label: t.querySelector('span').scrollWidth })));
+    assert.ok(tabs.every(t => t.label <= t.w), `tab labels fit: ${JSON.stringify(tabs)}`);
     const bar = await page.locator('nav.tabs').boundingBox();
     assert.ok(bar.y > 700, `tab bar at the bottom (top ${bar.y})`);
     assert.equal(await page.getAttribute('.brand', 'href'), '#/today');
@@ -689,7 +693,7 @@ try {
     await ctx.close();
   });
 
-  await step('phone (390 px): Routes and Overview render without overflow though they are not in the tab bar', async () => {
+  await step('phone (390 px): Routes (in the tab bar) and Overview (not) render without overflow', async () => {
     const { ctx, page, errors } = await newPage();
     await go(page, 'routes');
     await page.waitForSelector('#rt-form');
@@ -702,6 +706,35 @@ try {
     await page.screenshot({ path: join(SHOTS, 'phone-routes.png') });
     await page.screenshot({ path: join(SHOTS, 'phone-routes-full.png'), fullPage: true });
 
+    // A run's session page offers a route on the phone too.
+    await go(page, 'workout/w-2026-10-13-run');
+    assert.ok(await page.isVisible('a:has-text("Make a route for this run")'), 'route link on the phone workout page');
+    assert.deepEqual(errors, []);
+    await ctx.close();
+  });
+
+  await step('phone (390 px): generate from home, then take the route to Garmin or Strava the phone way', async () => {
+    const { ctx, page, errors, popups } = await newPage({ settings: { home: { lat: 55.7, lng: 12.55 } } });
+    await go(page, 'routes?km=10');
+    await page.waitForSelector('#rt-form');
+    await page.click('#rt-go');
+    await page.waitForSelector('[data-export="gpx"]');
+    // A phone can't use the Strava or Garmin web import pages, so the help says what works there.
+    assert.match(await page.textContent('[data-export="garmin"] + .help'), /Garmin Connect app/);
+    assert.match(await page.textContent('[data-export="strava"] + .help'), /[Dd]esktop site/);
+    const [download] = await Promise.all([page.waitForEvent('download'), page.click('[data-export="garmin"]')]);
+    assert.match(download.suggestedFilename(), /\.gpx$/);
+    assert.deepEqual(popups, [], 'no web import page opened on a phone');
+    let o = await overflow(page);
+    assert.ok(o.scrollW <= o.W && o.bad.length === 0, `routes exports (phone) overflow: ${JSON.stringify(o)}`);
+    await page.screenshot({ path: join(SHOTS, 'phone-routes-exports-full.png'), fullPage: true });
+    assert.deepEqual(errors, []);
+    await ctx.close();
+  });
+
+  await step('phone (390 px): Overview renders without overflow though it is not in the tab bar', async () => {
+    const { ctx, page, errors } = await newPage();
+    let o;
     await go(page, 'overview');
     await overviewReady(page);
     assert.equal(await page.getAttribute('html', 'data-layout'), 'phone');

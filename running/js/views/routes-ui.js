@@ -6,6 +6,7 @@ import { formatDate, formatDistance } from '../format.js';
 import { googleMapsUrl, cccUrl, usableVia } from '../geo.js';
 import { profileSvg } from '../charts.js';
 import { formatLatLng } from '../geolocate.js';
+import { isDesk } from '../layout.js';
 
 // Distance limits match the API's (functions/src/routing.js); travel is Google Maps' travelmode.
 export const PROFILES = {
@@ -24,6 +25,20 @@ const START_NAMES = { home: 'Home', location: 'Your location', map: 'Point on th
 // credit and the map credit sit together once.
 const ATTRIBUTION = html`Routing © <a href="https://openrouteservice.org/" target="_blank" rel="noopener">openrouteservice.org</a> by HeiGIT · Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors`;
 const GOOGLE_SAMPLED = 'Approximate: Google re-routes between 9 points.';
+// Strava's app cannot import a route and its web importer wants a desktop page; Garmin Connect's app
+// opens a GPX file itself. So on a phone the help says what actually works there.
+const STRAVA_DESK = 'Import the file with the upload icon. Needs a Strava subscription.';
+const STRAVA_PHONE = 'Strava’s app can’t import routes. Downloads the file; then open strava.com/routes/new in Chrome with ⋮ → Desktop site and use the upload icon. Needs a Strava subscription.';
+const GARMIN_DESK = 'Import → choose the file.';
+const GARMIN_PHONE = 'Downloads the file: open it with the Garmin Connect app to save it as a course and send it to your watch.';
+
+/** Whether this browser can hand a GPX file to another app (Web Share with files; Chrome allows only some types). */
+export function canShareGpx() {
+  try {
+    return typeof navigator !== 'undefined' && typeof navigator.canShare === 'function'
+      && navigator.canShare({ files: [new File(['<gpx/>'], 'route.gpx', { type: 'application/gpx+xml' })] });
+  } catch { return false; }
+}
 
 const pct = share => (Number.isFinite(share) ? `${Math.round(share * 100)} %` : '–');
 
@@ -169,15 +184,16 @@ const exportItem = (kind, label, help, primary = false) => html`<div class="rt-e
  * name (what "Take … with you" calls it) }.
  */
 function routeBody(c) {
-  const { route, profile } = c, s = route.surface || {};
+  const { route, profile } = c, s = route.surface || {}, desk = isDesk();
   const items = [exportItem('gpx', 'Download GPX', html`<span class="rt-file">${c.gpxName}</span>`, true)];
+  if (!desk && canShareGpx()) items.push(exportItem('share', 'Share GPX…', 'Hand the file to an app: Garmin Connect, Coros, Komoot or Drive.'));
   // A link that can't be built is left out rather than shown as a button that does nothing.
   if (googleMapsUrl(route.points, PROFILES[profile].travel, { via: c.via })) {
     const n = usableVia(c.via) ? c.via.length : 0;
     items.push(exportItem('google', 'Google Maps', n ? `Through your ${n} point${n === 1 ? '' : 's'}; Google finds its own way between them.` : GOOGLE_SAMPLED));
   }
-  items.push(exportItem('strava', 'Strava', 'Import the file with the upload icon. Needs a Strava subscription.'));
-  items.push(exportItem('garmin', 'Garmin Connect', 'Import → choose the file.'));
+  items.push(exportItem('strava', 'Strava', desk ? STRAVA_DESK : STRAVA_PHONE));
+  items.push(exportItem('garmin', 'Garmin Connect', desk ? GARMIN_DESK : GARMIN_PHONE));
   if (profile === 'ride' && cccUrl(c.start, c.targetKm ?? route.distanceKm)) items.push(exportItem('ccc', 'Plan with cafés in CCC', 'Opens Cake, Coffee & Cadence with this start and distance.'));
   return html`<figure class="rt-profile">
       <figcaption class="rt-cap"><span class="tile-label">Elevation${c.tag ? ` · ${c.tag}` : ''}</span><span class="rt-meta num">↑ ${Math.round(route.ascentM || 0)} m · ↓ ${Math.round(route.descentM || 0)} m</span></figcaption>

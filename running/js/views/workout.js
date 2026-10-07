@@ -3,7 +3,6 @@ import { html, raw, mount } from '../dom.js';
 import { api } from '../api.js';
 import { getPlan, getPaces } from '../store.js';
 import { buildHash } from '../router.js';
-import { isDesk } from '../layout.js';
 import { loading, errorState, statusChip, toast, busy } from '../ui.js';
 import { formatDate, formatDistance, formatDuration, workoutAmount, paceRange, PACE_NAMES, PHASE_NAMES } from '../format.js';
 import { SPORT_NAMES, activityRow, segmentList, segmentAmount } from './common.js';
@@ -48,9 +47,9 @@ function facts(w, paces) {
   </dl>`;
 }
 
-/** A run with a distance can seed the route generator; routes are a desk view, so a phone is not offered one. */
+/** A run with a distance can seed the route generator, on the phone as on the desk. */
 function routeLink(w) {
-  if (!isDesk() || w.sport !== 'run' || !(w.distanceKm > 0)) return '';
+  if (w.sport !== 'run' || !(w.distanceKm > 0)) return '';
   return html`<p><a class="link" href="${buildHash('routes', { km: w.distanceKm, from: w.id })}">Make a route for this run →</a></p>`;
 }
 

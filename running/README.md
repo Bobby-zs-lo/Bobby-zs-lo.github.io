@@ -79,10 +79,12 @@ single-use action token from the push payload; no ID token is involved.
 ## Desk layout
 
 At 1100 px and wider `js/layout.js` sets `<html data-layout="desk">`: the tab bar becomes a left
-rail, the phone views sit in a 760 px reading column, and two desk-only views join the rail,
-**Overview** and **Routes**. Every desk rule is scoped to that attribute, so a phone renders as
-before; the desk tabs are in its DOM but hidden, and an Overview or Routes link opened on a phone
-still renders, in one column. The layout follows the window live, across the breakpoint.
+rail, the phone views sit in a 760 px reading column, and the desk-only **Overview** joins the
+rail. **Routes** is in both: the sixth tab of the phone bar, where Strava and Garmin export only
+download (their web importers are no use on a phone) and *Share GPX…* appears when the browser can
+share files. Every desk rule is scoped to that attribute; the Overview tab is in the phone DOM but
+hidden, and an Overview link opened on a phone still renders, in one column. The layout follows
+the window live, across the breakpoint.
 
 A bare URL, an unknown route and a fresh sign-in all land on the layout's home: Overview on a
 desk, Today on a phone. That is why the manifest's `start_url` is a bare `./` (its `id` stays
