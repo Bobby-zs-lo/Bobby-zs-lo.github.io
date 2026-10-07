@@ -1,22 +1,27 @@
 /**
- * AbyssScene – Deep Sea Descent & Mythical Leviathan Countdown.
+ * AbyssScene – Living Ocean Aquarium & Deep Sea Leviathan Descent.
  *
- * An atmospheric descent from the sunlit surface to the bottom of the Mariana Trench,
- * encountering mythical sea creatures and sunken ruins before the colossal Ancient Leviathan
- * surges up and chomps the diving bell whole!
+ * An atmospheric descent from a vibrant sunlit coral reef down to the 11,000m Mariana Trench.
+ * Populated at every depth zone with living aquatic life: schools of colorful reef fish,
+ * sea turtles, pulsing jellyfish, mythical giant kraken, glowing anglerfish, and gulper eels,
+ * culminating in the terrifying Ancient Leviathan surging up from the seafloor and CHOMPING
+ * the diving bell whole!
  *
- * Progress & Depth:
- *   - 0.00 .. 0.25 (0 – 2,750m): Sunlit Surface (god rays, turquoise water, sea turtles gliding)
- *   - 0.25 .. 0.50 (2,750 – 5,500m): Twilight Zone (deep blue, mythical Giant Kraken Squid glides past)
- *   - 0.50 .. 0.75 (5,500 – 8,250m): Sunken Atlantis (midnight black, searchlights reveal ancient Atlantean columns)
- *   - 0.75 .. 0.95 (8,250 – 10,450m): Hadal Trench (hydrothermal vents, ominous glowing eyes stalking from abyss)
- *   - 0.95 .. 1.00 (10,450 – 11,000m): Leviathan Stalk (colossal shadow ascends directly beneath the diving bell)
+ * Depth & Aquarium Zones:
+ *   - 0.00 .. 0.25 (0 – 2,750m, Coral Shallows): Tropical schools of clownfish and blue tangs darting,
+ *     loggerhead sea turtles swimming, god rays, and bubbling reef.
+ *   - 0.25 .. 0.50 (2,750 – 5,500m, Twilight Zone): Glowing comb jellies, deep-sea schools, and the
+ *     mythical Giant Kraken Squid gliding across with waving tentacles.
+ *   - 0.50 .. 0.75 (5,500 – 8,250m, Sunken Atlantis): Sunken carved Atlantean ruins with glowing cyan glyphs,
+ *     menacing Anglerfish with glowing yellow lure bobbing through the ancient pillars.
+ *   - 0.75 .. 0.95 (8,250 – 10,450m, Hadal Mariana Trench): Hydrothermal vents, slithering Gulper Eels,
+ *     and giant glowing predator eyes blinking in the bottom abyss.
+ *   - 0.95 .. 1.00 (10,450 – 11,000m): Leviathan Stalk directly below the bell.
  *
  * Finale (at 0:00):
- *   - 0 .. 600ms: The Ancient Leviathan jaws open wide around the diving bell.
- *   - 600 .. 1800ms: CHOMP! The colossal fangs snap shut, eating the diving bell! (Crunch hit SFX & screen shake).
- *   - 1800 .. 3500ms: Inside the glowing belly as it digests in the abyss.
- *   - 3500 .. 4800ms: Leviathan slumbers back into the eternal trench.
+ *   - 0 .. 700ms: Colossal Ancient Leviathan surges upward, gaping its massive razor-fanged jaws wide!
+ *   - 700 .. 2000ms: CHOMP! The jaws SNAP SHUT around the diving bell, crunching it! (Hit SFX & bubble explosion).
+ *   - 2000 .. 4800ms: The diving bell is swallowed into the deep belly as silence reclaims the trench.
  */
 import { Scene, blit } from '../scene.js';
 import { audio }       from '../audio.js';
@@ -64,7 +69,7 @@ export function finalePhase(elapsedMs) {
 }
 
 const C = {
-  sunlit0: '#0a5275',
+  sunlit0: '#0a587e',
   sunlit1: '#04273d',
   twilight0: '#06263d',
   twilight1: '#021021',
@@ -92,24 +97,40 @@ export class AbyssScene extends Scene {
     this.bubbles = [];
     this.sonarRipples = [];
     this.bloodParticles = [];
-    this.turtleX = -40;
+    this.reefFish = [];
+
+    this.turtleX = -45;
     this.krakenX = 260;
+    this.anglerX = -40;
+    this.eelX = 270;
 
     this.finaleActive = false;
     this.finaleElapsed = 0;
     this.sfxPlayedChomp = false;
 
-    this._initBubbles();
+    this._initAquarium();
   }
 
-  _initBubbles() {
+  _initAquarium() {
     this.bubbles = [];
-    for (let i = 0; i < 28; i++) {
+    for (let i = 0; i < 30; i++) {
       this.bubbles.push({
         xRatio: Math.random(),
         y: Math.random() * 240,
         speed: 0.035 + Math.random() * 0.08,
         type: i % 3,
+      });
+    }
+
+    // Active schooling reef fish (clownfish & blue tang)
+    this.reefFish = [];
+    for (let i = 0; i < 6; i++) {
+      this.reefFish.push({
+        x: Math.random() * 240,
+        y: 40 + Math.random() * 120,
+        vx: (i % 2 === 0 ? 1 : -1) * (0.04 + Math.random() * 0.05),
+        vy: (Math.random() - 0.5) * 0.02,
+        type: (i % 2 === 0) ? 'fish_clown' : 'fish_tang',
       });
     }
   }
@@ -127,8 +148,10 @@ export class AbyssScene extends Scene {
     this.remainingMs = durationMs;
     this.sonarRipples = [];
     this.bloodParticles = [];
-    this.turtleX = -40;
-    this.krakenX = 260;
+    this.turtleX = -45;
+    this.krakenX = this.W + 40;
+    this.anglerX = -40;
+    this.eelX = this.W + 50;
     this.finaleActive = false;
     this.finaleElapsed = 0;
     this.sfxPlayedChomp = false;
@@ -144,23 +167,41 @@ export class AbyssScene extends Scene {
     // Submersible gentle aquatic floating bob
     this.subY = this.cy + Math.sin(this.time * 0.0025) * 3.5;
 
-    // Rising air bubbles
+    // Rising bubbles
     for (const b of this.bubbles) {
       b.y -= b.speed * dtMs;
       if (b.y < -12) b.y = this.H + 12;
     }
 
-    // Creature movements:
-    // Turtle swims across in stage 1
+    // Aquarium life updates:
+    // 1. Reef fish school swimming back and forth
     if (zone === 'surface_shallows') {
-      this.turtleX += 0.04 * dtMs;
-      if (this.turtleX > this.W + 40) this.turtleX = -40;
+      for (const f of this.reefFish) {
+        f.x += f.vx * dtMs;
+        f.y += Math.sin(this.time * 0.004 + f.x) * 0.4;
+        if (f.vx > 0 && f.x > this.W + 20) f.x = -20;
+        if (f.vx < 0 && f.x < -20) f.x = this.W + 20;
+      }
+      this.turtleX += 0.035 * dtMs;
+      if (this.turtleX > this.W + 50) this.turtleX = -50;
     }
 
-    // Kraken glides across in stage 2
+    // 2. Twilight Kraken gliding
     if (zone === 'twilight_kraken') {
-      this.krakenX -= 0.035 * dtMs;
-      if (this.krakenX < -50) this.krakenX = this.W + 50;
+      this.krakenX -= 0.03 * dtMs;
+      if (this.krakenX < -60) this.krakenX = this.W + 60;
+    }
+
+    // 3. Anglerfish hunting through Atlantis ruins
+    if (zone === 'atlantis_ruins') {
+      this.anglerX += 0.035 * dtMs;
+      if (this.anglerX > this.W + 40) this.anglerX = -40;
+    }
+
+    // 4. Gulper Eel slithering in Hadal trench
+    if (zone === 'abyssal_trench') {
+      this.eelX -= 0.04 * dtMs;
+      if (this.eelX < -50) this.eelX = this.W + 50;
     }
 
     // Sonar ripples
@@ -176,12 +217,12 @@ export class AbyssScene extends Scene {
       this.finaleElapsed += dtMs;
       if (this.finaleElapsed >= ABYSS_CHOMP_MS && !this.sfxPlayedChomp) {
         this.sfxPlayedChomp = true;
-        audio.sfx('hit'); // crunch sound!
+        audio.sfx('hit'); // crunch impact!
 
-        // Burst of violent crunch bubbles & debris
-        for (let i = 0; i < 30; i++) {
+        // Violent explosion of bubbles and debris
+        for (let i = 0; i < 35; i++) {
           const ang = Math.random() * Math.PI * 2;
-          const spd = 1 + Math.random() * 4;
+          const spd = 1.2 + Math.random() * 4.5;
           this.bloodParticles.push({
             x: this.cx,
             y: this.subY,
@@ -209,7 +250,7 @@ export class AbyssScene extends Scene {
     this.sonarRipples.push({
       x: this.cx,
       y: this.subY,
-      radius: 10,
+      radius: 12,
       alpha: 1.0,
     });
   }
@@ -231,7 +272,7 @@ export class AbyssScene extends Scene {
     const depth = oceanDepth(p);
     const zone = depthZone(p);
 
-    // 1. Ocean Water Gradient
+    // 1. Water Gradient
     const waterGrad = c.createLinearGradient(0, 0, 0, H);
     if (zone === 'surface_shallows') {
       waterGrad.addColorStop(0, C.sunlit0);
@@ -246,36 +287,52 @@ export class AbyssScene extends Scene {
     c.fillStyle = waterGrad;
     c.fillRect(0, 0, W, H);
 
-    // 2. Sunlit God Rays in Surface Shallows
+    // 2. Zone 1: Surface Coral Shallows (Sunlit God Rays, Schools of Fish, Sea Turtles)
     if (zone === 'surface_shallows') {
       c.save();
-      c.fillStyle = 'rgba(0, 245, 212, 0.09)';
-      for (const rx of [18, 65, 125, 175, 210]) {
+      c.fillStyle = 'rgba(0, 245, 212, 0.10)';
+      for (const rx of [15, 60, 115, 170, 215]) {
         c.beginPath();
-        c.moveTo(rx, 0); c.lineTo(rx + 16, 0);
-        c.lineTo(rx + 42, H); c.lineTo(rx - 8, H);
+        c.moveTo(rx, 0); c.lineTo(rx + 18, 0);
+        c.lineTo(rx + 45, H); c.lineTo(rx - 8, H);
         c.fill();
       }
       c.restore();
 
-      // Sea Turtle Swimming By
-      const turtleY = 70 + Math.sin(this.time * 0.003) * 6;
+      // Living School of Reef Fish (Clownfish & Blue Tangs)
+      for (const f of this.reefFish) {
+        blit(c, this.assets, f.type, Math.round(f.x), Math.round(f.y), 1, f.vx < 0);
+      }
+
+      // Sea Turtle Swimming Past
+      const turtleY = 72 + Math.sin(this.time * 0.003) * 6;
       blit(c, this.assets, 'sea_turtle', Math.round(this.turtleX), Math.round(turtleY), 1);
+
+      // Translucent Jellyfish pulsing upward
+      const jellyY = 120 + Math.sin(this.time * 0.002) * 12;
+      blit(c, this.assets, 'jellyfish_glow', W - 35, Math.round(jellyY), 1);
     }
 
-    // 3. Twilight Zone: Giant Kraken Squid
+    // 3. Zone 2: Twilight Mesopelagic (Giant Kraken & Bioluminescence)
     if (zone === 'twilight_kraken') {
-      const krakenY = 85 + Math.sin(this.time * 0.002) * 8;
+      // Pulsing comb jellyfish
+      for (const jy of [60, 130]) {
+        const jx = Math.round(30 + Math.sin(this.time * 0.002 + jy) * 15);
+        blit(c, this.assets, 'jellyfish_glow', jx, jy, 1);
+      }
+
+      // Giant Kraken Squid swimming across
+      const krakenY = 88 + Math.sin(this.time * 0.002) * 8;
       blit(c, this.assets, 'kraken_squid', Math.round(this.krakenX), Math.round(krakenY), 1);
 
-      // Kraken ambient bioluminescent aura
-      c.fillStyle = 'rgba(255, 120, 0, 0.12)';
+      // Kraken Bioluminescent Aura
+      c.fillStyle = 'rgba(255, 100, 80, 0.15)';
       c.beginPath();
-      c.arc(this.krakenX + 16, krakenY + 18, 28, 0, Math.PI * 2);
+      c.arc(this.krakenX + 18, krakenY + 20, 32, 0, Math.PI * 2);
       c.fill();
     }
 
-    // 4. Midnight Ocean: Sunken Atlantean Ruins
+    // 4. Zone 3: Sunken Atlantis Ruins & Midnight Anglerfish
     if (zone === 'atlantis_ruins' || zone === 'abyssal_trench' || zone === 'leviathan_stalk') {
       // Seafloor bedrock
       c.fillStyle = '#05070d';
@@ -288,24 +345,41 @@ export class AbyssScene extends Scene {
       c.lineTo(0, H);
       c.fill();
 
-      // Atlantean Ancient Temple Columns
-      blit(c, this.assets, 'atlantis_column', 28, H - 56, 1);
-      blit(c, this.assets, 'atlantis_column', W - 48, H - 62, 1);
+      // Atlantean Ancient Carved Temple Columns
+      blit(c, this.assets, 'atlantis_column', 24, H - 62, 1);
+      blit(c, this.assets, 'atlantis_column', W - 46, H - 66, 1);
 
-      // Glowing runes on ruins
-      c.fillStyle = 'rgba(0, 245, 212, 0.25)';
-      c.fillRect(36, H - 42, 6, 2);
-      c.fillRect(W - 40, H - 48, 6, 2);
+      // Glowing cyan glyphs
+      c.fillStyle = 'rgba(0, 245, 212, 0.4)';
+      c.fillRect(34, H - 44, 6, 2);
+      c.fillRect(W - 36, H - 48, 6, 2);
+
+      // Menacing Anglerfish with glowing lure swimming past in Zone 3
+      if (zone === 'atlantis_ruins') {
+        const anglerY = 110 + Math.sin(this.time * 0.003) * 6;
+        blit(c, this.assets, 'anglerfish', Math.round(this.anglerX), Math.round(anglerY), 1);
+        // Lure glow
+        c.fillStyle = 'rgba(255, 209, 102, 0.5)';
+        c.beginPath();
+        c.arc(this.anglerX + 20, anglerY + 2, 8, 0, Math.PI * 2);
+        c.fill();
+      }
     }
 
-    // 5. Stalking Giant Eyes in Hadal Abyss
+    // 5. Zone 4: Hadal Mariana Trench (Hydrothermal Vents, Gulper Eel, Stalking Eyes)
     if (zone === 'abyssal_trench' || zone === 'leviathan_stalk') {
+      // Gulper Eel slithering
+      if (zone === 'abyssal_trench') {
+        const eelY = 85 + Math.sin(this.time * 0.004) * 10;
+        blit(c, this.assets, 'gulper_eel', Math.round(this.eelX), Math.round(eelY), 1);
+      }
+
+      // Predator Glowing Yellow Eyes Blinking in Trench Floor
       const eyeBlink = Math.sin(this.time * 0.004);
       if (eyeBlink > -0.6) {
         c.fillStyle = '#ffd166';
         c.fillRect(cx - 36, H - 32, 5, 3);
         c.fillRect(cx + 31, H - 32, 5, 3);
-        // Slit pupils
         c.fillStyle = '#000000';
         c.fillRect(cx - 34, H - 32, 2, 3);
         c.fillRect(cx + 33, H - 32, 2, 3);
@@ -338,7 +412,7 @@ export class AbyssScene extends Scene {
       // Submersible Body
       blit(c, this.assets, 'submersible', subX - 16, subY - 16, 1);
 
-      // Warning beacon in cockpit during abyssal trench
+      // Warning beacon in cockpit during trench
       if (zone === 'abyssal_trench' || zone === 'leviathan_stalk') {
         if (Math.floor(this.time / 200) % 2 === 0) {
           c.fillStyle = C.crimson;
@@ -347,28 +421,28 @@ export class AbyssScene extends Scene {
       }
     }
 
-    // 7. Colossal Ancient Leviathan (Finale & Stalk)
+    // 7. Colossal Ancient Leviathan Jaws (Finale & Stalk)
     if (this.finaleActive || zone === 'leviathan_stalk') {
       let levTravel = 0;
       if (this.finaleActive) {
-        levTravel = leviathanAscent(this.finaleElapsed, 78);
+        levTravel = leviathanAscent(this.finaleElapsed, 84);
       } else {
-        levTravel = 15;
+        levTravel = 16;
       }
 
-      const jawY = (H + 10) - levTravel;
+      const jawY = (H + 12) - levTravel;
 
-      // Colossal Leviathan Jaws (64x48)
-      blit(c, this.assets, 'leviathan_jaws', cx - 32, Math.round(jawY - 24), 1);
+      // Colossal Leviathan Jaws (72x56)
+      blit(c, this.assets, 'leviathan_jaws', cx - 36, Math.round(jawY - 28), 1);
 
-      // Leviathan Bioluminescent Maw Glow
-      const mawGrad = c.createRadialGradient(cx, jawY, 8, cx, jawY, 65);
-      mawGrad.addColorStop(0, 'rgba(0, 255, 187, 0.55)');
-      mawGrad.addColorStop(0.6, 'rgba(0, 245, 212, 0.2)');
+      // Leviathan Maw Glow
+      const mawGrad = c.createRadialGradient(cx, jawY, 8, cx, jawY, 70);
+      mawGrad.addColorStop(0, 'rgba(0, 255, 187, 0.6)');
+      mawGrad.addColorStop(0.6, 'rgba(0, 245, 212, 0.22)');
       mawGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
       c.fillStyle = mawGrad;
       c.beginPath();
-      c.arc(cx, jawY, 65, 0, Math.PI * 2);
+      c.arc(cx, jawY, 70, 0, Math.PI * 2);
       c.fill();
     }
 
@@ -399,29 +473,29 @@ export class AbyssScene extends Scene {
     }
     c.globalAlpha = 1.0;
 
-    // 11. Depth Telemetry HUD
+    // 11. Telemetry HUD
     this._renderDepthHUD(c, W, depth, zone);
   }
 
   _renderDepthHUD(c, W, depth, zone) {
     c.save();
-    c.fillStyle = 'rgba(2, 10, 20, 0.8)';
-    c.fillRect(W - 74, 8, 68, 28);
+    c.fillStyle = 'rgba(2, 10, 20, 0.85)';
+    c.fillRect(W - 76, 8, 70, 28);
     c.strokeStyle = C.cyan;
     c.lineWidth = 1;
-    c.strokeRect(W - 74, 8, 68, 28);
+    c.strokeRect(W - 76, 8, 70, 28);
 
     c.fillStyle = C.cyan;
     c.font = '9px monospace';
-    c.fillText(`-${depth}m`, W - 68, 20);
+    c.fillText(`-${depth}m`, W - 70, 20);
 
     c.font = '7px monospace';
     c.fillStyle = (zone === 'abyssal_trench' || zone === 'leviathan_stalk') ? C.crimson : '#88d8b0';
-    const tag = (zone === 'surface_shallows') ? 'SURFACE' :
+    const tag = (zone === 'surface_shallows') ? 'CORAL REEF' :
                 (zone === 'twilight_kraken') ? 'KRAKEN' :
                 (zone === 'atlantis_ruins') ? 'ATLANTIS' :
                 (zone === 'abyssal_trench') ? 'WARNING!' : 'LEVIATHAN';
-    c.fillText(tag, W - 68, 31);
+    c.fillText(tag, W - 70, 31);
     c.restore();
   }
 
