@@ -11,16 +11,21 @@
 // an AI, so a Claude session developing the app must run it against these fixtures and never
 // against the live API. The behaviour mirrors functions/src/app.js closely enough for the
 // front end (auth, range validation, route-request validation, settings merge, a planned route
-// through given points: tests/mock-plan.mjs), and the fixtures are re-read when their file
-// changes, so rebuilding them needs no server restart.
+// through given points: tests/mock-plan.mjs, the sessions that count for a workout:
+// tests/mock-links.mjs), and the fixtures are re-read when their file changes, so rebuilding
+// them needs no server restart.
 //
-// Each createMockApi() call has its own copy of the settings: PUT /api/settings changes it and
-// GET /api/state reflects it. Everything else is read-only (workout actions answer, they do not stick).
+// Each createMockApi() call has its own state, and the fixtures are never written. PUT
+// /api/settings changes its copy of the settings and GET /api/state reflects it. PUT
+// /api/workouts/:id/links and a status action (done, skip, undo) change which sessions count and
+// the workout statuses, and the week, the plan, the activities and the health rows reflect that.
+// Everything else is read-only (a workout moved to tomorrow is answered, it does not move).
 import { readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { addDays, mondayOf } from '../js/format.js';
 import { decodePolyline, encodePolyline } from '../js/polyline.js';
 import { planRoute } from './mock-plan.mjs';
+import { createLinkStore } from './mock-links.mjs';
 
 export const MOCK_TOKENS = { owner: 'test-token', stranger: 'stranger-token' };
 
@@ -29,7 +34,6 @@ const KM_RANGE = { run: [2, 60], trail: [2, 60], ride: [10, 200] };
 const KM_PER_DEG = 111.195;
 const DEFAULT_ROUTE_DELAY_MS = 600; // long enough that loading states are visible
 const DEFAULT_PLAN_DELAY_MS = 300;  // a re-plan after a drag: long enough to see the old line fade
-const ACTION_STATUS = { done: 'done', skip: 'skipped', move_tomorrow: 'moved', undo_status: 'planned' };
 const SETTINGS_KEYS = ['raceDate', 'raceName', 'fiveKSeconds', 'hasWatch', 'morningHour', 'eveningHour', 'home', 'dashboard'];
 const NOTIFY_KEYS = ['morning', 'evening', 'activity', 'weekly'];
 
@@ -165,15 +169,33 @@ function findWorkout(id, week, plan) {
   return week.week.workouts.find((w) => w.id === id) || plan.weeks.flatMap((w) => w.workouts).find((w) => w.id === id) || null;
 }
 
+/** The Health Connect sessions in a list of daily health rows, each with its row's date. */
+const sessionsOf = (rows) => rows.flatMap((row) => ((row && row.exercise) || []).map((e) => ({ ...e, date: row.date })));
+
 export function createMockApi({ fixturesDir, routeDelayMs = DEFAULT_ROUTE_DELAY_MS, planDelayMs = DEFAULT_PLAN_DELAY_MS, settings: overrides = {} }) {
   const fx = fixtureReader(fixturesDir);
   let settings = structuredClone({ home: null, ...fx('state.json').settings, ...overrides });
+  const links = createLinkStore({
+    activities: () => fx('history.json'),
+    // The year of health rows, and the fixture week's own: one of its days lies after "today", where the year ends.
+    sessions: () => {
+      const all = [...sessionsOf(fx('health-year.json')), ...sessionsOf(fx('week-2026-10-12.json').days.map((d) => d.health))];
+      return [...new Map(all.map((s) => [s.id, s])).values()];
+    },
+    findWorkout: (id) => findWorkout(id, fx('week-2026-10-12.json'), fx('plan.json')),
+    fail,
+  });
+
+  // Fixture rows as the API shows them now: with the links and the statuses this mock has been given.
+  const healthRow = (row) => (row ? { ...row, exercise: (row.exercise || []).map(links.session) } : row);
+  const planWeekNow = (w) => (w ? { ...w, workouts: w.workouts.map(links.workout) } : w);
+  const dayNow = (d) => ({ ...d, workouts: d.workouts.map(links.workout), activities: d.activities.map(links.activity), health: healthRow(d.health) });
 
   const weekView = (date) => {
     const week = fx('week-2026-10-12.json');
     const plan = fx('plan.json');
     const today = fx('state.json').today;
-    if (!date || (date >= week.days[0].date && date <= week.days[6].date)) return week;
+    if (!date || (date >= week.days[0].date && date <= week.days[6].date)) return { week: planWeekNow(week.week), days: week.days.map(dayNow) };
     const monday = mondayOf(date);
     const planWeek = plan.weeks.find((w) => w.startDate === monday) || null;
     const history = fx('history.json');
@@ -186,16 +208,17 @@ export function createMockApi({ fixturesDir, routeDelayMs = DEFAULT_ROUTE_DELAY_
         checkin: null, health: d <= today ? health.find((h) => h.date === d) || null : null,
       };
     });
-    return { week: planWeek, days };
+    return { week: planWeekNow(planWeek), days: days.map(dayNow) };
   };
 
   const activityDetail = (id) => {
-    const row = fx('history.json').find((a) => String(a.id) === id) || fail(404, 'no such activity');
+    const stored = fx('history.json').find((a) => String(a.id) === id) || fail(404, 'no such activity');
+    const row = links.activity(stored);
     const week = fx('week-2026-10-12.json');
     const plan = fx('plan.json');
     const isRun = row.sportType === 'Run';
     const activity = { ...row, splits: row.splits ?? (isRun ? makeSplits(row) : null), stravaUrl: `https://www.strava.com/activities/${row.id}` };
-    return { activity, workout: row.workoutId ? findWorkout(row.workoutId, week, plan) : null, paces: plan.paces };
+    return { activity, workout: row.workoutId ? links.workout(findWorkout(row.workoutId, week, plan)) : null, paces: plan.paces };
   };
 
   // The one fixture stream is a 10 km run; stretch it to this activity's distance and time so the chart's axes agree with the page.
@@ -206,12 +229,6 @@ export function createMockApi({ fixturesDir, routeDelayMs = DEFAULT_ROUTE_DELAY_
     const kmScale = row.distanceKm / s.distanceKm.at(-1);
     const timeScale = (row.movingMin * 60) / s.timeS.at(-1);
     return { ...s, distanceKm: s.distanceKm.map((v) => round(v * kmScale, 3)), timeS: s.timeS.map((v) => Math.round(v * timeScale)) };
-  };
-
-  const workoutAction = (id, body) => {
-    const workout = findWorkout(id, fx('week-2026-10-12.json'), fx('plan.json')) || fail(404, 'Workout not found');
-    const status = ACTION_STATUS[body?.action] || fail(400, 'Unknown action');
-    return { workout: { ...workout, status } };
   };
 
   const updateSettings = (body) => {
@@ -239,7 +256,10 @@ export function createMockApi({ fixturesDir, routeDelayMs = DEFAULT_ROUTE_DELAY_
   // [method, path pattern, handler({ q, body, params })]; first match wins, the catch-all POST is last.
   const routes = [
     ['GET', /^\/api\/state$/, () => ({ ...fx('state.json'), settings: structuredClone(settings) })],
-    ['GET', /^\/api\/plan$/, () => fx('plan.json')],
+    ['GET', /^\/api\/plan$/, () => {
+      const plan = fx('plan.json');
+      return { ...plan, weeks: plan.weeks.map(planWeekNow) };
+    }],
     ['GET', /^\/api\/week$/, ({ q }) => {
       const date = q.get('date');
       if (date && !DATE.test(date)) fail(400, 'date must be YYYY-MM-DD');
@@ -250,18 +270,19 @@ export function createMockApi({ fixturesDir, routeDelayMs = DEFAULT_ROUTE_DELAY_
       if (withParam && withParam !== 'polyline') fail(400, 'with must be polyline');
       const [from, to] = dateRange(q, fx('state.json').today);
       return fx('history.json').filter((a) => a.date >= from && a.date <= to)
-        .sort((a, b) => a.startUtc.localeCompare(b.startUtc)).map((a) => listRow(a, withParam === 'polyline'));
+        .sort((a, b) => a.startUtc.localeCompare(b.startUtc)).map((a) => listRow(links.activity(a), withParam === 'polyline'));
     }],
     ['GET', /^\/api\/activities\/([^/]+)\/streams$/, ({ params }) => activityStreams(params[0])],
     ['GET', /^\/api\/activities\/([^/]+)$/, ({ params }) => activityDetail(params[0])],
     ['GET', /^\/api\/health$/, ({ q }) => {
       const [from, to] = dateRange(q, fx('state.json').today);
-      return fx('health-year.json').filter((r) => r.date >= from && r.date <= to);
+      return fx('health-year.json').filter((r) => r.date >= from && r.date <= to).map(healthRow);
     }],
     ['GET', /^\/api\/reviews$/, () => fx('reviews.json')],
     ['GET', /^\/api\/proposals$/, () => fx('proposals.json')],
     ['GET', /^\/api\/changesets$/, () => fx('changesets.json')],
-    ['POST', /^\/api\/workouts\/([^/]+)\/action$/, ({ params, body }) => workoutAction(decodeURIComponent(params[0]), body)],
+    ['POST', /^\/api\/workouts\/([^/]+)\/action$/, ({ params, body }) => links.act(decodeURIComponent(params[0]), body?.action)],
+    ['PUT', /^\/api\/workouts\/([^/]+)\/links$/, ({ params, body }) => links.save(decodeURIComponent(params[0]), body)],
     ['POST', /^\/api\/checkin$/, () => ({ ok: true })],
     ['POST', /^\/api\/routes\/generate$/, ({ body }) => generateRoutes(body)],
     ['POST', /^\/api\/routes\/plan$/, async ({ body }) => {

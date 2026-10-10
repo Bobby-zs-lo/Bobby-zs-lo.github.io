@@ -305,9 +305,11 @@ try {
     const { ctx, page, errors, log } = await newPage();
     await go(page, 'week');
     assert.equal(await page.$$eval('.day', e => e.length), 7);
-    assert.match(await page.textContent('.kmbar'), /5\.2\s*\/\s*12 km/);
+    assert.match(await page.textContent('.kmbar'), /6\.4\s*\/\s*12 km/); // Tuesday's 5.21 km run and its 1.2 km warm-up
     await page.click('[data-go="7"]');
     await page.waitForFunction(() => location.hash.includes('2026-10-19'));
+    // The hash changes before the view does, so the old week's days can still be there: wait for the new heading.
+    await page.waitForFunction(() => /19–25 Oct/.test((document.querySelector('#view h1') || {}).textContent || ''));
     await page.waitForSelector('.day');
     assert.match(await page.textContent('h1'), /19–25 Oct/);
 
@@ -689,6 +691,60 @@ try {
     await page.evaluate(() => { location.hash = '#/nowhere'; });
     await page.waitForFunction(() => location.hash === '#/today');
     await page.waitForSelector('.workout-title');
+    assert.deepEqual(errors, []);
+    await ctx.close();
+  });
+
+  await step('phone (390 px): choose which recorded session counts for a workout; the status and Today follow', async () => {
+    const { ctx, page, log, errors } = await newPage();
+    const RUN = 'w-2026-10-13-run', MORNING = '15800000002', WARM_UP = '15800000004';
+    const box = id => `input[name=session][value="activity:${id}"]`;
+    const counted = () => page.$$eval('.actual-rows .activity-name', els => els.map(e => e.textContent.trim()));
+    const fits = async what => {
+      const o = await overflow(page);
+      assert.ok(o.scrollW <= o.W && o.bad.length === 0, `${what} overflows: ${JSON.stringify(o)}`);
+    };
+    await go(page, `workout/${RUN}`);
+    assert.deepEqual(await counted(), ['Morning Run'], 'the fixture matched the session, not the warm-up before it');
+    assert.match(await page.textContent('.kv .chip'), /Done/);
+
+    // Change: every session of the day, the matched one ticked, the Health Connect copy of it not tickable.
+    await page.click('[data-link-open]');
+    await page.waitForSelector('[data-link-form]:not([hidden])');
+    assert.equal(await page.locator('input[name=session]').count(), 4);
+    assert.deepEqual([await page.isChecked(box(MORNING)), await page.isChecked(box(WARM_UP))], [true, false]);
+    assert.match(await page.textContent('.link-opt:has(input:disabled)'), /Health Connect[\s\S]*Same as the Strava activity/);
+    assert.equal(await page.evaluate(() => document.activeElement.name), 'session', 'focus moved into the editor');
+    await page.locator('[data-actual]').scrollIntoViewIfNeeded();
+    await fits('the link editor');
+    await page.screenshot({ path: join(SHOTS, 'phone-links-editor.png') });
+
+    await page.uncheck(box(MORNING));
+    await page.check(box(WARM_UP));
+    await page.click('[data-link-form] button[type=submit]');
+    await page.waitForSelector('.toast--ok');
+    assert.match(await page.textContent('.toast--ok'), /Sessions updated/);
+    const put = log.find(l => l.method === 'PUT');
+    assert.equal(put.path, `/api/workouts/${RUN}/links`);
+    assert.deepEqual(put.body, { activityIds: [WARM_UP], healthIds: [] });
+    // The page redraws in place: the warm-up is what was done, 1.2 km of 5 is Partial, focus is back on Change.
+    await page.waitForFunction(() => document.activeElement.matches('[data-link-open]') && document.querySelector('[data-link-form]').hidden);
+    assert.deepEqual(await counted(), ['Warm-up jog']);
+    assert.match(await page.textContent('[data-actual] .help'), /3\.8 km short of the plan\./);
+    assert.match(await page.textContent('.kv .chip'), /Partial/);
+    await fits('the session page');
+    await page.screenshot({ path: join(SHOTS, 'phone-links-saved.png') });
+
+    // Today shows the same: the warm-up on the card with a way to change it, the run under "Also today".
+    await page.goto(`${APP}#/today`);
+    await page.waitForSelector('.workout-title');
+    const card = page.locator('.workout', { hasText: 'Easy run' });
+    assert.match(await card.locator('.chip').textContent(), /Partial/);
+    assert.deepEqual(await card.locator('.matched .activity-name').allTextContents(), ['Warm-up jog']);
+    assert.equal(await card.locator('.matched-head a').getAttribute('href'), `#/workout/${RUN}?link=1`);
+    assert.match(await page.locator('.card', { hasText: 'Also today' }).textContent(), /Morning Run[\s\S]*Commute to Rigshospitalet/);
+    await fits('Today');
+    await page.screenshot({ path: join(SHOTS, 'phone-links-today.png') });
     assert.deepEqual(errors, []);
     await ctx.close();
   });

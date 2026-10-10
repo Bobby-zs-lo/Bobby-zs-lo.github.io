@@ -4,9 +4,13 @@ import { getState, getPaces } from '../store.js';
 import { loading, errorState, statusChip } from '../ui.js';
 import { navigate } from '../router.js';
 import { addDays, formatWeekRange, formatDate, dayShort, parseDate, runKm, PHASE_NAMES, workoutAmount, paceRange } from '../format.js';
-import { activityRow, kmBar } from './common.js';
+import { activityRow, healthRow, kmBar } from './common.js';
+import { healthSessions } from '../links.js';
 import { ICONS } from '../icons.js';
 
+// Strava activities are all listed; of Health Connect only the sessions chosen to count for a
+// workout, as on Today. The rest (walks, copies of Strava activities) belong to the Health view.
+const countedHealth = d => healthSessions(d).filter(s => s.workoutId && !s.duplicateOfStrava);
 
 function checkinLine(c) {
   if (!c) return '';
@@ -69,6 +73,7 @@ export async function render(el, ctx) {
                 ${w.sport === 'rest' ? '' : statusChip(w.status)}
               </li>`)}</ul>` : html`<p class="muted">Rest</p>`}
             ${as.map(activityRow)}
+            ${countedHealth(d).map(healthRow)}
             ${checkinLine(d.checkin)}
           </div>
         </li>`;

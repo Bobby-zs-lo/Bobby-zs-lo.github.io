@@ -6048,6 +6048,30 @@
   ]
  },
  {
+  "id": 15800000004,
+  "date": "2026-10-13",
+  "startUtc": "2026-10-13T05:49:00Z",
+  "sportType": "Run",
+  "name": "Warm-up jog",
+  "distanceKm": 1.2,
+  "movingMin": 8.1,
+  "elapsedMin": 8.5,
+  "avgPaceSecPerKm": 405,
+  "avgHr": 124,
+  "maxHr": 142,
+  "elevM": 4,
+  "workoutId": null,
+  "avgCadence": 85.6,
+  "avgWatts": null,
+  "sufferScore": null,
+  "commute": false,
+  "polyline": "}z|rIydvkAQpHrBpEdDoBfDYhDwAF_I?aIcD{AeDcCeDV]`HsAdG",
+  "startLatLng": [
+   55.69471,
+   12.57053
+  ]
+ },
+ {
   "id": 15800000002,
   "date": "2026-10-13",
   "startUtc": "2026-10-13T05:58:00Z",

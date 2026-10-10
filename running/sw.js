@@ -24,10 +24,10 @@ const SHELL = [
   './', './index.html', './manifest.webmanifest', './css/running.css',
   './js/config.js', './js/app.js', './js/api.js', './js/auth.js', './js/router.js', './js/format.js',
   './js/markdown.js', './js/push.js', './js/store.js', './js/dom.js', './js/ui.js',
-  './js/icons.js', './js/sparkline.js', './js/changes.js',
+  './js/icons.js', './js/sparkline.js', './js/changes.js', './js/links.js',
   './js/views/common.js', './js/views/login.js', './js/views/today.js', './js/views/week.js',
   './js/views/plan.js', './js/views/health.js', './js/views/reviews.js', './js/views/settings.js',
-  './js/views/workout.js', './js/views/activity.js',
+  './js/views/workout.js', './js/views/workout-links.js', './js/views/activity.js',
   // Desk layout (≥ 1100 px). Map tiles, Leaflet (cdnjs) and route requests are cross-origin
   // and never reach the cache: the fetch handler returns early for other origins.
   './css/desk.css', './css/overview.css', './css/overview-edit.css', './css/map.css', './css/routes.css', './js/layout.js', './js/polyline.js', './js/geo.js',

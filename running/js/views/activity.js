@@ -3,6 +3,7 @@
 // pace, heart-rate and elevation streams.
 import { html, raw, mount } from '../dom.js';
 import { api } from '../api.js';
+import { getPlan } from '../store.js';
 import { loading, errorState, busy } from '../ui.js';
 import { formatDate, formatDistance, formatDuration, formatPace, formatNumber, parsePace, paceRange, PACE_NAMES, sportFamily } from '../format.js';
 import { decodePolyline } from '../polyline.js';
@@ -245,17 +246,28 @@ function watchWidth(host, state) {
   state.observer.observe(host);
 }
 
+/** Where the choice of what counts for a session is made: the editor on its page. */
+const linkHref = workoutId => `#/workout/${encodeURIComponent(workoutId)}?link=1`;
+
+/** The planned sessions of a date, rest days aside: what an unmatched activity could count for. */
+function sessionsOn(plan, date) {
+  return ((plan && plan.weeks) || []).flatMap(wk => wk.workouts || []).filter(x => x.date === date && x.sport !== 'rest');
+}
+
 export async function render(el, ctx) {
   const id = (ctx.rest && ctx.rest[0]) || '';
   if (!id) { mount(el, html`<p class="state">No activity chosen.</p>`); return; }
   loading(el, 'Loading activity');
 
-  let data;
-  try { data = await api.get(`/api/activities/${encodeURIComponent(id)}`); }
-  catch (e) { if (ctx.isCurrent()) errorState(el, e, () => render(el, ctx)); return; }
+  let data, plan;
+  try {
+    // The plan only feeds the offer to link an unmatched activity; the page stands without it.
+    [data, plan] = await Promise.all([api.get(`/api/activities/${encodeURIComponent(id)}`), getPlan().catch(() => null)]);
+  } catch (e) { if (ctx.isCurrent()) errorState(el, e, () => render(el, ctx)); return; }
   if (!ctx.isCurrent()) return;
 
   const { activity: a, workout: w, paces } = data;
+  const linkable = w ? [] : sessionsOn(plan, a.date);
   const range = w ? paceRange(paces, w.paceKey) : null;
   const lo = range && paces[w.paceKey] ? parsePace(paces[w.paceKey].min) : null;
   const hi = range && paces[w.paceKey] ? parsePace(paces[w.paceKey].max) : null;
@@ -286,12 +298,16 @@ export async function render(el, ctx) {
       ${hasRoute ? mapCard() : ''}
 
       ${w ? html`<section class="card act-match">
-        <h2 class="section-title">Matched to a session</h2>
+        <div class="section-head">
+          <h2 class="section-title">Matched to a session</h2>
+          <a class="link" href="${linkHref(w.id)}" aria-label="Change which sessions count for ${w.title}">Change</a>
+        </div>
         <p><a class="link" href="#/workout/${encodeURIComponent(w.id)}">${w.title} →</a></p>
         ${range ? html`<p class="help">Target pace ${range} · ${PACE_NAMES[w.paceKey] || ''}${
           onTarget != null && splits.length ? ` · ${onTarget} of ${splits.length} kilometres inside the window` : ''}</p>` : ''}
       </section>` : html`<section class="card banner banner--quiet act-match">
         <p>Not matched to a planned session. It still counts as load the weekly review can take into account.</p>
+        ${linkable.map(x => html`<p><a class="link" href="${linkHref(x.id)}">Link it to ${x.title} →</a></p>`)}
       </section>`}
 
       ${splits.length ? html`<section class="act-splits" aria-labelledby="sp-h">

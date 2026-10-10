@@ -25,7 +25,7 @@ const call = (api, method, path, { search = '', body = null, authz = OWNER } = {
 
 // ── fixtures ────────────────────────────────────────────────────────────────
 
-test('history: a year of unique, time-ordered activities that keep the three original rows', () => {
+test('history: a year of unique, time-ordered activities that keep the hand-written rows', () => {
   const history = fixture('history.json');
   assert.ok(history.length > 200);
   assert.equal(new Set(history.map((a) => a.id)).size, history.length);
@@ -269,4 +269,127 @@ test('mock: a saved dashboard layout persists and is validated like the backend'
   assert.deepEqual((await call(api, 'GET', '/api/state')).json.settings.dashboard, layout);
   await call(api, 'PUT', '/api/settings', { body: { dashboard: null } });
   assert.equal((await call(api, 'GET', '/api/state')).json.settings.dashboard, null);
+});
+
+// ── which recorded sessions count for a workout (PUT /api/workouts/:id/links) ──
+
+const RUN = 'w-2026-10-13-run', CORE = 'w-2026-10-13-strength', LONG_RUN = 'w-2026-10-17-run';
+const MORNING = '15800000002', WARM_UP = '15800000004', COMMUTE = '15800000003', MONDAY_RIDE = '15800000001';
+const TUESDAY = '2026-10-13', SATURDAY = '2026-10-17';
+const UNTOUCHED = { [WARM_UP]: [null, null], [MORNING]: [RUN, null], [COMMUTE]: [null, null] };
+const dayOf = async (api, date) => (await call(api, 'GET', '/api/week', { search: `?date=${date}` })).json.days.find((d) => d.date === date);
+const putLinks = (api, id, activityIds, healthIds = []) => call(api, 'PUT', `/api/workouts/${id}/links`, { body: { activityIds, healthIds } });
+const linksOf = (day) => Object.fromEntries(day.activities.map((a) => [a.id, [a.workoutId, a.linkSource]]));
+const statusOf = (day, id) => day.workouts.find((w) => w.id === id).status;
+const facts = (workout) => [workout.status, workout.statusSource, workout.linksBy];
+
+test('fixtures: two runs and a Strava copy on Tuesday, Health Connect alone on Saturday, an id on every session', async () => {
+  const api = newApi();
+  const tue = await dayOf(api, TUESDAY);
+  assert.deepEqual(linksOf(tue), UNTOUCHED);
+  assert.deepEqual(tue.activities.map((a) => String(a.id)), [WARM_UP, MORNING, COMMUTE], 'by start time: the warm-up first');
+  assert.deepEqual(tue.health.exercise.map((e) => [e.type, e.duplicateOfStrava, e.workoutId]), [['running', true, RUN]], 'the copy keeps a stale link');
+  const sat = await dayOf(api, SATURDAY);
+  assert.deepEqual(sat.activities, []);
+  assert.deepEqual(sat.health.exercise.map((e) => [e.type, e.distanceKm, e.duplicateOfStrava, e.workoutId]), [['RUNNING', 7.2, false, null]]);
+  assert.equal(statusOf(sat, LONG_RUN), 'planned');
+  const year = (await call(api, 'GET', '/api/health', { search: '?from=2025-10-13&to=2026-10-13' })).json;
+  const sessions = [...year.flatMap((row) => row.exercise), ...sat.health.exercise];
+  assert.ok(sessions.length > 50 && sessions.every((e) => /^[0-9a-f]{64}$/.test(e.id) && 'workoutId' in e));
+  assert.equal(new Set(sessions.map((e) => e.id)).size, sessions.length);
+  assert.deepEqual(sessions.filter((e) => e.workoutId).map((e) => e.id), [tue.health.exercise[0].id], 'no other session is linked');
+  assert.deepEqual(year.at(-1).exercise, tue.health.exercise, 'one session, one id and one link, in the week and in the health range');
+});
+
+test('links: a Health Connect copy that was linked before Strava had the session counts for nothing and cannot be sent', async () => {
+  const api = newApi();
+  const [copy] = (await dayOf(api, TUESDAY)).health.exercise;
+  const refused = await putLinks(api, RUN, [MORNING], [copy.id]);
+  assert.deepEqual([refused.status, refused.json], [400, { error: `Health Connect session ${copy.id} is the same as a Strava activity of that day` }]);
+  assert.equal((await dayOf(api, TUESDAY)).health.exercise[0].workoutId, RUN, 'refused: still as it was');
+  // With the Strava run unlinked only the copy is left, and a copy is nothing: planned. The save drops its link too.
+  assert.deepEqual(facts((await putLinks(api, RUN, [])).json.workout), ['planned', null, 'user']);
+  assert.equal((await dayOf(api, TUESDAY)).health.exercise[0].workoutId, null);
+});
+
+test('links: swapping the matched run for the warm-up moves the link, locks both and leaves the session partial', async () => {
+  const api = newApi();
+  const put = await putLinks(api, RUN, [WARM_UP]);
+  assert.deepEqual([put.status, put.json.ok, put.json.workout.id], [200, true, RUN]);
+  assert.deepEqual(facts(put.json.workout), ['partial', 'strava', 'user'], '1.2 km is under 80 % of 5 km');
+  const tue = await dayOf(api, TUESDAY);
+  assert.deepEqual(linksOf(tue), { [WARM_UP]: [RUN, 'user'], [MORNING]: [null, 'user'], [COMMUTE]: [null, null] });
+  assert.equal(statusOf(tue, RUN), 'partial');
+  // every other read agrees
+  assert.equal((await call(api, 'GET', `/api/activities/${MORNING}`)).json.workout, null);
+  const warmUp = (await call(api, 'GET', `/api/activities/${WARM_UP}`)).json;
+  assert.deepEqual([warmUp.workout.id, warmUp.workout.status, warmUp.activity.workoutId, warmUp.activity.linkSource], [RUN, 'partial', RUN, 'user']);
+  const plan = (await call(api, 'GET', '/api/plan')).json;
+  assert.equal(plan.weeks.flatMap((w) => w.workouts).find((w) => w.id === RUN).status, 'partial');
+  const listed = (await call(api, 'GET', '/api/activities', { search: `?from=${TUESDAY}&to=${TUESDAY}` })).json;
+  assert.deepEqual(listed.map((a) => [String(a.id), a.workoutId]), [[WARM_UP, RUN], [MORNING, null], [COMMUTE, null]]);
+  assert.equal(statusOf(await dayOf(newApi(), TUESDAY), RUN), 'done', 'a new mock starts from the fixture');
+});
+
+test('links: several sessions count together; none puts a status that came from links back to planned', async () => {
+  const api = newApi();
+  assert.deepEqual(facts((await putLinks(api, RUN, [MORNING, WARM_UP])).json.workout), ['done', 'strava', 'user']);
+  assert.equal((await putLinks(api, RUN, [WARM_UP, COMMUTE])).json.workout.status, 'done', '1.2 + 6.1 km: the sum decides');
+  assert.deepEqual(facts((await putLinks(api, RUN, [])).json.workout), ['planned', null, 'user']);
+  assert.deepEqual(linksOf(await dayOf(api, TUESDAY)), { [WARM_UP]: [null, 'user'], [MORNING]: [null, 'user'], [COMMUTE]: [null, 'user'] });
+});
+
+test('links: a Health Connect session alone can count', async () => {
+  const api = newApi();
+  const [run] = (await dayOf(api, SATURDAY)).health.exercise;
+  const put = await putLinks(api, LONG_RUN, [], [run.id]);
+  assert.deepEqual([put.status, ...facts(put.json.workout)], [200, 'done', 'health', 'user']);
+  const sat = await dayOf(api, SATURDAY);
+  assert.deepEqual([sat.health.exercise[0].workoutId, statusOf(sat, LONG_RUN)], [LONG_RUN, 'done']);
+  assert.equal((await putLinks(api, LONG_RUN, [], [])).json.workout.status, 'planned');
+  assert.equal((await dayOf(api, SATURDAY)).health.exercise[0].workoutId, null);
+});
+
+test('links: ticking a session that counts elsewhere moves it, and the workout that lost it follows', async () => {
+  const api = newApi();
+  assert.equal((await putLinks(api, CORE, [MORNING])).json.workout.status, 'done', '31.6 min against 20 planned');
+  const tue = await dayOf(api, TUESDAY);
+  assert.deepEqual(linksOf(tue)[MORNING], [CORE, 'user']);
+  assert.equal(statusOf(tue, RUN), 'planned', 'the run lost its only session');
+});
+
+test('links: a status set by hand wins over the links, until it is undone', async () => {
+  const api = newApi();
+  const act = (id, action) => call(api, 'POST', `/api/workouts/${id}/action`, { body: { action } });
+  assert.equal((await act(CORE, 'skip')).json.workout.status, 'skipped');
+  assert.equal(statusOf(await dayOf(api, TUESDAY), CORE), 'skipped', 'a status action sticks, per mock');
+  assert.equal((await putLinks(api, CORE, [COMMUTE])).json.workout.status, 'skipped');
+  await act(RUN, 'done');
+  assert.equal((await putLinks(api, RUN, [])).json.workout.status, 'done', 'done by hand stays done with nothing linked');
+  assert.equal((await act(CORE, 'undo_status')).json.workout.status, 'planned');
+  assert.equal((await putLinks(api, CORE, [COMMUTE])).json.workout.status, 'done', '19 min is 80 % of 20 and more');
+  assert.equal((await act(CORE, 'move_tomorrow')).json.workout.status, 'moved');
+  assert.equal(statusOf(await dayOf(api, TUESDAY), CORE), 'done', 'a move only answers');
+});
+
+test('links: validated like the backend, in its words, and a refused request changes nothing', async () => {
+  const api = newApi();
+  const [saturdayRun] = (await dayOf(api, SATURDAY)).health.exercise;
+  const put = async (id, body) => { const r = await call(api, 'PUT', `/api/workouts/${id}/links`, { body }); return [r.status, r.json.error]; };
+  const badList = (key) => [400, `${key} must be a list of at most 10 different ids, each a string`];
+  assert.deepEqual(await put('w-nope', { activityIds: [], healthIds: [] }), [404, 'Workout not found']);
+  assert.deepEqual(await put(RUN, null), [400, 'Body must be { activityIds, healthIds }']);
+  assert.deepEqual(await put(RUN, { activityIds: [WARM_UP] }), badList('healthIds'), 'both lists are required');
+  assert.deepEqual(await put(RUN, { activityIds: [Number(WARM_UP)], healthIds: [] }), badList('activityIds'), 'ids are strings');
+  assert.deepEqual(await put(RUN, { activityIds: [WARM_UP, WARM_UP], healthIds: [] }), badList('activityIds'), 'each id once');
+  assert.deepEqual(await put(RUN, { activityIds: [], healthIds: Array.from({ length: 11 }, (_, i) => `h${i}`) }), badList('healthIds'), 'at most 10');
+  assert.deepEqual(await put('w-nope', { activityIds: 'all', healthIds: [] }), badList('activityIds'), 'the body is read before the workout');
+  assert.deepEqual(await put(RUN, { activityIds: ['1'], healthIds: [] }), [400, 'No Strava activity 1 on 2026-10-13']);
+  assert.deepEqual(await put(RUN, { activityIds: [WARM_UP, MONDAY_RIDE], healthIds: [] }), [400, `No Strava activity ${MONDAY_RIDE} on 2026-10-13`], 'another day’s');
+  const unknown = 'f'.repeat(64);
+  assert.deepEqual(await put(RUN, { activityIds: [], healthIds: [unknown] }), [400, `No Health Connect exercise session ${unknown} on 2026-10-13`]);
+  assert.deepEqual(await put(RUN, { activityIds: [], healthIds: [saturdayRun.id] }), [400, `No Health Connect exercise session ${saturdayRun.id} on 2026-10-13`], 'another day’s');
+  const tue = await dayOf(api, TUESDAY);
+  assert.deepEqual(linksOf(tue), UNTOUCHED);
+  assert.equal(statusOf(tue, RUN), 'done');
 });

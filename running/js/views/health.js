@@ -2,7 +2,7 @@ import { html, raw, mount } from '../dom.js';
 import { api } from '../api.js';
 import { getState } from '../store.js';
 import { loading, errorState } from '../ui.js';
-import { addDays, formatDate, formatTimestamp, formatNumber, formatDuration, formatDistance } from '../format.js';
+import { addDays, formatDate, formatTimestamp, formatNumber, formatDuration, formatDistance, exerciseName, exerciseFamily } from '../format.js';
 import { sparklineSvg, buildSparkPath } from '../sparkline.js';
 
 const METRICS = [
@@ -27,9 +27,6 @@ const LOG_COLUMNS = [
   { key: 'activeKcal', label: 'kcal', digits: 0 },
 ];
 
-const EXERCISE_NAMES = { running: 'Run', biking: 'Ride', cycling: 'Ride', walking: 'Walk', strength_training: 'Strength', weightlifting: 'Strength' };
-const exName = t => EXERCISE_NAMES[String(t || '').toLowerCase()] || String(t || 'Exercise').replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase());
-
 export async function render(el, ctx) {
   loading(el, 'Loading health data');
   let state, rows;
@@ -51,15 +48,8 @@ export async function render(el, ctx) {
     .sort((a, b) => String(b.startUtc).localeCompare(String(a.startUtc)));
 
   const logDates = dates.slice(-14).reverse();
-  const fam = t => {
-    const v = String(t || '').toLowerCase();
-    if (v.includes('bik') || v.includes('cycl')) return 'ride';
-    if (v.includes('run')) return 'run';
-    if (v.includes('walk') || v.includes('hik')) return 'walk';
-    return 'other';
-  };
   const mins = (f, days) => sessions
-    .filter(x => fam(x.type) === f && !x.duplicateOfStrava && days.includes(x.date))
+    .filter(x => exerciseFamily(x.type) === f && !x.duplicateOfStrava && days.includes(x.date))
     .reduce((t, x) => t + (x.durationMin || 0), 0);
   const last7 = dates.slice(-7), prev7 = dates.slice(-14, -7);
   const loadRows = [
@@ -134,7 +124,7 @@ export async function render(el, ctx) {
       <p class="help">From Health Connect. Sessions that Strava already has are greyed out and not counted twice.</p>
       ${sessions.length ? html`<ul class="plain card sessions">${sessions.map(s => html`<li class="session${s.duplicateOfStrava ? ' is-dup' : ''}">
           <span class="session-date">${formatDate(s.date)}</span>
-          <span class="session-main"><span>${exName(s.type)}</span>
+          <span class="session-main"><span>${exerciseName(s.type)}</span>
             <span class="num muted">${[formatDuration(s.durationMin), s.distanceKm != null ? formatDistance(s.distanceKm) : ''].filter(Boolean).join(' · ')}</span></span>
           ${s.duplicateOfStrava ? html`<span class="tag">On Strava</span>` : ''}
         </li>`)}</ul>` : html`<p class="muted">No exercise sessions in the last 28 days.</p>`}

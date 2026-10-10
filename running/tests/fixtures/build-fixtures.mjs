@@ -6,12 +6,23 @@
 // The original fixtures are unchanged; history.json, streams.json, routes-generate.json and
 // health-year.json are generated from one seeded random source (see synthetic.mjs), so
 // re-running this script reproduces every file byte for byte.
+//
+// For choosing which recorded sessions count for a workout (PUT /api/workouts/:id/links):
+//   Tue 2026-10-13  two runs on Strava, a warm-up that counts for nothing and the matched
+//                   "Morning Run", and a Health Connect copy of the latter. The copy still
+//                   carries a link to the run, as one linked before Strava delivered the same
+//                   session does on the backend: it must count for nothing and never be sent.
+//   Sat 2026-10-17  a Health Connect run and no Strava activity, for a link made of Health
+//                   Connect alone. It lies after "today": no earlier day has a planned run
+//                   without a Strava activity, and the invented plan is left as it was. Its
+//                   type is spelled as the backend spells them ('RUNNING'); the older
+//                   sessions keep the lower case they were written in.
 import { writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { addDays, diffDays, mondayOf } from '../../js/format.js';
 import { makeRandom } from './synthetic-geo.mjs';
-import { buildHistory, buildStreams, buildRoutesGenerate, buildHealthYear } from './synthetic.mjs';
+import { buildHistory, buildStreams, buildRoutesGenerate, buildHealthYear, withHealthId } from './synthetic.mjs';
 
 const DIR = dirname(fileURLToPath(import.meta.url));
 const TODAY = '2026-10-13';
@@ -147,32 +158,44 @@ const acts = [
   { id: 15800000002, date: '2026-10-13', startUtc: '2026-10-13T05:58:00Z', sportType: 'Run', name: 'Morning Run', distanceKm: 5.21, movingMin: 31.6, avgPaceSecPerKm: 364, avgHr: 142, commute: false, workoutId: tue.find(w => w.sport === 'run').id },
   { id: 15800000003, date: '2026-10-13', startUtc: '2026-10-13T07:40:00Z', sportType: 'Ride', name: 'Commute to Rigshospitalet', distanceKm: 6.1, movingMin: 19, avgPaceSecPerKm: null, avgHr: null, commute: true, workoutId: null },
 ];
+// A warm-up before Tuesday's run. Added after the three rows above and kept out of `acts`, so
+// what is generated from them (buildHistory and buildHealthYear below) does not change.
+const WARM_UP = { id: 15800000004, date: '2026-10-13', startUtc: '2026-10-13T05:49:00Z', sportType: 'Run', name: 'Warm-up jog', distanceKm: 1.2, movingMin: 8.1, avgPaceSecPerKm: 405, avgHr: 124, commute: false, workoutId: null };
+const WARM_UP_SEED = 20261010;
+const allActs = [...acts, WARM_UP];
+const HEALTH_ONLY_DATE = '2026-10-17';
+const HEALTH_ONLY_RUN = withHealthId({ type: 'RUNNING', startUtc: '2026-10-17T06:10:00Z', durationMin: 47, distanceKm: 7.2, duplicateOfStrava: false });
 const health = (date, i) => ({
   date, steps: 6000 + ((i * 1731) % 7000), distanceKm: null, activeKcal: 380 + (i * 37) % 300,
   restingHr: 56 - Math.round(i / 9) + ((i * 7) % 3), hrvRmssd: 44 + ((i * 13) % 11), avgHr: 72,
   sleepHours: i % 9 === 4 ? null : +(6.4 + ((i * 17) % 18) / 10).toFixed(1), sleepDeepH: 1.1, sleepRemH: 1.6,
   weightKg: i % 3 === 0 ? +(78.6 - i * 0.03).toFixed(1) : null, vo2max: null, spo2: 97, exercise: [],
 });
-const days = Array.from({ length: 7 }, (_, k) => {
-  const date = addDays(W1, k);
-  const past = date <= TODAY;
-  return {
-    date,
-    workouts: wk1.workouts.filter(w => w.date === date),
-    activities: acts.filter(a => a.date === date),
-    checkin: date === '2026-10-12' ? { date, sleepHours: 7.25, sleepQuality: 4, soreness: 2, mood: 4, energy: 4, note: 'Legs fine after the weekend.' } : null,
-    health: past ? health(date, 30 + k) : null,
-  };
-});
-const week = { week: wk1, days };
 
 // ── health: 28 days to TODAY ────────────────────────────────────────────────
 const healthRows = Array.from({ length: 28 }, (_, k) => health(addDays(TODAY, k - 27), k));
-healthRows[27].exercise = [{ type: 'running', startUtc: '2026-10-13T05:58:00Z', durationMin: 32, distanceKm: 5.1, duplicateOfStrava: true }];
+// `workoutId` on a session is a link that exists when the mock starts (tests/mock-links.mjs). This one is stale: see the top.
+healthRows[27].exercise = [{ type: 'running', startUtc: '2026-10-13T05:58:00Z', durationMin: 32, distanceKm: 5.1, duplicateOfStrava: true, workoutId: tue.find(w => w.sport === 'run').id }];
 healthRows[26].exercise = [{ type: 'biking', startUtc: '2026-10-12T16:04:00Z', durationMin: 47, distanceKm: 18.2, duplicateOfStrava: true }];
 healthRows[23].exercise = [{ type: 'walking', startUtc: '2026-10-09T11:30:00Z', durationMin: 41, distanceKm: 3.4, duplicateOfStrava: false }];
 healthRows[20].exercise = [{ type: 'strength_training', startUtc: '2026-10-06T17:00:00Z', durationMin: 25, distanceKm: null, duplicateOfStrava: false }];
+for (const row of healthRows) row.exercise = row.exercise.map(withHealthId);
 for (const k of [5, 6, 12]) healthRows[k].hrvRmssd = null;
+
+// The week's days carry the Health Connect sessions (same ids) of the health rows for those dates.
+const exerciseOn = date => (date === HEALTH_ONLY_DATE ? [HEALTH_ONLY_RUN] : (healthRows.find(r => r.date === date) || { exercise: [] }).exercise);
+const days = Array.from({ length: 7 }, (_, k) => {
+  const date = addDays(W1, k);
+  const recorded = date <= TODAY || date === HEALTH_ONLY_DATE;
+  return {
+    date,
+    workouts: wk1.workouts.filter(w => w.date === date),
+    activities: allActs.filter(a => a.date === date).sort((a, b) => a.startUtc.localeCompare(b.startUtc)),
+    checkin: date === '2026-10-12' ? { date, sleepHours: 7.25, sleepQuality: 4, soreness: 2, mood: 4, energy: 4, note: 'Legs fine after the weekend.' } : null,
+    health: recorded ? { ...health(date, 30 + k), exercise: exerciseOn(date) } : null,
+  };
+});
+const week = { week: wk1, days };
 
 const settings = { raceDate: RACE, raceName: 'Berlin Marathon', fiveKSeconds: 1410, hasWatch: false,
   notify: { morning: true, evening: true, activity: true, weekly: true }, morningHour: 7, eveningHour: 20 };
@@ -216,16 +239,17 @@ const state = {
 // ── synthetic: a year of history, one run's streams, route variants, a year of health ──
 const HISTORY_FROM = '2025-10-13';
 const rng = makeRandom(20261006);
-const history = buildHistory({ rng, existing: acts, from: HISTORY_FROM, planStart: START });
+const history = buildHistory({ rng, existing: acts, from: HISTORY_FROM, planStart: START, added: [WARM_UP], addedRng: makeRandom(WARM_UP_SEED) });
 const streams = buildStreams(rng);
 const routesGenerate = buildRoutesGenerate(rng);
 const healthYear = buildHealthYear({
-  rng, history, from: HISTORY_FROM, to: TODAY,
+  // Without the warm-up: its kilometres would move that day's step count, and it has no Health Connect copy.
+  rng, history: history.filter(a => a.id !== WARM_UP.id), from: HISTORY_FROM, to: TODAY,
   fixedExercise: new Map(healthRows.filter(r => r.exercise.length).map(r => [r.date, r.exercise])),
 });
 
 const out = { 'state.json': state, 'plan.json': plan, 'week-2026-10-12.json': week, 'health.json': healthRows,
-  'reviews.json': reviews, 'proposals.json': proposals, 'changesets.json': changesets, 'activities.json': acts,
+  'reviews.json': reviews, 'proposals.json': proposals, 'changesets.json': changesets, 'activities.json': allActs,
   'history.json': history, 'streams.json': streams, 'routes-generate.json': routesGenerate, 'health-year.json': healthYear };
 for (const [f, v] of Object.entries(out)) writeFileSync(join(DIR, f), JSON.stringify(v, null, 1) + '\n');
 console.log(`fixtures written (plan: ${weeks.length} weeks, N=${N}; history: ${history.length} activities, health-year: ${healthYear.length} days)`);

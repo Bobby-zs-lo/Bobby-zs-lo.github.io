@@ -31,6 +31,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "94507da079bdb7a02ef12cb15768a272c051c22ff931a09471b37165167abb91",
     "type": "running",
     "startUtc": "2025-10-14T16:16:00Z",
     "durationMin": 42,
@@ -71,6 +72,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "f64eb0060d0d0067672812d1c5ab592c928ce4eadf0e46c375418b6d38679e07",
     "type": "walking",
     "startUtc": "2025-10-16T11:29:00Z",
     "durationMin": 31,
@@ -95,6 +97,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "01b6f32ac658c5963c71bc5fe86df381c0bdd0ff8fe34cf796dbb53c241df5e6",
     "type": "running",
     "startUtc": "2025-10-17T10:16:00Z",
     "durationMin": 33,
@@ -119,6 +122,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "1167d10fa573d186088fe9490c79cf20cd59dc54f73012fb32c19e672b265f89",
     "type": "running",
     "startUtc": "2025-10-18T08:55:00Z",
     "durationMin": 79,
@@ -143,6 +147,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "bb2a0196e3b1287d70c20c7dd8ec8d832c110aeda5ad683a0984a96b6405499e",
     "type": "biking",
     "startUtc": "2025-10-19T10:02:00Z",
     "durationMin": 57,
@@ -167,6 +172,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "cc5471a0f2f8c1fa447450755e6e30c93762fa332c72fac4ce1a0b18ac197c90",
     "type": "walking",
     "startUtc": "2025-10-20T11:50:00Z",
     "durationMin": 26,
@@ -174,6 +180,7 @@
     "duplicateOfStrava": false
    },
    {
+    "id": "6e52c69830602b522af55dcafae7b215fd4d0c0a893067ceef53fa88f2df5433",
     "type": "biking",
     "startUtc": "2025-10-20T16:48:00Z",
     "durationMin": 63,
@@ -214,6 +221,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "e2581311dee211743d8ddb66373b4203cc1108edcc08c8170a60105cc7631105",
     "type": "strength_training",
     "startUtc": "2025-10-22T17:00:00Z",
     "durationMin": 25,
@@ -318,6 +326,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "2555f9605c9da979a9ef2c59c8a25df2bd4b1e20ccdc48ea9c9b5a54b322c725",
     "type": "running",
     "startUtc": "2025-10-28T16:42:00Z",
     "durationMin": 42,
@@ -342,6 +351,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "c3be811e9b69b4fbf24dc2b50f52d9d0e4a76ab2828d7ae870939543888c7952",
     "type": "running",
     "startUtc": "2025-10-29T10:25:00Z",
     "durationMin": 34,
@@ -382,6 +392,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "f12d114afdeb6cfd5eed200e9b473a924477e9694de9e302e49f7c70d919fc66",
     "type": "running",
     "startUtc": "2025-10-31T10:44:00Z",
     "durationMin": 38,
@@ -406,6 +417,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "a59d5d651f8b03bf257f3b6c2589f5f8a897d3ccbf767c67e5eb1ab51647f68c",
     "type": "running",
     "startUtc": "2025-11-01T08:18:00Z",
     "durationMin": 86,
@@ -430,6 +442,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "c4f6092077eeb0e82f7f9c1998d5b4414a903f266d1d9b190dd240b53e2cf8a2",
     "type": "strength_training",
     "startUtc": "2025-11-02T17:00:00Z",
     "durationMin": 25,
@@ -470,6 +483,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "2ed5653827e105a93da529b0b9b87759bb2cdecede447878fc2e32b084cb6571",
     "type": "walking",
     "startUtc": "2025-11-04T11:10:00Z",
     "durationMin": 22,
@@ -510,6 +524,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "ccf2c8a683f916198f2ae31f9fe215e65ddde85061964e717f922e57b21446dd",
     "type": "running",
     "startUtc": "2025-11-06T16:26:00Z",
     "durationMin": 44,
@@ -598,6 +613,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "3defbf4c01fa09f0a1ce9521720b3e575eaf27d53df143096b53fa19bc7f556b",
     "type": "running",
     "startUtc": "2025-11-11T06:08:00Z",
     "durationMin": 43,
@@ -622,6 +638,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "df008de98fee823da61fc40c898020b4853db9555ed82e60d0c4c2f7f240809d",
     "type": "biking",
     "startUtc": "2025-11-12T17:16:00Z",
     "durationMin": 57,
@@ -662,6 +679,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "37a305d1ca9efdf2e11c2467117e39dad18d09e12b0b23ddd39093b929444661",
     "type": "running",
     "startUtc": "2025-11-14T10:45:00Z",
     "durationMin": 38,
@@ -669,6 +687,7 @@
     "duplicateOfStrava": true
    },
    {
+    "id": "039e8f5c3f1c44dafc00c8a2dae0f565f9aa1ff49349137cdb1a4d073f29a8e2",
     "type": "strength_training",
     "startUtc": "2025-11-14T17:00:00Z",
     "durationMin": 25,
@@ -741,6 +760,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "6e3e4d0716c6f5db8d31b586d716c7625cd8c273407d629664f56d28cb6427ff",
     "type": "running",
     "startUtc": "2025-11-18T16:52:00Z",
     "durationMin": 42,
@@ -941,6 +961,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "2a27fce83740400ab750325ba26dd653f05cb6cb95588b1174d306895845d4f0",
     "type": "biking",
     "startUtc": "2025-11-30T09:29:00Z",
     "durationMin": 61,
@@ -1013,6 +1034,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "d422e77d71e2ad2f461786b9ab7c19cb063af5a4fb308b5826a96b8c39a475de",
     "type": "running",
     "startUtc": "2025-12-04T05:21:00Z",
     "durationMin": 46,
@@ -1053,6 +1075,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "ac15568177ee36600419c78f0371a9f798609de84f622f004f085af6dd93846b",
     "type": "running",
     "startUtc": "2025-12-06T09:06:00Z",
     "durationMin": 87,
@@ -1093,6 +1116,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "ea630367de75eec32626dfe372b6cc4f6ba725b985902939090cf652e0d3cc41",
     "type": "walking",
     "startUtc": "2025-12-08T11:16:00Z",
     "durationMin": 35,
@@ -1100,6 +1124,7 @@
     "duplicateOfStrava": false
    },
    {
+    "id": "3936a5b32ac4a5b7f17a3a6c94bf5973cc96a395f2554318a6c2b4941d61b141",
     "type": "biking",
     "startUtc": "2025-12-08T16:25:00Z",
     "durationMin": 84,
@@ -1140,6 +1165,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "bc0124d2839729ed541abbfb1d854969f0f5f6f3dd6d5c2b21e166ded38f4a9a",
     "type": "running",
     "startUtc": "2025-12-10T06:36:00Z",
     "durationMin": 31,
@@ -1196,6 +1222,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "e783359372c39cef90367af377ae0c8dcc5f1f27140c7ca588eb6d21a1572bba",
     "type": "biking",
     "startUtc": "2025-12-13T17:38:00Z",
     "durationMin": 101,
@@ -1220,6 +1247,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "aa9c694093613841d8ddfd133a0b7351969662e1d99fd508aaaad866a541cad1",
     "type": "running",
     "startUtc": "2025-12-14T08:08:00Z",
     "durationMin": 95,
@@ -1244,6 +1272,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "61b77204196a6f36b6e92f052b422c7b12e9488611a25fd8cd94d5bebb48d851",
     "type": "biking",
     "startUtc": "2025-12-15T17:17:00Z",
     "durationMin": 113,
@@ -1268,6 +1297,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "d62644d52f329187762c412183fb343361a1813ac8d1e8d9461eda181894faca",
     "type": "running",
     "startUtc": "2025-12-16T16:47:00Z",
     "durationMin": 46,
@@ -1324,6 +1354,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "32e22f31d11194d4e01711ad7a1101e82e1bd032fe2c1b7930ac61ef9d10c406",
     "type": "running",
     "startUtc": "2025-12-19T06:31:00Z",
     "durationMin": 36,
@@ -1348,6 +1379,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "19f412758e2fc9933708b55ece10ed096b01d1bdec70ccf1ba7e5e58e604e789",
     "type": "biking",
     "startUtc": "2025-12-20T16:43:00Z",
     "durationMin": 71,
@@ -1404,6 +1436,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "f98dfc32acd71d63448a6138c8d15c4b5a4731fc969b851f2d711eef5baad90d",
     "type": "running",
     "startUtc": "2025-12-23T17:05:00Z",
     "durationMin": 43,
@@ -1460,6 +1493,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "0bf741e1e3386fd5cc1d0630da71555bd20dcf806d05fe9b1589d39d073301a6",
     "type": "biking",
     "startUtc": "2025-12-26T17:31:00Z",
     "durationMin": 74,
@@ -1516,6 +1550,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "361d71dd599d5466b2d9caf597d671ae889fde58ff34e196b7aa7d788dcffc12",
     "type": "strength_training",
     "startUtc": "2025-12-29T17:00:00Z",
     "durationMin": 25,
@@ -1588,6 +1623,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "bd01589ff934b1a3627d29da09e3887cbd468805d3b1bd029c93523a82f51292",
     "type": "running",
     "startUtc": "2026-01-02T05:38:00Z",
     "durationMin": 43,
@@ -1644,6 +1680,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "aababd4afcbfab0f2f404e801f67ba70cf9adf857e1ee29e5567cf214d0c1cb9",
     "type": "walking",
     "startUtc": "2026-01-05T11:17:00Z",
     "durationMin": 24,
@@ -1651,6 +1688,7 @@
     "duplicateOfStrava": false
    },
    {
+    "id": "3738695f08bc928f09db6f3dd9632075e226d521589c3e9b92d8677f3e749430",
     "type": "biking",
     "startUtc": "2026-01-05T16:07:00Z",
     "durationMin": 55,
@@ -1691,6 +1729,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "9803c8a56673e92b410cf2f3b049df72e1019064a42e410c268dc1d05c3932e5",
     "type": "running",
     "startUtc": "2026-01-07T10:28:00Z",
     "durationMin": 42,
@@ -1763,6 +1802,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "44f1476e720cb3d5dc6c91c6b1e091e43c1260f78934651a140ca4e4bbc71fbe",
     "type": "biking",
     "startUtc": "2026-01-11T09:22:00Z",
     "durationMin": 61,
@@ -1803,6 +1843,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "911d0490a4c6caaf0a6bbf270ce772676c05e3e610edf9bd63ec363dde27fa17",
     "type": "running",
     "startUtc": "2026-01-13T05:59:00Z",
     "durationMin": 40,
@@ -1875,6 +1916,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "e376f893e988d582b00537b0ccd7abe12930062ee4d83d5cab8914f8cb94184d",
     "type": "running",
     "startUtc": "2026-01-17T07:25:00Z",
     "durationMin": 85,
@@ -1963,6 +2005,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "ddb8b51246562c3e89ae5025b7c9e3b117e9585ab0264f0af8de84a4a3fa8380",
     "type": "running",
     "startUtc": "2026-01-22T06:05:00Z",
     "durationMin": 46,
@@ -1987,6 +2030,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "22321024c2fb438c861d4b8712678deefb0dd7ce028ed1bc201027ac2d4745a2",
     "type": "running",
     "startUtc": "2026-01-23T10:39:00Z",
     "durationMin": 44,
@@ -2011,6 +2055,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "7119f439846edaa6a52a32d746274e233bbcafd1718c33d70aaecd7915c8b701",
     "type": "running",
     "startUtc": "2026-01-24T07:48:00Z",
     "durationMin": 97,
@@ -2035,6 +2080,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "dd59f3b8fe7092ccf2e5c5b77af7385abd934a928a45f9de25a68aad6627ae28",
     "type": "strength_training",
     "startUtc": "2026-01-25T17:00:00Z",
     "durationMin": 25,
@@ -2091,6 +2137,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "e29b4b83f83181f9181977d41192971d17fd7e425ba6a0424a9ec4e791afc582",
     "type": "running",
     "startUtc": "2026-01-28T11:09:00Z",
     "durationMin": 34,
@@ -2131,6 +2178,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "664490f8634b1f47bd0c47c91426e2b87852b81d6c1b657bcee37486b87c91e7",
     "type": "biking",
     "startUtc": "2026-01-30T15:59:00Z",
     "durationMin": 98,
@@ -2171,6 +2219,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "91c01a4a12bbcbcbdf6854976139f898a4f2adb10beb3e3c0578896ef031817f",
     "type": "biking",
     "startUtc": "2026-02-01T10:02:00Z",
     "durationMin": 132,
@@ -2178,6 +2227,7 @@
     "duplicateOfStrava": true
    },
    {
+    "id": "70f351d990721da42b7879ee6802fc1624ed3207ed26a858fbff11189e995434",
     "type": "walking",
     "startUtc": "2026-02-01T11:25:00Z",
     "durationMin": 40,
@@ -2234,6 +2284,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "a133c74dd307ad6ce705740ef68cf32fb7cfa5659735db40c666442830fc146d",
     "type": "walking",
     "startUtc": "2026-02-04T11:31:00Z",
     "durationMin": 30,
@@ -2274,6 +2325,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "0e1883bc29916ea91a750a3a490d02ea6c55df1000b4971c5a30cef209d27451",
     "type": "running",
     "startUtc": "2026-02-06T10:24:00Z",
     "durationMin": 48,
@@ -2314,6 +2366,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "1cb39b823dff4ae47a0c87b41f07d1d3eaf88d9271c9a0adb334012b8b3657c1",
     "type": "biking",
     "startUtc": "2026-02-08T08:31:00Z",
     "durationMin": 81,
@@ -2354,6 +2407,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "6dfef03ee83165772750c522b5fdef6babc74c7f86fbc1a91637f75900eb3843",
     "type": "running",
     "startUtc": "2026-02-10T05:57:00Z",
     "durationMin": 40,
@@ -2394,6 +2448,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "341fc769297d6541f7a6155d0c270565495313bebbe90ad869d6fadf56765f01",
     "type": "walking",
     "startUtc": "2026-02-12T11:11:00Z",
     "durationMin": 43,
@@ -2434,6 +2489,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "a9a59773c7d390fe4cde81d4bcd97c8e5b6cf59dc62188518a0663ca6be5b85f",
     "type": "running",
     "startUtc": "2026-02-14T08:30:00Z",
     "durationMin": 102,
@@ -2490,6 +2546,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "26e9634facd468b06b57785fe87c34c3139917e03b209dff21eaa4cfbd2f51e6",
     "type": "running",
     "startUtc": "2026-02-17T16:58:00Z",
     "durationMin": 50,
@@ -2514,6 +2571,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "7dc06bdf9ecb718ab7036e269583c1a73f382ff7d4e40384bb611dc5764e1a93",
     "type": "running",
     "startUtc": "2026-02-18T10:20:00Z",
     "durationMin": 32,
@@ -2570,6 +2628,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "6ba6ca002cfcb4a6696204d623d9711bbf24564f7a94d061a0125899b507e7e5",
     "type": "running",
     "startUtc": "2026-02-21T07:24:00Z",
     "durationMin": 94,
@@ -2577,6 +2636,7 @@
     "duplicateOfStrava": true
    },
    {
+    "id": "772714d0c4d54d018e7ab37fec2f0e62e394d7ab876afda594f2b174c817f637",
     "type": "strength_training",
     "startUtc": "2026-02-21T17:00:00Z",
     "durationMin": 25,
@@ -2633,6 +2693,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "87ca2f39d05b9bea04df93273d989143df34398eebcb86284bccb9c15948bfd3",
     "type": "running",
     "startUtc": "2026-02-24T05:23:00Z",
     "durationMin": 46,
@@ -2689,6 +2750,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "7e6a1cc406b0fd6b450f5ea7ab601fd935ca229fb0961eafea30dd55b309910a",
     "type": "running",
     "startUtc": "2026-02-27T05:13:00Z",
     "durationMin": 52,
@@ -2729,6 +2791,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "660f5ec8a58451885478fba16dc99e30d22fa5c896f8a5bb55f90d7f41f9d76b",
     "type": "biking",
     "startUtc": "2026-03-01T10:07:00Z",
     "durationMin": 70,
@@ -2753,6 +2816,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "bbd400cb94d7e4a88c3640738f0dc1fef9984558ec0729f15d9c1c9801f9d365",
     "type": "biking",
     "startUtc": "2026-03-02T16:54:00Z",
     "durationMin": 81,
@@ -2777,6 +2841,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "fd67df55a16b1de5d0872a590c81c5c4e6c830c898b29d58c4f5fd8227f07108",
     "type": "running",
     "startUtc": "2026-03-03T16:20:00Z",
     "durationMin": 53,
@@ -2833,6 +2898,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "e8bac372c1dfbcec51c44c153524db3b4f71bc40dbda3de8c85ff1832639243e",
     "type": "running",
     "startUtc": "2026-03-06T10:58:00Z",
     "durationMin": 34,
@@ -2857,6 +2923,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "909c0f46e8595775011352c0ff9f07df24d33e21fd08c934661864b52c6e4204",
     "type": "biking",
     "startUtc": "2026-03-07T17:08:00Z",
     "durationMin": 112,
@@ -2897,6 +2964,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "3c6da8c084cd9059b1c0f3ac84d1f697a5310ef60f1510ba8550f8ed851156ae",
     "type": "biking",
     "startUtc": "2026-03-09T17:00:00Z",
     "durationMin": 95,
@@ -2921,6 +2989,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "5f72000da556a41c897ae3c7500ffec54d04058deaba834e8ce2fb4cbf0c61e6",
     "type": "running",
     "startUtc": "2026-03-10T16:06:00Z",
     "durationMin": 52,
@@ -2977,6 +3046,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "75de2d1e5e8db2cb97b9773e97d1b7a8fb5ff7aa4e573a3cf345966646890f46",
     "type": "biking",
     "startUtc": "2026-03-13T16:23:00Z",
     "durationMin": 61,
@@ -3017,6 +3087,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "c828659a1cb79437d0edb21e0a5f283ef7c47468e921d1c6e91c417d56bc39f8",
     "type": "strength_training",
     "startUtc": "2026-03-15T17:00:00Z",
     "durationMin": 25,
@@ -3041,6 +3112,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "a4fb660ad8973935946e455ebab4b1e254485110e4c9d3090768ff770c6bce5a",
     "type": "biking",
     "startUtc": "2026-03-16T16:06:00Z",
     "durationMin": 122,
@@ -3065,6 +3137,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "563867e3e0c2e877a86e32dc0b4c5159ea9562212ea6218e0ba1e92d91c2c761",
     "type": "running",
     "startUtc": "2026-03-17T16:32:00Z",
     "durationMin": 45,
@@ -3121,6 +3194,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "6f11a95b5e24a27732949726850eb0d117868676d1aaad749f13537bf068d627",
     "type": "running",
     "startUtc": "2026-03-20T05:58:00Z",
     "durationMin": 44,
@@ -3145,6 +3219,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "70b7b4537213a5b08b8deba03b0905a1ebe69eca29f3614162790687dd224402",
     "type": "biking",
     "startUtc": "2026-03-21T16:05:00Z",
     "durationMin": 98,
@@ -3169,6 +3244,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "2ec68873d03b991f803eef17966791fae924ff1604af33c7d10983bd4664cda8",
     "type": "running",
     "startUtc": "2026-03-22T07:28:00Z",
     "durationMin": 100,
@@ -3176,6 +3252,7 @@
     "duplicateOfStrava": true
    },
    {
+    "id": "d2e250c982a6e5c7a0809ab72aa5a8fac189367c1d896c3599c07a0e166be4ca",
     "type": "strength_training",
     "startUtc": "2026-03-22T17:00:00Z",
     "durationMin": 25,
@@ -3232,6 +3309,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "2cb91c6bc6898feacbfcfacef481d8c130f53dc533faedb50e93009862613ace",
     "type": "running",
     "startUtc": "2026-03-25T05:38:00Z",
     "durationMin": 55,
@@ -3288,6 +3366,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "fad60f915356cc25f4f0f14b6175e98185dcaad84a012252e8f4ceca46a8f78d",
     "type": "running",
     "startUtc": "2026-03-28T09:25:00Z",
     "durationMin": 96,
@@ -3328,6 +3407,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "c4ade5bdbcb6d68208cfb4b8f9ae7cdf10c70aa3401396c5c7286f587ef3d503",
     "type": "biking",
     "startUtc": "2026-03-30T16:33:00Z",
     "durationMin": 76,
@@ -3352,6 +3432,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "583b0adc57e860d5360a428e3a8ba949fd314720bdf2895044125b3d20b77aaf",
     "type": "running",
     "startUtc": "2026-03-31T05:35:00Z",
     "durationMin": 52,
@@ -3376,6 +3457,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "a4a1d45dfd032d1aff17730bec1cf3f05aa32d3833f7ffea7616e57196960f6c",
     "type": "running",
     "startUtc": "2026-04-01T05:56:00Z",
     "durationMin": 55,
@@ -3383,6 +3465,7 @@
     "duplicateOfStrava": true
    },
    {
+    "id": "0dcf003a6e949538f2c5714efb2c27a313a41894669783e9f11f332f5ff16bae",
     "type": "walking",
     "startUtc": "2026-04-01T11:43:00Z",
     "durationMin": 44,
@@ -3439,6 +3522,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "93c9580c992d5faa524d8dd9fd7dc6859047d3a7bbd754f4916469849d85ddff",
     "type": "strength_training",
     "startUtc": "2026-04-04T17:00:00Z",
     "durationMin": 25,
@@ -3511,6 +3595,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "0a5c8dcc35fe9ce70d4b640afb39c1e3221e46dad199b5559d10ab7c2feb71fc",
     "type": "running",
     "startUtc": "2026-04-08T10:39:00Z",
     "durationMin": 42,
@@ -3551,6 +3636,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "f53b6f52e95f948350f019890381312ff482a94b586a6dc2f71527f8a5e104e6",
     "type": "walking",
     "startUtc": "2026-04-10T11:51:00Z",
     "durationMin": 33,
@@ -3558,6 +3644,7 @@
     "duplicateOfStrava": false
    },
    {
+    "id": "af7c7a964f4d970f806e327541d6ade482cb54c605e99c5380c2bcf814035a96",
     "type": "biking",
     "startUtc": "2026-04-10T17:31:00Z",
     "durationMin": 121,
@@ -3614,6 +3701,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "114a8a8995691f80adcc0c9adcc3d2f2af6dd69e5726607f57297fd20ca750f7",
     "type": "biking",
     "startUtc": "2026-04-13T17:31:00Z",
     "durationMin": 84,
@@ -3638,6 +3726,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "8c97d524f31cfccc5cb6d5c1b6577bf318d7ecf988f45abc7309ef3edf5c5481",
     "type": "running",
     "startUtc": "2026-04-14T05:20:00Z",
     "durationMin": 50,
@@ -3645,6 +3734,7 @@
     "duplicateOfStrava": true
    },
    {
+    "id": "58b6c92f9f7facf908f77b874cd3b39162653e4f78e0ff4abcf4555b58f3297f",
     "type": "strength_training",
     "startUtc": "2026-04-14T17:00:00Z",
     "durationMin": 25,
@@ -3733,6 +3823,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "5d999b8cfb746390eef03a48aba840092fcb0cc9a9d87c3c9cfaed9b7a1a2486",
     "type": "biking",
     "startUtc": "2026-04-19T08:19:00Z",
     "durationMin": 88,
@@ -3789,6 +3880,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "ab9bccfc0f336f0a97555d5805048a11c1d5209cee12b28ee696dba6736e6d3e",
     "type": "biking",
     "startUtc": "2026-04-22T16:42:00Z",
     "durationMin": 94,
@@ -3813,6 +3905,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "879ebee8dd7b865287f1583d22e51f9f7f66b5320b883403c2aba7c3d752d794",
     "type": "walking",
     "startUtc": "2026-04-23T11:06:00Z",
     "durationMin": 44,
@@ -3837,6 +3930,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "e8f20b832f6974a2e175154936105862b83b96ca865ccd68eb30dd10157c8df8",
     "type": "running",
     "startUtc": "2026-04-24T06:35:00Z",
     "durationMin": 50,
@@ -3877,6 +3971,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "8da53e75a1b5d83f4570865c04e7e292bd90bef47b08758f04d68f3f13626c27",
     "type": "running",
     "startUtc": "2026-04-26T09:19:00Z",
     "durationMin": 100,
@@ -3933,6 +4028,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "18c53b85433c6b25ed9e489ba88ee0dfe30c832076d96022ee9626fb90578264",
     "type": "walking",
     "startUtc": "2026-04-29T11:43:00Z",
     "durationMin": 37,
@@ -3940,6 +4036,7 @@
     "duplicateOfStrava": false
    },
    {
+    "id": "b1b29af0ecbeffbab8444814523896e5838af750b23dbc1b974a53d62ad7ee12",
     "type": "biking",
     "startUtc": "2026-04-29T16:34:00Z",
     "durationMin": 86,
@@ -3996,6 +4093,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "4db797fc01850a3d5eb971ce09b7f3360e57fbffa2c69e8a9d28bfc4e9e768e7",
     "type": "running",
     "startUtc": "2026-05-02T08:57:00Z",
     "durationMin": 98,
@@ -4020,6 +4118,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "5881ea8a13935ed0d955b73747fe28d33eac4d3d69adaaee868cb6154d45b9f6",
     "type": "biking",
     "startUtc": "2026-05-03T09:25:00Z",
     "durationMin": 96,
@@ -4060,6 +4159,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "91d1e3cfbec904c667e4e37eb5067350ac602c233a9b0e8ad65fee3ad75ed803",
     "type": "running",
     "startUtc": "2026-05-05T16:45:00Z",
     "durationMin": 50,
@@ -4084,6 +4184,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "a6cfebaf474e76a6d6e470d5b25b6798043d78f0ceea386c3c103c246b77ae34",
     "type": "biking",
     "startUtc": "2026-05-06T17:19:00Z",
     "durationMin": 102,
@@ -4172,6 +4273,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "e03934707062acaba3decce723488d9b90aa3d6e1c50448571f37a991354334b",
     "type": "biking",
     "startUtc": "2026-05-11T17:21:00Z",
     "durationMin": 145,
@@ -4228,6 +4330,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "53d37df54136bdd3ae5930a3988b5c402ecd44980b2783b614216640c4972070",
     "type": "running",
     "startUtc": "2026-05-14T05:37:00Z",
     "durationMin": 47,
@@ -4284,6 +4387,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "51cdb94d6357b9bbf80a9609c131904ced77dfb5d8fcbd7939b0f3dbec5051db",
     "type": "biking",
     "startUtc": "2026-05-17T09:14:00Z",
     "durationMin": 98,
@@ -4340,6 +4444,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "f53d34cfef48c414245dabf72dd83344d6b70982ba23bb53ea0ac37b1fbb4f7d",
     "type": "running",
     "startUtc": "2026-05-20T10:26:00Z",
     "durationMin": 48,
@@ -4364,6 +4469,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "829e14099b9017390d28a0ef65312e6685e0f31f13d3862b09cec8e2eb5a2ea9",
     "type": "walking",
     "startUtc": "2026-05-21T11:38:00Z",
     "durationMin": 38,
@@ -4388,6 +4494,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "f7fbf8e71bc95b24e44b1bb0d8df2973506181bbd171f30d59d8ac6a22ffcf38",
     "type": "biking",
     "startUtc": "2026-05-22T17:30:00Z",
     "durationMin": 109,
@@ -4460,6 +4567,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "88a4cbf11c78255aba7cf0fe3593c8737ee274f2a7a58b6e18c57850298fffa2",
     "type": "running",
     "startUtc": "2026-05-26T17:28:00Z",
     "durationMin": 54,
@@ -4516,6 +4624,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "e47f2b82d48d2fd7e2f4d5fdd8ac981c7c01ba28f0ebfe98fa94a22120c3c2fc",
     "type": "running",
     "startUtc": "2026-05-29T05:12:00Z",
     "durationMin": 55,
@@ -4572,6 +4681,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "67dc8a15660414a70aa10c85633e4e35f4bc2481560bd0dbb1c88d75e92336d1",
     "type": "walking",
     "startUtc": "2026-06-01T11:49:00Z",
     "durationMin": 29,
@@ -4596,6 +4706,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "14ccd1d4d9066ab7489c06295b7d3f32f7324061b75eab1a2abc3b16e571396b",
     "type": "running",
     "startUtc": "2026-06-02T05:43:00Z",
     "durationMin": 50,
@@ -4620,6 +4731,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "aae448f0f391fde5f956b3b41b75d575ac55ebf48f9e3d24f861a62835a2548d",
     "type": "running",
     "startUtc": "2026-06-03T05:39:00Z",
     "durationMin": 44,
@@ -4676,6 +4788,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "30ad7790d031f7d927114fdac51a7a59263270455362d4dda4f4c99c5517491d",
     "type": "running",
     "startUtc": "2026-06-06T07:52:00Z",
     "durationMin": 118,
@@ -4683,6 +4796,7 @@
     "duplicateOfStrava": true
    },
    {
+    "id": "d7abfc69de16d5e13500dc4bb9f934d44eb925ae4be2ca59f2b8ec66a7379bc4",
     "type": "strength_training",
     "startUtc": "2026-06-06T17:00:00Z",
     "durationMin": 25,
@@ -4739,6 +4853,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "791156723796d0af9d2c8c1efc7668224a8cede60dc9d4f55bf491719f1cac5f",
     "type": "walking",
     "startUtc": "2026-06-09T11:23:00Z",
     "durationMin": 24,
@@ -4811,6 +4926,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "858b8db87f1e45171a9152140797b7042cd4ea24c6eca5d384c21b51940b2f76",
     "type": "running",
     "startUtc": "2026-06-13T07:50:00Z",
     "durationMin": 104,
@@ -4963,6 +5079,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "b330665fda9ab52244ad93de30dc01a791f01b90c3b4a3a4b357d41373d1faee",
     "type": "biking",
     "startUtc": "2026-06-22T16:17:00Z",
     "durationMin": 129,
@@ -5003,6 +5120,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "3a6257590e7e7ed5ecb0fb4a8adf93be26519535fb239108a128d50c5beaa45f",
     "type": "running",
     "startUtc": "2026-06-24T05:56:00Z",
     "durationMin": 51,
@@ -5059,6 +5177,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "84cca9792de765ef2f36eab3682c28b62ea7d078ef89b5b0bf9bb0c6677a4682",
     "type": "running",
     "startUtc": "2026-06-27T07:50:00Z",
     "durationMin": 118,
@@ -5083,6 +5202,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "221e8f1c36f16ed9f843a49cea5d6b2b6203ac6b173f811765a62c504a1e35f6",
     "type": "biking",
     "startUtc": "2026-06-28T10:25:00Z",
     "durationMin": 120,
@@ -5107,6 +5227,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "76be6b9404db5de7c16323de8bd145c7536919a303a5efb56af6cc9d1f557d78",
     "type": "biking",
     "startUtc": "2026-06-29T16:35:00Z",
     "durationMin": 104,
@@ -5291,6 +5412,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "62ad1e609f46d90eb88347c967a9337ae8f84d9c71b1ce558ec7e4cd24d9318a",
     "type": "running",
     "startUtc": "2026-07-10T05:36:00Z",
     "durationMin": 35,
@@ -5443,6 +5565,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "fef7e6ffcb2dd9bbddd8d62feea93ad99bfb29fffe2c1fd828183f087459923c",
     "type": "biking",
     "startUtc": "2026-07-19T08:47:00Z",
     "durationMin": 155,
@@ -5467,6 +5590,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "0ad03d56231055cdf85d47d3b4277d46842cc241dbe9990eea64ce21221c0019",
     "type": "strength_training",
     "startUtc": "2026-07-20T17:00:00Z",
     "durationMin": 25,
@@ -5507,6 +5631,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "52063f88dd193976d7f76e7c566cd119be2c777f2885120f4aaf5e6f0397340a",
     "type": "running",
     "startUtc": "2026-07-22T05:38:00Z",
     "durationMin": 34,
@@ -5531,6 +5656,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "ea0b486a64312b1c8ebbb25db375cc837b9bc2cad282463dddab1274186289c4",
     "type": "walking",
     "startUtc": "2026-07-23T11:51:00Z",
     "durationMin": 48,
@@ -5635,6 +5761,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "0f3603bbdc7fbae27e90586b84c366e4a1a0c32565e3dd9f7de650eb01c34d7d",
     "type": "walking",
     "startUtc": "2026-07-29T11:41:00Z",
     "durationMin": 47,
@@ -5691,6 +5818,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "b0c6991c61de97933ef358c4fedd1f279940d61832fb3fe6f3ff7b8ae6c394e7",
     "type": "running",
     "startUtc": "2026-08-01T09:19:00Z",
     "durationMin": 113,
@@ -5779,6 +5907,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "bcaf5bd20383a0f48d65e7dd10b19fda9fbf3e55d402e2895c09c2e02b5a22db",
     "type": "walking",
     "startUtc": "2026-08-06T11:12:00Z",
     "durationMin": 36,
@@ -5803,6 +5932,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "5a85e7db7aa8cc4f578d0bd57173248d650800fef0fb304f766aecdf2a814e5d",
     "type": "running",
     "startUtc": "2026-08-07T06:33:00Z",
     "durationMin": 49,
@@ -5827,6 +5957,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "40ea8d840a80c4322f0fa9bb159d9a4a5a4482369c6c86cc132beb4ffee06fd0",
     "type": "running",
     "startUtc": "2026-08-08T08:56:00Z",
     "durationMin": 120,
@@ -5851,6 +5982,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "23f3a8e3681090242909259c7ef9e51c244cc13283c55190bc9896322794ef61",
     "type": "biking",
     "startUtc": "2026-08-09T09:27:00Z",
     "durationMin": 112,
@@ -5891,6 +6023,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "3e955ee72b1fcdbd38bfdcfcc7689d96c69c662873762ed5f6600809de5e33cd",
     "type": "running",
     "startUtc": "2026-08-11T16:22:00Z",
     "durationMin": 58,
@@ -5947,6 +6080,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "608ceaea6185a91a7b3963ef0c3e9e0395c72a9c36ca7845bac56cc037f539ce",
     "type": "running",
     "startUtc": "2026-08-14T06:12:00Z",
     "durationMin": 55,
@@ -5954,6 +6088,7 @@
     "duplicateOfStrava": true
    },
    {
+    "id": "1e81349f464c7133f160ff0f275048c676ecf1cbc3867e919fe3415f5eee9f6e",
     "type": "walking",
     "startUtc": "2026-08-14T11:15:00Z",
     "durationMin": 44,
@@ -6026,6 +6161,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "a76e2b679501da817b68f1c80d3b0cb41cde082af0604529c9ada1f48f5dc1a7",
     "type": "strength_training",
     "startUtc": "2026-08-18T17:00:00Z",
     "durationMin": 25,
@@ -6082,6 +6218,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "cc8fc8f9c881e1788b50681f18f7acfdd404a1a5a7eafa55899ebacebdf4e6e0",
     "type": "running",
     "startUtc": "2026-08-21T06:14:00Z",
     "durationMin": 61,
@@ -6106,6 +6243,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "255335d89c9ae4938217a460ff62a2bd74fad2ace1377759cf2267d7c5eb222c",
     "type": "biking",
     "startUtc": "2026-08-22T16:34:00Z",
     "durationMin": 140,
@@ -6146,6 +6284,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "7c81c1c7e68b353010c32c72f0fa2518284d7029aa13a231700b8a1ad4e08053",
     "type": "strength_training",
     "startUtc": "2026-08-24T17:00:00Z",
     "durationMin": 25,
@@ -6234,6 +6373,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "9a95a273624acb90181d2d102d8ec26811a6202564c4461335d3a306e404be1d",
     "type": "running",
     "startUtc": "2026-08-29T07:25:00Z",
     "durationMin": 117,
@@ -6258,6 +6398,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "7d752c9a2dc53c3fcc0b0377a9397e8df09e8e9195de5c2dcf12b4cffbb844b1",
     "type": "biking",
     "startUtc": "2026-08-30T09:52:00Z",
     "durationMin": 136,
@@ -6314,6 +6455,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "a78c57580bb0eca4b3f181e7bede32243f6bb865ba1171011e7d4f4e28479149",
     "type": "running",
     "startUtc": "2026-09-02T10:45:00Z",
     "durationMin": 57,
@@ -6354,6 +6496,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "1520506754658b4833e11fa71cc149332768648eea4328dc07c5a44e2c56a565",
     "type": "strength_training",
     "startUtc": "2026-09-04T17:00:00Z",
     "durationMin": 25,
@@ -6474,6 +6617,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "90f677ede8d39b394534ebac0560b007cfe2a8206457b41fed3d48d197f36028",
     "type": "running",
     "startUtc": "2026-09-11T11:04:00Z",
     "durationMin": 46,
@@ -6498,6 +6642,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "7a093a1e2057ce37bb8f5daa8aa6ff87576c883d2dd7dc7ecf0140fb5973fb30",
     "type": "running",
     "startUtc": "2026-09-12T08:22:00Z",
     "durationMin": 117,
@@ -6538,6 +6683,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "6ad676e4041847e89df64a30e10635c952a20994bb3b542e795dafe83fc6725d",
     "type": "walking",
     "startUtc": "2026-09-14T11:03:00Z",
     "durationMin": 41,
@@ -6578,6 +6724,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "9eebb77337a38bbaeb2c002c59b03ddd39a4c47c7a577202b636c57469b1c954",
     "type": "running",
     "startUtc": "2026-09-16T06:38:00Z",
     "durationMin": 64,
@@ -6602,6 +6749,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "49a83ecdcc2aaf73ab03043030cdf9804fca4af69c00fc00f0a73d8bb35cdb75",
     "type": "running",
     "startUtc": "2026-09-17T06:14:00Z",
     "durationMin": 55,
@@ -6626,6 +6774,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "adae9b3d793f2d2c5bd368baa4ac426020ab8b77711fb5bd4325365fa7b7be9c",
     "type": "biking",
     "startUtc": "2026-09-18T17:40:00Z",
     "durationMin": 102,
@@ -6746,6 +6895,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "32970021d35984cb274cd1d009934d355a70fd8588fd874dcf499c299ee38106",
     "type": "running",
     "startUtc": "2026-09-25T05:11:00Z",
     "durationMin": 54,
@@ -6834,6 +6984,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "b28b190b7d6bd38d32eed527cb93959e48e65ed9357ee04bc7e650744743cf11",
     "type": "running",
     "startUtc": "2026-09-30T11:15:00Z",
     "durationMin": 59,
@@ -6874,6 +7025,7 @@
   "spo2": 98,
   "exercise": [
    {
+    "id": "5291b4e7c9b4ae5d3a088d00e0e621f35b8a6a792f463ede756f0e35d3423546",
     "type": "running",
     "startUtc": "2026-10-02T11:22:00Z",
     "durationMin": 62,
@@ -6914,6 +7066,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "5c11162aded7c55659c4d9833a433f243e53a2440da267671bbb9998ec14e721",
     "type": "running",
     "startUtc": "2026-10-04T07:22:00Z",
     "durationMin": 125,
@@ -6954,6 +7107,7 @@
   "spo2": 95,
   "exercise": [
    {
+    "id": "4f89259297703b54c05ab36f2205c5c681c3d1476b036e1593e496c0dce9c5c0",
     "type": "strength_training",
     "startUtc": "2026-10-06T17:00:00Z",
     "durationMin": 25,
@@ -6994,6 +7148,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "767b5539218b1099120ea4616427c85e7113cd43086ee90bd5bf5cb0021d598b",
     "type": "running",
     "startUtc": "2026-10-08T17:05:00Z",
     "durationMin": 53,
@@ -7018,6 +7173,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "4c76af4797f2bd8bd4015dda9e9322bd5e1855401c8dae3f5db75c0bfacdf808",
     "type": "walking",
     "startUtc": "2026-10-09T11:30:00Z",
     "durationMin": 41,
@@ -7042,6 +7198,7 @@
   "spo2": 96,
   "exercise": [
    {
+    "id": "eb9fb4009850a299cb3390259ce2b4cab7fa0bd283220c7d1c32ebe985569ec9",
     "type": "walking",
     "startUtc": "2026-10-10T11:24:00Z",
     "durationMin": 44,
@@ -7082,6 +7239,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "bf18d595e03f0cef806b72d4fa3d2aea1018eca7d8809a4265975446329cce52",
     "type": "biking",
     "startUtc": "2026-10-12T16:04:00Z",
     "durationMin": 47,
@@ -7106,11 +7264,13 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "22ae75f2bc67a5ea0b83560fbe6fcc947925fa8014bbdb6e5f80cea98ca56988",
     "type": "running",
     "startUtc": "2026-10-13T05:58:00Z",
     "durationMin": 32,
     "distanceKm": 5.1,
-    "duplicateOfStrava": true
+    "duplicateOfStrava": true,
+    "workoutId": "w-2026-10-13-run"
    }
   ]
  }

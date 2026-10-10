@@ -5,6 +5,7 @@
 // Why invented: the app shows Strava data and Strava's API policy forbids that data reaching
 // an AI. Claude sessions developing this app run it against these files (via
 // preview-server.mjs and mock-api.mjs) and never against the live API.
+import { createHash } from 'node:crypto';
 import { addDays, diffDays, mondayOf, weekdayIndex } from '../../js/format.js';
 import { makeBaseLoops, pickLoop, renderLoop, encodeLoop, startOf, round } from './synthetic-geo.mjs';
 
@@ -126,9 +127,11 @@ function planStartActivities(rng, loops) {
 
 /**
  * A year of invented runs and rides, [from, planStart) generated week by week, then plan week 0's two
- * sessions, then `existing` (the three rows activities.json already holds, kept with their ids).
+ * sessions, then `existing` (the three rows activities.json first held, kept with their ids), then
+ * `added`. Rows added to the fixtures later draw their routes from `addedRng`, a random source of
+ * their own, so everything generated from the shared one stays byte for byte what it was.
  */
-export function buildHistory({ rng, existing, from, planStart }) {
+export function buildHistory({ rng, existing, from, planStart, added = [], addedRng = rng }) {
   const loops = makeBaseLoops(rng, LOOP_KMS);
   const generated = [];
   for (let monday = mondayOf(from); monday < planStart; monday = addDays(monday, 7)) {
@@ -141,7 +144,8 @@ export function buildHistory({ rng, existing, from, planStart }) {
     .sort((a, b) => a.startUtc.localeCompare(b.startUtc))
     .map((row, i) => ({ ...row, id: FIRST_ID + i }));
   const kept = existing.map((row) => completeExisting(row, rng, loops));
-  return [...fresh, ...kept].sort((a, b) => a.startUtc.localeCompare(b.startUtc));
+  const late = added.map((row) => completeExisting(row, addedRng, loops));
+  return [...fresh, ...kept, ...late].sort((a, b) => a.startUtc.localeCompare(b.startUtc));
 }
 
 // ── streams ─────────────────────────────────────────────────────────────────
@@ -207,6 +211,16 @@ export function buildRoutesGenerate(rng) {
 
 const minutesApart = (a, b) => Math.abs(Date.parse(a) - Date.parse(b)) / 60000;
 
+/**
+ * A Health Connect session with the id the API gives it. The backend's id is the SHA-256 of the
+ * stored record; here it is the SHA-256 of the session's own fields, which is as stable and as long.
+ */
+export function withHealthId(session) {
+  const { id: _previous, ...fields } = session;
+  const text = `exercise|${fields.type}|${fields.startUtc}|${fields.durationMin}|${fields.distanceKm}`;
+  return { id: createHash('sha256').update(text).digest('hex'), ...fields };
+}
+
 /** Health Connect sessions for a day: the fixed ones as given, plus a Strava-duplicate for about half the activities. */
 function exerciseFor(date, activities, fixed, rng) {
   const keep = fixed.map((e) => ({ ...e }));
@@ -225,7 +239,7 @@ function exerciseFor(date, activities, fixed, rng) {
   if (!fixed.length && rng.chance(0.03)) {
     extra.push({ type: 'strength_training', startUtc: `${date}T17:00:00Z`, durationMin: 25, distanceKm: null, duplicateOfStrava: false });
   }
-  return [...keep, ...mirrored, ...extra].sort((a, b) => a.startUtc.localeCompare(b.startUtc));
+  return [...keep, ...mirrored, ...extra].map(withHealthId).sort((a, b) => a.startUtc.localeCompare(b.startUtc));
 }
 
 /**

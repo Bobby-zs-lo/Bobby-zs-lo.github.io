@@ -136,6 +136,13 @@ export function formatTimestamp(iso, now = new Date()) {
   else if (mins >= 60 && mins < 60 * 24) rel = `${Math.round(mins / 60)} h ago`;
   return rel ? `${day}, ${time} (${rel})` : `${day}, ${time}`;
 }
+/** ISO timestamp → '07:58' (24 hours, Copenhagen time), '' when there is none */
+export function formatClock(iso) {
+  const d = iso ? new Date(iso) : null;
+  if (!d || isNaN(d)) return '';
+  // hourCycle, not hour12: with hour12 false some engines write midnight as '24:05'.
+  return new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Copenhagen', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d);
+}
 export function formatNumber(n, digits = 0) {
   if (n == null || !isFinite(n)) return '–';
   return new Intl.NumberFormat('en-GB', { maximumFractionDigits: digits, minimumFractionDigits: digits }).format(n);
@@ -152,6 +159,27 @@ export function sportFamily(sportType) {
 /** Sum of run km over a list of Strava activities */
 export function runKm(activities) {
   return (activities || []).reduce((s, a) => s + (sportFamily(a.sportType) === 'run' ? (a.distanceKm || 0) : 0), 0);
+}
+
+// Health Connect names its exercise sessions by type, and the backend passes the name on in
+// capitals: 'RUNNING', 'BIKING', 'STRENGTH_TRAINING', …
+const EXERCISE_NAMES = {
+  running: 'Run', running_treadmill: 'Treadmill run', biking: 'Ride', cycling: 'Ride', walking: 'Walk',
+  strength_training: 'Strength', weightlifting: 'Strength',
+};
+/** 'RUNNING' → 'Run'; a type without a short name is spelled out: 'OTHER_WORKOUT' → 'Other workout' */
+export function exerciseName(type) {
+  const key = String(type || '').toLowerCase();
+  return EXERCISE_NAMES[key] || (key || 'exercise').replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase());
+}
+/** 'run' | 'ride' | 'walk' | 'strength' | 'other', the Health Connect counterpart of sportFamily */
+export function exerciseFamily(type) {
+  const v = String(type || '').toLowerCase();
+  if (v.includes('bik') || v.includes('cycl')) return 'ride';
+  if (v.includes('run')) return 'run';
+  if (v.includes('walk') || v.includes('hik')) return 'walk';
+  if (v.includes('strength') || v.includes('weight')) return 'strength';
+  return 'other';
 }
 export const PHASE_NAMES = {
   reentry: 'Re-entry', base: 'Base', halfbuild: 'Half-marathon build', recovery: 'Recovery',

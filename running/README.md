@@ -25,7 +25,8 @@ Private, single-user marathon-training PWA (front end only). The backend is the
 | `js/analytics.js`, `js/charts.js`, `js/geo.js`, `js/polyline.js`, `js/route-edit.js` | Pure helpers for the desk (tested): training analytics, inline-SVG charts, distance / GPX / map-app links, the encoded-polyline codec, the route editor's handle lists, undo and request sequencing |
 | `js/map.js` | Leaflet on demand, and the helpers every map draws with (see Maps) |
 | `js/geolocate.js` | The device's location, for a route start (Routes and Settings) |
-| `js/views/workout.js` | `#/workout/<id>` — one session step by step: every segment with its target pace window and the time one repetition should take, why the session exists, and how the recorded activity compared |
+| `js/views/workout.js` | `#/workout/<id>` — one session step by step: every segment with its target pace window and the time one repetition should take, why the session exists, and how what was recorded compared. `workout-links.js` is its "What you actually did" card and the editor that chooses which recorded sessions count (see Linking) |
+| `js/links.js` | Pure helpers (tested) for that choice: the sessions of a day, what is ticked, the request body, the summed distance |
 | `js/views/activity.js` | `#/activity/<id>` — one Strava activity in full, with kilometre splits marked against the target window of the session it matched |
 | `js/push.js` | Notification permission and Web Push subscription |
 | `js/views/overview.js` | `#/overview` — the desk dashboard. `overview-model.js` computes every number from the loaded data and owns the tile catalogue and layout logic (pure, tested); `tiles.js`, `tiles-charts.js`, `tiles-table.js` and `tiles-map.js` draw the tiles; `overview-layout.js` is *Customise* |
@@ -118,6 +119,27 @@ desk, Today on a phone. That is why the manifest's `start_url` is a bare `./` (i
     (Ctrl+Z, Ctrl+Shift+Z) keep 30 steps and step back to a planned state without a new request.
     A live readout on the map shows the distance against the target and the climb.
 
+## Linking recorded sessions to a workout
+
+The backend matches a Strava activity to the day's planned workout by itself; which sessions
+count is the owner's to change. On `#/workout/<id>`, *Change* under "What you actually did" (or
+*Link a recorded session* when nothing is linked yet) opens an editor in that card: one checkbox
+per session recorded that day, Strava first, then Health Connect, each with its distance, duration
+and start time. One, several (a warm-up and the session count together) or none can be ticked. A
+Health Connect session that is a copy of a Strava activity is listed but cannot be ticked, and is
+never counted or sent, even if it still carries a link from before Strava had the session; a
+session that counts for another workout of the day says so, and ticking it moves it. *Save* sends
+the complete set, `PUT /api/workouts/:id/links { activityIds: string[], healthIds: string[] }`
+(at most ten of each), then reads the week and the plan again: the status follows the links (done
+at 80 % of the plan, else partial, planned with nothing linked) unless it was set by hand. Links
+are same-day only; a session run on another day is handled by moving the workout first.
+
+`#/workout/<id>?link=1` opens the editor straight away. Today links there from each card (*Change*
+beside what counts, or *Link a recorded session →* when nothing counts but a session of the
+workout's own sport was recorded, so the ride to work does not prompt on a planned run), and so
+does the Activity page (*Change*, or *Link it to …* for each session planned that day). Today, Week
+and the session page show a linked Health Connect session as a row beside the Strava ones.
+
 ## Maps
 
 Leaflet 1.9.4 loads from cdnjs with subresource integrity, only once a map is about to show, so a
@@ -142,7 +164,9 @@ PLAYWRIGHT_NODE_MODULES=/path/to/node_modules SHOTS_DIR=/tmp/shots \
 
 The smoke test serves the repo root, fakes Firebase Auth (see above), answers the API from the
 shared mock (`tests/mock-api.mjs`; a planned route is made up in `tests/mock-plan.mjs`, and a point
-dropped in the Øresund east of the fictional home answers 502 as OpenRouteService would) on the
+dropped in the Øresund east of the fictional home answers 502 as OpenRouteService would; the links
+endpoint, with the backend's rules and messages, is `tests/mock-links.mjs`, and what it changes
+lasts as long as that mock) on the
 invented data in `tests/fixtures/` (rebuild with
 `node running/tests/fixtures/build-fixtures.mjs`), and saves screenshots. Playwright is not a
 dependency of this repo. Install it somewhere else, and point `CHROMIUM_PATH` at its Chromium
@@ -175,7 +199,7 @@ session working on the app runs it here, and never against the live API.
 Hash routes, parsed by `js/router.js`; path segments after the view name arrive as `ctx.rest`.
 
 `#/login` · `#/today` · `#/week?date=` · `#/plan` · `#/health` · `#/reviews` · `#/settings` ·
-`#/workout/<workoutId>` · `#/activity/<activityId>` · `#/overview?p=&s=&w=` (range `4w`, `12w`,
+`#/workout/<workoutId>?link=` (`1` opens the editor of what counts) · `#/activity/<activityId>` · `#/overview?p=&s=&w=` (range `4w`, `12w`,
 `season`, `1y` or `all`; sport `run`, `ride` or `all`; a picked week's Monday) ·
 `#/routes?km=&profile=&from=&mode=` (distance, `trail` or `ride`, the planned run it is for, `draw`)
 

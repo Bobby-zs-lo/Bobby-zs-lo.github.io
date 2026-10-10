@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   addDays, mondayOf, weekdayIndex, weekDates, diffDays, formatDate, formatWeekRange,
   formatPace, parsePace, paceRange, formatDistance, formatDuration, formatMmSs, parseMmSs,
-  workoutAmount, runKm, sportFamily, formatTimestamp, copenhagenToday,
+  workoutAmount, runKm, sportFamily, formatTimestamp, copenhagenToday, formatClock, exerciseName, exerciseFamily,
 } from '../js/format.js';
 
 test('Danish week: Monday is day 0, Sunday day 6', () => {
@@ -96,4 +96,31 @@ test('timestamps render in Copenhagen time', () => {
   assert.equal(formatTimestamp('2026-10-13T11:58:00Z', now), '13 Oct, 13:58 (2 min ago)');
   assert.equal(formatTimestamp('2026-10-01T06:12:00Z', now), '1 Oct, 08:12');
   assert.equal(formatTimestamp(null, now), 'never');
+});
+
+test('clock times are Copenhagen time, 24 hours, whatever the device', () => {
+  assert.equal(formatClock('2026-10-13T05:58:00Z'), '07:58'); // CEST, UTC+2
+  assert.equal(formatClock('2026-12-01T05:58:00Z'), '06:58'); // CET, UTC+1
+  assert.equal(formatClock('2026-10-13T22:05:00Z'), '00:05'); // past midnight, not '24:05'
+  assert.equal(formatClock(null), '');
+  assert.equal(formatClock('soon'), '');
+});
+
+test('Health Connect exercise types have a name and a sport family', () => {
+  assert.equal(exerciseName('running'), 'Run');
+  assert.equal(exerciseName('RUNNING'), 'Run', 'the backend sends the type in capitals');
+  assert.equal(exerciseName('BIKING'), 'Ride');
+  assert.equal(exerciseName('STRENGTH_TRAINING'), 'Strength');
+  assert.equal(exerciseName('RUNNING_TREADMILL'), 'Treadmill run');
+  assert.equal(exerciseName('OTHER_WORKOUT'), 'Other workout', 'a type without a short name is spelled out, not shouted');
+  assert.equal(exerciseName('79'), '79', 'a code the backend could not name stays as it is');
+  assert.equal(exerciseName(null), 'Exercise');
+  assert.equal(exerciseFamily('RUNNING_TREADMILL'), 'run');
+  assert.equal(exerciseFamily('biking'), 'ride');
+  assert.equal(exerciseFamily('cycling'), 'ride');
+  assert.equal(exerciseFamily('hiking'), 'walk');
+  assert.equal(exerciseFamily('strength_training'), 'strength');
+  assert.equal(exerciseFamily('weightlifting'), 'strength');
+  assert.equal(exerciseFamily('yoga'), 'other');
+  assert.equal(exerciseFamily(undefined), 'other');
 });

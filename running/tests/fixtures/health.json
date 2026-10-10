@@ -335,6 +335,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "4f89259297703b54c05ab36f2205c5c681c3d1476b036e1593e496c0dce9c5c0",
     "type": "strength_training",
     "startUtc": "2026-10-06T17:00:00Z",
     "durationMin": 25,
@@ -391,6 +392,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "4c76af4797f2bd8bd4015dda9e9322bd5e1855401c8dae3f5db75c0bfacdf808",
     "type": "walking",
     "startUtc": "2026-10-09T11:30:00Z",
     "durationMin": 41,
@@ -447,6 +449,7 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "bf18d595e03f0cef806b72d4fa3d2aea1018eca7d8809a4265975446329cce52",
     "type": "biking",
     "startUtc": "2026-10-12T16:04:00Z",
     "durationMin": 47,
@@ -471,11 +474,13 @@
   "spo2": 97,
   "exercise": [
    {
+    "id": "22ae75f2bc67a5ea0b83560fbe6fcc947925fa8014bbdb6e5f80cea98ca56988",
     "type": "running",
     "startUtc": "2026-10-13T05:58:00Z",
     "durationMin": 32,
     "distanceKm": 5.1,
-    "duplicateOfStrava": true
+    "duplicateOfStrava": true,
+    "workoutId": "w-2026-10-13-run"
    }
   ]
  }

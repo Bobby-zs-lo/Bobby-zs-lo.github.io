@@ -1,6 +1,7 @@
-// Pieces shared by Today and Week.
+// Pieces shared by Today, Week and the session page.
 import { html, raw } from '../dom.js';
-import { formatDistance, formatDuration, formatPace, sportFamily, workoutAmount, paceRange, PACE_NAMES, dayShort, parseDate } from '../format.js';
+import { formatDistance, formatDuration, formatPace, sportFamily, workoutAmount, paceRange, PACE_NAMES, dayShort, parseDate, exerciseName } from '../format.js';
+import { sessionStats } from '../links.js';
 import { statusChip } from '../ui.js';
 
 export const SPORT_NAMES = { run: 'Run', ride: 'Ride', strength: 'Strength', rest: 'Rest', race: 'Race' };
@@ -18,6 +19,23 @@ export function activityRow(a) {
     <span class="activity-name">${a.name || a.sportType}${a.commute ? html` <span class="tag">Commute</span>` : ''}</span>
     <span class="activity-stats num">${activityLine(a)}</span>
   </a>`;
+}
+
+/**
+ * A Health Connect session in the grammar of activityRow. It has no page of its own, so it is
+ * not a link, and it shows its start time: nothing else tells two sessions of a day apart.
+ */
+export function healthRow(s) {
+  return html`<div class="activity activity--health">
+    <span class="activity-src">Health Connect</span>
+    <span class="activity-name">${exerciseName(s.type)}</span>
+    <span class="activity-stats num">${sessionStats(s)}</span>
+  </div>`;
+}
+
+/** What counts for a workout (linkedSessions in js/links.js) as rows: Strava first, then Health Connect. */
+export function linkedRows(linked) {
+  return [...linked.activities.map(activityRow), ...linked.health.map(healthRow)];
 }
 
 /** '20 s', '8 min', '1:30 h' — the clock side of a segment. */

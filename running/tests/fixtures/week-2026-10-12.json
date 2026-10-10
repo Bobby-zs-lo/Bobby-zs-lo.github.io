@@ -184,7 +184,16 @@
     "weightKg": 77.7,
     "vo2max": null,
     "spo2": 97,
-    "exercise": []
+    "exercise": [
+     {
+      "id": "bf18d595e03f0cef806b72d4fa3d2aea1018eca7d8809a4265975446329cce52",
+      "type": "biking",
+      "startUtc": "2026-10-12T16:04:00Z",
+      "durationMin": 47,
+      "distanceKm": 18.2,
+      "duplicateOfStrava": true
+     }
+    ]
    }
   },
   {
@@ -218,6 +227,19 @@
     }
    ],
    "activities": [
+    {
+     "id": 15800000004,
+     "date": "2026-10-13",
+     "startUtc": "2026-10-13T05:49:00Z",
+     "sportType": "Run",
+     "name": "Warm-up jog",
+     "distanceKm": 1.2,
+     "movingMin": 8.1,
+     "avgPaceSecPerKm": 405,
+     "avgHr": 124,
+     "commute": false,
+     "workoutId": null
+    },
     {
      "id": 15800000002,
      "date": "2026-10-13",
@@ -260,7 +282,17 @@
     "weightKg": null,
     "vo2max": null,
     "spo2": 97,
-    "exercise": []
+    "exercise": [
+     {
+      "id": "22ae75f2bc67a5ea0b83560fbe6fcc947925fa8014bbdb6e5f80cea98ca56988",
+      "type": "running",
+      "startUtc": "2026-10-13T05:58:00Z",
+      "durationMin": 32,
+      "distanceKm": 5.1,
+      "duplicateOfStrava": true,
+      "workoutId": "w-2026-10-13-run"
+     }
+    ]
    }
   },
   {
@@ -345,7 +377,31 @@
    ],
    "activities": [],
    "checkin": null,
-   "health": null
+   "health": {
+    "date": "2026-10-17",
+    "steps": 10585,
+    "distanceKm": null,
+    "activeKcal": 475,
+    "restingHr": 54,
+    "hrvRmssd": 48,
+    "avgHr": 72,
+    "sleepHours": 6.5,
+    "sleepDeepH": 1.1,
+    "sleepRemH": 1.6,
+    "weightKg": null,
+    "vo2max": null,
+    "spo2": 97,
+    "exercise": [
+     {
+      "id": "4d257659304f347ad9a67f128c4fddd9248662f1fb01cd22e866f87600a2af84",
+      "type": "RUNNING",
+      "startUtc": "2026-10-17T06:10:00Z",
+      "durationMin": 47,
+      "distanceKm": 7.2,
+      "duplicateOfStrava": false
+     }
+    ]
+   }
   },
   {
    "date": "2026-10-18",

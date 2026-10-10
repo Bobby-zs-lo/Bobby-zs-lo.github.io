@@ -3,13 +3,32 @@ import { api } from '../api.js';
 import { getState, getPaces } from '../store.js';
 import { loading, errorState, statusChip, toast, busy } from '../ui.js';
 import { formatDate, workoutAmount, paceRange, PACE_NAMES, PHASE_NAMES, formatNumber } from '../format.js';
-import { SPORT_NAMES, activityRow, weekStrip, segmentList } from './common.js';
+import { SPORT_NAMES, activityRow, linkedRows, weekStrip, segmentList } from './common.js';
+import { linkedSessions, hasUnlinkedMatch } from '../links.js';
 import { renderMarkdown } from '../markdown.js';
 
 const ACTION_DONE = { done: 'Marked as done', skip: 'Skipped', move_tomorrow: 'Moved to tomorrow', undo_status: 'Status reset' };
 
-function workoutCard(w, paces, activities) {
-  const matched = activities.filter(a => a.workoutId === w.id);
+/**
+ * What counts for the session, with the way to change it; or, when nothing counts but a session
+ * of its sport was recorded, the offer to link one. Both open the editor on the session page.
+ */
+function matchedBlock(w, day) {
+  const rows = linkedRows(linkedSessions(day, w.id));
+  const editHref = `#/workout/${encodeURIComponent(w.id)}?link=1`;
+  if (rows.length) {
+    return html`<div class="matched">
+      <div class="matched-head">
+        <span class="matched-label">Counts for this session</span>
+        <a class="link" href="${editHref}" aria-label="Change which sessions count for ${w.title}">Change</a>
+      </div>
+      ${rows}
+    </div>`;
+  }
+  return hasUnlinkedMatch(day, w) ? html`<p class="matched"><a class="link" href="${editHref}">Link a recorded session →</a></p>` : '';
+}
+
+function workoutCard(w, paces, day) {
   const pr = paceRange(paces, w.paceKey);
   const isRest = w.sport === 'rest';
   const actionable = !isRest && w.status === 'planned';
@@ -24,7 +43,7 @@ function workoutCard(w, paces, activities) {
     ${w.details ? html`<div class="workout-details md">${raw(renderMarkdown(w.details))}</div>` : ''}
     ${w.segments && w.segments.length ? segmentList(w.segments, { compact: true }) : ''}
     ${isRest ? '' : html`<a class="link" href="#/workout/${encodeURIComponent(w.id)}">Full session detail →</a>`}
-    ${matched.length ? html`<div class="matched">${matched.map(activityRow)}</div>` : ''}
+    ${isRest ? '' : matchedBlock(w, day)}
     ${isRest ? '' : html`<div class="actions">
       ${actionable
         ? html`<button type="button" class="btn btn--primary" data-action="done">Done</button>
@@ -103,7 +122,7 @@ export async function render(el, ctx) {
             <p class="eyebrow">Rest</p>
             <h2 class="workout-title">${workouts[0] ? workouts[0].title : 'Rest day'}</h2>
             <p class="muted">${workouts[0] && workouts[0].details ? workouts[0].details : 'An easy spin or a walk is fine. Sleep counts as training.'}</p>
-          </article>` : workouts.filter(w => w.sport !== 'rest').map(w => workoutCard(w, paces, activities))}
+          </article>` : workouts.filter(w => w.sport !== 'rest').map(w => workoutCard(w, paces, day))}
         ${unmatched.length ? html`<div class="card"><h2 class="section-title">Also today</h2>${unmatched.map(activityRow)}</div>` : ''}
       </section>
       <section class="glance" aria-labelledby="glance-h">

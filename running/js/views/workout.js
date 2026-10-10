@@ -1,11 +1,14 @@
-// One session in full: what to run, what to hit, and what actually happened.
+// One session in full: what to run, what to hit, and what actually happened. Which recorded
+// sessions count as "what happened" is chosen here too (js/views/workout-links.js);
+// #/workout/<id>?link=1 opens straight into that choice.
 import { html, raw, mount } from '../dom.js';
 import { api } from '../api.js';
 import { getPlan, getPaces } from '../store.js';
 import { buildHash } from '../router.js';
 import { loading, errorState, statusChip, toast, busy } from '../ui.js';
-import { formatDate, formatDistance, formatDuration, workoutAmount, paceRange, PACE_NAMES, PHASE_NAMES } from '../format.js';
-import { SPORT_NAMES, activityRow, segmentList, segmentAmount } from './common.js';
+import { formatDate, workoutAmount, paceRange, PACE_NAMES, PHASE_NAMES } from '../format.js';
+import { SPORT_NAMES, segmentList } from './common.js';
+import { actualSection, wireActual } from './workout-links.js';
 import { renderMarkdown } from '../markdown.js';
 
 const ACTION_DONE = { done: 'Marked as done', skip: 'Skipped', move_tomorrow: 'Moved to tomorrow', undo_status: 'Status reset' };
@@ -53,25 +56,20 @@ function routeLink(w) {
   return html`<p><a class="link" href="${buildHash('routes', { km: w.distanceKm, from: w.id })}">Make a route for this run →</a></p>`;
 }
 
-function comparison(w, matched) {
-  if (!matched.length) return '';
-  const planned = w.distanceKm;
-  const actual = matched.reduce((s, a) => s + (a.distanceKm || 0), 0);
-  const diff = planned && actual ? Math.round((actual - planned) * 10) / 10 : null;
-  return html`<section class="card">
-    <h2 class="section-title">What you actually did</h2>
-    ${matched.map(activityRow)}
-    ${diff != null ? html`<p class="help">${diff === 0 ? 'Exactly as planned.'
-      : diff > 0 ? `${formatDistance(diff)} more than planned.` : `${formatDistance(-diff)} short of the plan.`}</p>` : ''}
-  </section>`;
-}
-
-export async function render(el, ctx) {
+/** `quiet` redraws over the page as it stands, without the loading state: after a save, in place. */
+export async function render(el, ctx, { quiet = false } = {}) {
   const id = (ctx.rest && ctx.rest[0]) || '';
   if (!id) { mount(el, html`<p class="state">No session chosen.</p>`); return; }
-  loading(el, 'Loading session');
+  if (!quiet) loading(el, 'Loading session');
+  // ?link=1 opens the editor once. Every redraw from this page goes without it, and so does the
+  // address once the editor has closed, or a reload would open it again.
+  const wantsEditor = ctx.params.link === '1';
+  const again = { ...ctx, params: { ...ctx.params, link: undefined } };
+  const forgetLinkParam = () => {
+    if (wantsEditor && ctx.isCurrent()) history.replaceState(null, '', `#/workout/${encodeURIComponent(id)}`);
+  };
 
-  let plan, week, w, paces, dayActivities = [];
+  let plan, week, w, paces, day = null;
   try {
     plan = await getPlan();
     for (const wk of plan.weeks) {
@@ -82,17 +80,13 @@ export async function render(el, ctx) {
     paces = await getPaces();
     try {
       const resp = await api.get(`/api/week?date=${w.date}`);
-      const day = (resp.days || []).find(d => d.date === w.date);
-      if (day) {
-        dayActivities = day.activities || [];
-        const fresh = (day.workouts || []).find(x => x.id === id);
-        if (fresh) w = { ...w, status: fresh.status };
-      }
+      day = (resp.days || []).find(d => d.date === w.date) || null;
+      const fresh = day && (day.workouts || []).find(x => x.id === id);
+      if (fresh) w = { ...w, status: fresh.status };
     } catch { /* the plan alone is enough to show the session */ }
   } catch (e) { errorState(el, e, () => render(el, ctx)); return; }
   if (!ctx.isCurrent()) return;
 
-  const matched = dayActivities.filter(a => a.workoutId === id);
   const actionable = w.status === 'planned';
   const note = KIND_NOTES[w.kind];
 
@@ -117,7 +111,7 @@ export async function render(el, ctx) {
       <p>${note}</p>
     </section>` : ''}
 
-    ${comparison(w, matched)}
+    ${actualSection(w, day)}
 
     <div class="actions" id="workout-actions">
       ${actionable
@@ -135,8 +129,21 @@ export async function render(el, ctx) {
         await api.post(`/api/workouts/${encodeURIComponent(id)}/action`, { action });
         toast(ACTION_DONE[action] || 'Saved', { kind: 'ok' });
         await getPlan({ force: true });
-        render(el, ctx);
+        render(el, again);
       } catch (ex) { toast(ex.message, { kind: 'error' }); }
     }));
+  });
+
+  wireActual(el, {
+    workout: w, day, open: wantsEditor, onClosed: forgetLinkParam,
+    onSaved: async () => {
+      forgetLinkParam();
+      // The status follows the links, and the plan holds the status. If the plan cannot be
+      // read again the week still can: the redraw below takes the status from there.
+      try { await getPlan({ force: true }); } catch { /* keep the copy in memory */ }
+      await render(el, again, { quiet: true });
+      const opener = ctx.isCurrent() && el.querySelector('[data-link-open]');
+      if (opener) opener.focus();
+    },
   });
 }
