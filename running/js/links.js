@@ -29,9 +29,12 @@ export function healthSessions(day) {
   return list.filter(s => s && s.id).sort(byStart);
 }
 
-/** Whether anything at all was recorded that day; without it there is nothing to choose from. */
-export function hasRecorded(day) {
-  return dayActivities(day).length + healthSessions(day).length > 0;
+/**
+ * Whether the session page offers the choice at all: something was recorded that day, and the
+ * workout is not a rest day, which has nothing to link (the backend refuses one too).
+ */
+export function canLink(workout, day) {
+  return workout.sport !== 'rest' && dayActivities(day).length + healthSessions(day).length > 0;
 }
 
 /**
@@ -97,11 +100,6 @@ export function linkCandidates(day, workoutId) {
     ...dayActivities(day).map(a => row('activity', a, a.name || a.sportType, a.movingMin)),
     ...healthSessions(day).map(s => row('health', s, exerciseName(s.type), s.durationMin)),
   ];
-}
-
-/** The keys ticked when the editor opens: what counts now. */
-export function initialSelection(candidates) {
-  return candidates.filter(c => c.linked).map(c => c.key);
 }
 
 /** The PUT body for the ticked keys: ids as strings, in the order shown, never a disabled row. */

@@ -305,7 +305,7 @@ test('links: a Health Connect copy that was linked before Strava had the session
   const api = newApi();
   const [copy] = (await dayOf(api, TUESDAY)).health.exercise;
   const refused = await putLinks(api, RUN, [MORNING], [copy.id]);
-  assert.deepEqual([refused.status, refused.json], [400, { error: `Health Connect session ${copy.id} is the same as a Strava activity of that day` }]);
+  assert.deepEqual([refused.status, refused.json], [400, { error: 'That Health Connect session is the same as a Strava activity of that day' }]);
   assert.equal((await dayOf(api, TUESDAY)).health.exercise[0].workoutId, RUN, 'refused: still as it was');
   // With the Strava run unlinked only the copy is left, and a copy is nothing: planned. The save drops its link too.
   assert.deepEqual(facts((await putLinks(api, RUN, [])).json.workout), ['planned', null, 'user']);
@@ -366,8 +366,9 @@ test('links: a status set by hand wins over the links, until it is undone', asyn
   assert.equal((await putLinks(api, CORE, [COMMUTE])).json.workout.status, 'skipped');
   await act(RUN, 'done');
   assert.equal((await putLinks(api, RUN, [])).json.workout.status, 'done', 'done by hand stays done with nothing linked');
-  assert.equal((await act(CORE, 'undo_status')).json.workout.status, 'planned');
-  assert.equal((await putLinks(api, CORE, [COMMUTE])).json.workout.status, 'done', '19 min is 80 % of 20 and more');
+  // Undoing the mark hands the status back to the links, as on the backend: what is linked decides again.
+  assert.deepEqual(facts((await act(CORE, 'undo_status')).json.workout), ['done', 'strava', 'user'], '19 of the 20 planned minutes were linked while it was skipped');
+  assert.deepEqual(facts((await act(RUN, 'undo_status')).json.workout), ['planned', null, 'user'], 'nothing is linked to the run');
   assert.equal((await act(CORE, 'move_tomorrow')).json.workout.status, 'moved');
   assert.equal(statusOf(await dayOf(api, TUESDAY), CORE), 'done', 'a move only answers');
 });
@@ -384,11 +385,16 @@ test('links: validated like the backend, in its words, and a refused request cha
   assert.deepEqual(await put(RUN, { activityIds: [WARM_UP, WARM_UP], healthIds: [] }), badList('activityIds'), 'each id once');
   assert.deepEqual(await put(RUN, { activityIds: [], healthIds: Array.from({ length: 11 }, (_, i) => `h${i}`) }), badList('healthIds'), 'at most 10');
   assert.deepEqual(await put('w-nope', { activityIds: 'all', healthIds: [] }), badList('activityIds'), 'the body is read before the workout');
-  assert.deepEqual(await put(RUN, { activityIds: ['1'], healthIds: [] }), [400, 'No Strava activity 1 on 2026-10-13']);
-  assert.deepEqual(await put(RUN, { activityIds: [WARM_UP, MONDAY_RIDE], healthIds: [] }), [400, `No Strava activity ${MONDAY_RIDE} on 2026-10-13`], 'another day’s');
-  const unknown = 'f'.repeat(64);
-  assert.deepEqual(await put(RUN, { activityIds: [], healthIds: [unknown] }), [400, `No Health Connect exercise session ${unknown} on 2026-10-13`]);
-  assert.deepEqual(await put(RUN, { activityIds: [], healthIds: [saturdayRun.id] }), [400, `No Health Connect exercise session ${saturdayRun.id} on 2026-10-13`], 'another day’s');
+  // The words are shown to the owner as they are: they name the day and never an id.
+  const notStrava = [400, "A Strava activity in the list isn't from 2026-10-13"];
+  const notHealth = [400, "A Health Connect session in the list isn't from 2026-10-13"];
+  assert.deepEqual(await put(RUN, { activityIds: ['1'], healthIds: [] }), notStrava, 'an unknown activity');
+  assert.deepEqual(await put(RUN, { activityIds: [WARM_UP, MONDAY_RIDE], healthIds: [] }), notStrava, 'another day’s');
+  assert.deepEqual(await put(RUN, { activityIds: [], healthIds: ['f'.repeat(64)] }), notHealth, 'an unknown session');
+  assert.deepEqual(await put(RUN, { activityIds: [], healthIds: [saturdayRun.id] }), notHealth, 'another day’s');
+  assert.deepEqual(await put(RUN, { activityIds: ['1'], healthIds: ['f'.repeat(64)] }), notHealth, 'Health Connect is checked first');
+  assert.deepEqual(await put('w-2026-10-15-rest', { activityIds: [], healthIds: [] }), [400, 'A rest day has nothing to link']);
+  assert.deepEqual(await put('w-2026-10-15-rest', { activityIds: [] }), badList('healthIds'), 'the body is read before the rest day is refused');
   const tue = await dayOf(api, TUESDAY);
   assert.deepEqual(linksOf(tue), UNTOUCHED);
   assert.equal(statusOf(tue, RUN), 'done');

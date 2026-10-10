@@ -4,16 +4,19 @@
 // Contract (the backend's; docs/superpowers/specs/2026-10-10-manual-activity-links-design.md in
 // Running-with-Claude): PUT /api/workouts/:id/links { activityIds: string[], healthIds: string[] }
 // names the complete set of sessions that count for the workout: replace semantics, the workout's
-// own day only, at most ten different ids of each. 400 for a body of another shape, an id that is
-// no session of that day, or a Health Connect session that is a copy of a Strava activity; 404 for
-// an unknown workout. Every activity the request links or unlinks gets linkSource 'user', the
-// workout gets linksBy 'user', and the status of the workout (and of any workout that lost a
-// session) is worked out again from what is linked: 'done' at 80 % of the plan, else 'partial',
-// back to 'planned' with nothing linked. A status set by hand (statusSource 'user') is never touched.
+// own day only, at most ten different ids of each. 400 for a body of another shape, a rest day, an
+// id that is no session of that day, or a Health Connect session that is a copy of a Strava
+// activity; 404 for an unknown workout. Every activity the request links or unlinks gets linkSource
+// 'user', the workout gets linksBy 'user', and the status of the workout (and of any workout that
+// lost a session) is worked out again from what is linked: 'done' at 80 % of the plan, else
+// 'partial', back to 'planned' with nothing linked. A status set by hand (statusSource 'user') is
+// never touched.
 //
-// Same rules, same order and same messages as setWorkoutLinks in functions/src/service.js: the
-// front end shows the server's words. The fixtures are never written: what changed lives in the
-// store made here, one per mock.
+// The rules live in functions/src/links.js (parseLinkRequest, linkSessions and the checks it
+// runs, recomputeLinkedStatus), called by setWorkoutLinks in service.js. This follows them in the
+// same order and in the same words, which name the day and never an id: the front end shows them
+// as they come. The fixtures are never written: what changed lives in the store made here, one
+// per mock.
 
 const MAX_LINKS = 10;
 const MAX_ID_LENGTH = 80;
@@ -93,15 +96,17 @@ export function createLinkStore({ activities, sessions, findWorkout, fail }) {
   function save(id, body) {
     const { activityIds, healthIds } = parseLinks(body, fail);
     const base = findWorkout(id) || fail(404, 'Workout not found');
+    if (base.sport === 'rest') fail(400, 'A rest day has nothing to link');
     // An unknown id and one of another day end the same way: it is no session of the workout's date.
-    const acts = activityIds.map((aid) => activities().find((a) => String(a.id) === aid && a.date === base.date)
-      || fail(400, `No Strava activity ${aid} on ${base.date}`));
+    // Health Connect is checked first, as on the backend, so two faults read the same there and here.
     const health = healthIds.map((hid) => {
       const session = sessions().find((s) => s.id === hid && s.date === base.date)
-        || fail(400, `No Health Connect exercise session ${hid} on ${base.date}`);
-      if (session.duplicateOfStrava) fail(400, `Health Connect session ${hid} is the same as a Strava activity of that day`);
+        || fail(400, `A Health Connect session in the list isn't from ${base.date}`);
+      if (session.duplicateOfStrava) fail(400, 'That Health Connect session is the same as a Strava activity of that day');
       return session;
     });
+    const acts = activityIds.map((aid) => activities().find((a) => String(a.id) === aid && a.date === base.date)
+      || fail(400, `A Strava activity in the list isn't from ${base.date}`));
 
     // Everything checked out; only now does anything change.
     const lost = new Set();
@@ -131,6 +136,8 @@ export function createLinkStore({ activities, sessions, findWorkout, fail }) {
     if (action === 'move_tomorrow') return { workout: { ...current(base), status: 'moved' } };
     const status = ACTION_STATUS[action] || fail(400, 'Unknown action');
     mark(id, { status, statusSource: action === 'undo_status' ? null : 'user' });
+    // An undone mark hands the status back to the links: what is linked decides again, at once.
+    if (action === 'undo_status') recompute(id);
     return { workout: current(base) };
   }
 

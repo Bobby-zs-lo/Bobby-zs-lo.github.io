@@ -61,8 +61,9 @@ export async function render(el, ctx, { quiet = false } = {}) {
   const id = (ctx.rest && ctx.rest[0]) || '';
   if (!id) { mount(el, html`<p class="state">No session chosen.</p>`); return; }
   if (!quiet) loading(el, 'Loading session');
-  // ?link=1 opens the editor once. Every redraw from this page goes without it, and so does the
-  // address once the editor has closed, or a reload would open it again.
+  // ?link=1 opens the editor once. Every redraw from this page goes without it, and the address
+  // loses it as soon as no editor is open (closed, saved, a status marked, or never there: a rest
+  // day, a day with nothing recorded), or a reload would open one out of nowhere.
   const wantsEditor = ctx.params.link === '1';
   const again = { ...ctx, params: { ...ctx.params, link: undefined } };
   const forgetLinkParam = () => {
@@ -129,12 +130,13 @@ export async function render(el, ctx, { quiet = false } = {}) {
         await api.post(`/api/workouts/${encodeURIComponent(id)}/action`, { action });
         toast(ACTION_DONE[action] || 'Saved', { kind: 'ok' });
         await getPlan({ force: true });
+        forgetLinkParam();
         render(el, again);
       } catch (ex) { toast(ex.message, { kind: 'error' }); }
     }));
   });
 
-  wireActual(el, {
+  const editing = wireActual(el, {
     workout: w, day, open: wantsEditor, onClosed: forgetLinkParam,
     onSaved: async () => {
       forgetLinkParam();
@@ -146,4 +148,5 @@ export async function render(el, ctx, { quiet = false } = {}) {
       if (opener) opener.focus();
     },
   });
+  if (!editing) forgetLinkParam();
 }

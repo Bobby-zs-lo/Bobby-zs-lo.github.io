@@ -132,9 +132,12 @@ session that counts for another workout of the day says so, and ticking it moves
 the complete set, `PUT /api/workouts/:id/links { activityIds: string[], healthIds: string[] }`
 (at most ten of each), then reads the week and the plan again: the status follows the links (done
 at 80 % of the plan, else partial, planned with nothing linked) unless it was set by hand. Links
-are same-day only; a session run on another day is handled by moving the workout first.
+are same-day only; a session run on another day is handled by moving the workout first. A rest
+day has nothing to link and gets no editor. When the server refuses a save, its message is shown
+in the editor, which stays open with the ticks as they were.
 
-`#/workout/<id>?link=1` opens the editor straight away. Today links there from each card (*Change*
+`#/workout/<id>?link=1` opens the editor straight away, and the address drops `?link=1` as soon as
+no editor is open (closed, saved, or never there). Today links there from each card (*Change*
 beside what counts, or *Link a recorded session →* when nothing counts but a session of the
 workout's own sport was recorded, so the ride to work does not prompt on a planned run), and so
 does the Activity page (*Change*, or *Link it to …* for each session planned that day). Today, Week
@@ -168,8 +171,17 @@ dropped in the Øresund east of the fictional home answers 502 as OpenRouteServi
 endpoint, with the backend's rules and messages, is `tests/mock-links.mjs`, and what it changes
 lasts as long as that mock) on the
 invented data in `tests/fixtures/` (rebuild with
-`node running/tests/fixtures/build-fixtures.mjs`), and saves screenshots. Playwright is not a
-dependency of this repo. Install it somewhere else, and point `CHROMIUM_PATH` at its Chromium
+`node running/tests/fixtures/build-fixtures.mjs`), and saves screenshots. Its steps for linking
+recorded sessions live in `tests/smoke-links.playwright.mjs`, which the one command runs too.
+
+The live API must never be asked for anything by a test. Two things see to that: every request
+to its origin is answered by the mock, and the browser is started with a resolver rule under which
+the API's host does not resolve at all. The second is there because the first can be undone by
+accident: Playwright sends a request that is in flight on to the network when the handler holding
+it is removed (`unroute`), so a test that stands in front of the mock steps aside with
+`route.fallback()` and never removes its handler.
+
+Playwright is not a dependency of this repo. Install it somewhere else, and point `CHROMIUM_PATH` at its Chromium
 unless that is at `/opt/pw-browsers/chromium`. On Windows, for instance:
 
 ```sh

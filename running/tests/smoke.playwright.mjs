@@ -22,6 +22,7 @@ import { API_BASE, APP_VERSION } from '../js/config.js';
 import { formatDistance } from '../js/format.js';
 import { decodePolyline } from '../js/polyline.js';
 import { createMockApi, MOCK_TOKENS } from './mock-api.mjs';
+import { linkSteps } from './smoke-links.playwright.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = join(HERE, '..', '..');
@@ -136,7 +137,11 @@ async function step(name, fn) {
 // ── run ─────────────────────────────────────────────────────────────────────
 const { chromium } = await loadPlaywright();
 const executablePath = process.env.CHROMIUM_PATH || (existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : undefined);
-const browser = await chromium.launch({ executablePath });
+// A backstop under the route handlers further down: in this browser the live API's host does not
+// resolve. A request that slips past the handlers (Playwright lets one out to the network when its
+// handler is removed while it is in flight) then fails by name instead of reaching the backend.
+const LIVE_API_UNREACHABLE = `--host-resolver-rules=MAP ${new URL(API_BASE).hostname} ~NOTFOUND`;
+const browser = await chromium.launch({ executablePath, args: [LIVE_API_UNREACHABLE] });
 const srv = await serve();
 const ORIGIN = `http://127.0.0.1:${srv.address().port}`;
 const APP = `${ORIGIN}/running/`;
@@ -695,59 +700,8 @@ try {
     await ctx.close();
   });
 
-  await step('phone (390 px): choose which recorded session counts for a workout; the status and Today follow', async () => {
-    const { ctx, page, log, errors } = await newPage();
-    const RUN = 'w-2026-10-13-run', MORNING = '15800000002', WARM_UP = '15800000004';
-    const box = id => `input[name=session][value="activity:${id}"]`;
-    const counted = () => page.$$eval('.actual-rows .activity-name', els => els.map(e => e.textContent.trim()));
-    const fits = async what => {
-      const o = await overflow(page);
-      assert.ok(o.scrollW <= o.W && o.bad.length === 0, `${what} overflows: ${JSON.stringify(o)}`);
-    };
-    await go(page, `workout/${RUN}`);
-    assert.deepEqual(await counted(), ['Morning Run'], 'the fixture matched the session, not the warm-up before it');
-    assert.match(await page.textContent('.kv .chip'), /Done/);
-
-    // Change: every session of the day, the matched one ticked, the Health Connect copy of it not tickable.
-    await page.click('[data-link-open]');
-    await page.waitForSelector('[data-link-form]:not([hidden])');
-    assert.equal(await page.locator('input[name=session]').count(), 4);
-    assert.deepEqual([await page.isChecked(box(MORNING)), await page.isChecked(box(WARM_UP))], [true, false]);
-    assert.match(await page.textContent('.link-opt:has(input:disabled)'), /Health Connect[\s\S]*Same as the Strava activity/);
-    assert.equal(await page.evaluate(() => document.activeElement.name), 'session', 'focus moved into the editor');
-    await page.locator('[data-actual]').scrollIntoViewIfNeeded();
-    await fits('the link editor');
-    await page.screenshot({ path: join(SHOTS, 'phone-links-editor.png') });
-
-    await page.uncheck(box(MORNING));
-    await page.check(box(WARM_UP));
-    await page.click('[data-link-form] button[type=submit]');
-    await page.waitForSelector('.toast--ok');
-    assert.match(await page.textContent('.toast--ok'), /Sessions updated/);
-    const put = log.find(l => l.method === 'PUT');
-    assert.equal(put.path, `/api/workouts/${RUN}/links`);
-    assert.deepEqual(put.body, { activityIds: [WARM_UP], healthIds: [] });
-    // The page redraws in place: the warm-up is what was done, 1.2 km of 5 is Partial, focus is back on Change.
-    await page.waitForFunction(() => document.activeElement.matches('[data-link-open]') && document.querySelector('[data-link-form]').hidden);
-    assert.deepEqual(await counted(), ['Warm-up jog']);
-    assert.match(await page.textContent('[data-actual] .help'), /3\.8 km short of the plan\./);
-    assert.match(await page.textContent('.kv .chip'), /Partial/);
-    await fits('the session page');
-    await page.screenshot({ path: join(SHOTS, 'phone-links-saved.png') });
-
-    // Today shows the same: the warm-up on the card with a way to change it, the run under "Also today".
-    await page.goto(`${APP}#/today`);
-    await page.waitForSelector('.workout-title');
-    const card = page.locator('.workout', { hasText: 'Easy run' });
-    assert.match(await card.locator('.chip').textContent(), /Partial/);
-    assert.deepEqual(await card.locator('.matched .activity-name').allTextContents(), ['Warm-up jog']);
-    assert.equal(await card.locator('.matched-head a').getAttribute('href'), `#/workout/${RUN}?link=1`);
-    assert.match(await page.locator('.card', { hasText: 'Also today' }).textContent(), /Morning Run[\s\S]*Commute to Rigshospitalet/);
-    await fits('Today');
-    await page.screenshot({ path: join(SHOTS, 'phone-links-today.png') });
-    assert.deepEqual(errors, []);
-    await ctx.close();
-  });
+  // Which recorded sessions count for a workout: four steps of their own (tests/smoke-links.playwright.mjs).
+  await linkSteps({ step, newPage, go, overflow, APP, SHOTS });
 
   await step('phone (390 px): Routes (in the tab bar) and Overview (not) render without overflow', async () => {
     const { ctx, page, errors } = await newPage();

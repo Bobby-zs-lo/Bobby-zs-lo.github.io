@@ -254,20 +254,32 @@ function sessionsOn(plan, date) {
   return ((plan && plan.weeks) || []).flatMap(wk => wk.workouts || []).filter(x => x.date === date && x.sport !== 'rest');
 }
 
+/**
+ * An unmatched activity offers the sessions planned for its day. They come from the plan, which
+ * the page never waits for: the offer is filled in when (and if) the plan arrives.
+ */
+async function offerLinks(el, date, state, ctx) {
+  const host = el.querySelector('[data-link-offers]');
+  if (!host) return;
+  let plan;
+  try { plan = await getPlan(); } catch { return; } // no plan, no offer: the page says all it knows without one
+  const sessions = sessionsOn(plan, date);
+  if (state.disposed || !ctx.isCurrent() || !sessions.length) return;
+  mount(host, sessions.map(x => html`<p><a class="link" href="${linkHref(x.id)}">Link it to ${x.title} →</a></p>`));
+  host.hidden = false;
+}
+
 export async function render(el, ctx) {
   const id = (ctx.rest && ctx.rest[0]) || '';
   if (!id) { mount(el, html`<p class="state">No activity chosen.</p>`); return; }
   loading(el, 'Loading activity');
 
-  let data, plan;
-  try {
-    // The plan only feeds the offer to link an unmatched activity; the page stands without it.
-    [data, plan] = await Promise.all([api.get(`/api/activities/${encodeURIComponent(id)}`), getPlan().catch(() => null)]);
-  } catch (e) { if (ctx.isCurrent()) errorState(el, e, () => render(el, ctx)); return; }
+  let data;
+  try { data = await api.get(`/api/activities/${encodeURIComponent(id)}`); }
+  catch (e) { if (ctx.isCurrent()) errorState(el, e, () => render(el, ctx)); return; }
   if (!ctx.isCurrent()) return;
 
   const { activity: a, workout: w, paces } = data;
-  const linkable = w ? [] : sessionsOn(plan, a.date);
   const range = w ? paceRange(paces, w.paceKey) : null;
   const lo = range && paces[w.paceKey] ? parsePace(paces[w.paceKey].min) : null;
   const hi = range && paces[w.paceKey] ? parsePace(paces[w.paceKey].max) : null;
@@ -307,7 +319,7 @@ export async function render(el, ctx) {
           onTarget != null && splits.length ? ` · ${onTarget} of ${splits.length} kilometres inside the window` : ''}</p>` : ''}
       </section>` : html`<section class="card banner banner--quiet act-match">
         <p>Not matched to a planned session. It still counts as load the weekly review can take into account.</p>
-        ${linkable.map(x => html`<p><a class="link" href="${linkHref(x.id)}">Link it to ${x.title} →</a></p>`)}
+        <div data-link-offers hidden></div>
       </section>`}
 
       ${splits.length ? html`<section class="act-splits" aria-labelledby="sp-h">
@@ -326,6 +338,7 @@ export async function render(el, ctx) {
   const state = { disposed: false, map: null, streams: null, chartWidth: 0, observer: null };
   bindStreams(el.querySelector('[data-streams-host]'), id, state, ctx);
   if (hasRoute) showRoute(el, route, state, ctx);
+  offerLinks(el, a.date, state, ctx);
 
   // The router calls this on navigation. Leaflet may still be loading by then: showRoute checks
   // state.disposed after it resolves and destroys the map it just built.

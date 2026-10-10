@@ -274,7 +274,6 @@ a.activity:hover .activity-name { color: var(--accent); }
 .actual .section-head { min-height: var(--touch); }         /* the head keeps its height when Change is hidden */
 .actual-view > * + * { margin-top: 10px; }
 .link-editor > * + * { margin-top: 14px; }
-.link-editor .form-error { overflow-wrap: anywhere; }       /* the server names a session by its 64-character id */
 .link-set > legend { padding: 0; font-weight: 600; font-size: 15px; color: var(--ink); }
 .link-list { display: grid; gap: 8px; margin-top: 12px; }
 .link-opt {

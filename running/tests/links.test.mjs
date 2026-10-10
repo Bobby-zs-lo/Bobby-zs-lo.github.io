@@ -3,8 +3,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  MAX_LINKS, healthSessions, hasRecorded, linkedSessions, linkedTotals, comparisonLine, sessionStats,
-  linkCandidates, initialSelection, linksBody, linksError, hasUnlinkedMatch,
+  MAX_LINKS, healthSessions, canLink, linkedSessions, linkedTotals, comparisonLine, sessionStats,
+  linkCandidates, linksBody, linksError, hasUnlinkedMatch,
 } from '../js/links.js';
 
 const RUN = 'w-2026-10-13-run', CORE = 'w-2026-10-13-strength';
@@ -40,12 +40,20 @@ test('health sessions: by start time, and only those the backend gave an id', ()
   assert.deepEqual(healthSessions(undefined), []);
 });
 
-test('hasRecorded: any Strava activity or Health Connect session of the day', () => {
-  assert.equal(hasRecorded(makeDay()), true);
-  assert.equal(hasRecorded(healthOnly()), true);
-  assert.equal(hasRecorded(makeDay({ activities: [], health: null })), false);
-  assert.equal(hasRecorded(makeDay({ activities: [], health: { exercise: [] } })), false);
-  assert.equal(hasRecorded(null), false);
+test('canLink: a session can be given what was recorded on its day, a Strava activity or a Health Connect session', () => {
+  const [run, core] = workouts();
+  assert.equal(canLink(run, makeDay()), true);
+  assert.equal(canLink(core, makeDay()), true, 'whatever its sport');
+  assert.equal(canLink(run, healthOnly()), true);
+  assert.equal(canLink(run, makeDay({ activities: [], health: null })), false, 'nothing recorded, nothing to choose from');
+  assert.equal(canLink(run, makeDay({ activities: [], health: { exercise: [] } })), false);
+  assert.equal(canLink(run, null), false, 'the week could not be read');
+});
+
+test('canLink: a rest day has nothing to link, whatever was recorded', () => {
+  const rest = { id: 'w-rest', date: '2026-10-13', sport: 'rest', title: 'Rest' };
+  assert.equal(canLink(rest, makeDay()), false);
+  assert.equal(canLink(rest, healthOnly()), false);
 });
 
 // ── what counts for a workout ───────────────────────────────────────────────
@@ -122,13 +130,12 @@ test('candidates: an activity without a name goes by its sport type', () => {
   assert.equal(linkCandidates(day, RUN).find(c => c.id === String(MORNING)).name, 'Run');
 });
 
-test('candidates: what is linked now is ticked, and that is the initial selection', () => {
+test('candidates: what is linked now is ticked', () => {
   const day = makeDay();
   day.health.exercise.find(s => s.id === 'hc-walk').workoutId = RUN;
   const list = linkCandidates(day, RUN);
   assert.deepEqual(list.filter(c => c.linked).map(c => c.key), ['activity:902', 'health:hc-walk']);
-  assert.deepEqual(initialSelection(list), ['activity:902', 'health:hc-walk']);
-  assert.deepEqual(initialSelection(linkCandidates(day, CORE)), []);
+  assert.deepEqual(linkCandidates(day, CORE).filter(c => c.linked), []);
 });
 
 test('candidates: a Health Connect copy of a Strava activity cannot be ticked', () => {
@@ -136,7 +143,7 @@ test('candidates: a Health Connect copy of a Strava activity cannot be ticked', 
   day.health.exercise.find(s => s.id === 'hc-copy').workoutId = RUN; // must not happen; never trust it
   const copy = linkCandidates(day, RUN).find(c => c.key === 'health:hc-copy');
   assert.deepEqual([copy.disabled, copy.linked, copy.note], [true, false, 'Same as the Strava activity']);
-  assert.deepEqual(initialSelection(linkCandidates(day, RUN)), ['activity:902']);
+  assert.deepEqual(linkCandidates(day, RUN).filter(c => c.linked).map(c => c.key), ['activity:902']);
   assert.ok(linkCandidates(day, RUN).filter(c => c.key !== 'health:hc-copy').every(c => !c.disabled));
 });
 
