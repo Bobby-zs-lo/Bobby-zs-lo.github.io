@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Math Invaders — Retro Math Arcade</title>
+  <meta name="description" content="Math Invaders — An educational retro Space Invaders arcade game for kids across Grades 1 through 10.">
+  <meta name="theme-color" content="#070a18">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Lexend:wght@400;500;600;700;800;900&family=Orbitron:wght@500;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <script type="module" crossorigin src="./assets/index-FXXOzKXF.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-emPrU6i5.css">
+</head>
+<body>
+  <div id="app" class="arcade-container">
+    <!-- Top Header Bar -->
+    <header id="top-bar" class="arcade-bar">
+      <div class="profile-badge" id="btn-profile-badge" title="Switch or edit player profile">
+        <span class="avatar-icon" id="header-avatar">🚀</span>
+        <span class="player-name" id="header-player-name">Select Pilot</span>
+        <span class="grade-badge" id="header-grade-tag">Grade 2</span>
+      </div>
+
+      <div class="economy-display">
+        <div class="currency-pill coins" title="Coins earned">
+          <span class="curr-icon">🪙</span>
+          <span id="header-coins">0</span>
+        </div>
+        <div class="currency-pill diamonds" title="Diamonds earned">
+          <span class="curr-icon">💎</span>
+          <span id="header-diamonds">0</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button id="btn-audio-toggle" class="icon-btn" title="Toggle Sound / Music">🔊</button>
+        <button id="btn-switch-profile" class="icon-btn" title="Switch Kid Profile">👥 Profiles</button>
+        <button id="btn-hangar" class="icon-btn hangar-btn" title="Ship Hangar & Upgrades">🛸 Hangar</button>
+        <button id="btn-parent-report" class="icon-btn parent-btn" title="Parent Math Analytics">📊 Report</button>
+      </div>
+    </header>
+
+    <!-- Main Dynamic Screen Container -->
+    <main id="screen-container">
+      <!-- 1. Profile Gateway View (Shown on startup or when switching) -->
+      <section id="view-profile-select" class="screen-view">
+        <div id="profile-select-mount" class="gateway-wrapper"></div>
+      </section>
+
+      <!-- 2. Star Map View (Candy Crush Style) -->
+      <section id="view-star-map" class="screen-view hidden">
+        <div id="star-map-mount" class="star-map-wrapper"></div>
+      </section>
+
+      <!-- 3. Active Game Arena View -->
+      <section id="view-game-arena" class="screen-view hidden">
+        <div class="arena-layout">
+          <!-- Main Combat Arena -->
+          <div class="combat-column">
+            <div class="canvas-box">
+              <canvas id="game-canvas"></canvas>
+
+              <!-- In-Game HUD overlay -->
+              <div id="game-hud" class="hud-layer">
+                <div class="hud-left">
+                  <div class="lives-indicator" id="hud-lives">
+                    <span class="shield-heart">🛡️</span>
+                    <span class="shield-heart">🛡️</span>
+                    <span class="shield-heart">🛡️</span>
+                  </div>
+                  <div class="score-display">
+                    <span class="hud-label">SCORE:</span>
+                    <span id="hud-score" class="hud-val">0</span>
+                  </div>
+                </div>
+
+                <div class="hud-center">
+                  <span id="hud-stage-name" class="stage-tag">SECTOR 1 — STAGE 1</span>
+                  <div class="wave-progress-bar">
+                    <div id="hud-wave-fill" class="wave-fill" style="width: 0%;"></div>
+                  </div>
+                </div>
+
+                <div class="hud-right">
+                  <button id="btn-toggle-upgrade-panel" class="tactical-upgrade-btn" title="Toggle Ship Upgrade Panel (Aliens keep descending!)">
+                    <span class="upgrade-icon">⚡</span>
+                    <span class="upgrade-txt">UPGRADE (0/1)</span>
+                  </button>
+                  <button id="btn-adult-speed" class="icon-btn speed-toggle-btn" title="Adult Alien Descent Speed Control">
+                    <span class="speed-icon">⏳</span>
+                    <span id="hud-speed-badge" class="speed-badge-txt">1.0x</span>
+                  </button>
+                  <button id="btn-pause-game" class="icon-btn pause-btn" title="Pause Game">⏸️</button>
+                  <button id="btn-exit-to-map" class="icon-btn exit-btn" title="Return to Star Map">🗺️ Map</button>
+                </div>
+              </div>
+
+              <!-- Adult In-Game Speed Control Flyout Panel -->
+              <div id="in-game-speed-panel" class="speed-control-panel hidden">
+                <div class="speed-panel-header">
+                  <span class="speed-panel-title">⚡ ALIEN DESCENT SPEED</span>
+                  <button id="btn-close-speed-panel" class="speed-panel-close-btn" title="Close Speed Panel">✕</button>
+                </div>
+                <div class="speed-panel-body">
+                  <div class="speed-display-row">
+                    <span class="speed-label">Speed Multiplier:</span>
+                    <span id="speed-display-val" class="speed-value-badge">1.0x</span>
+                  </div>
+                  <input id="in-game-speed-slider" class="speed-range-slider" type="range" min="0.2" max="2.0" step="0.1" value="1.0" />
+                  <div class="speed-range-labels">
+                    <span>0.2x (Super Slow)</span>
+                    <span>1.0x (Normal)</span>
+                    <span>2.0x (Fast)</span>
+                  </div>
+                  <div class="speed-presets-row">
+                    <button class="speed-preset-btn" data-speed="0.4">0.4x Slow</button>
+                    <button class="speed-preset-btn" data-speed="0.7">0.7x Gentle</button>
+                    <button class="speed-preset-btn active" data-speed="1.0">1.0x Normal</button>
+                    <button class="speed-preset-btn" data-speed="1.5">1.5x Fast</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- In-Game Pause Modal Overlay -->
+              <div id="in-game-pause-modal" class="pause-overlay-modal hidden">
+                <div class="pause-modal-card">
+                  <div class="pause-card-header">
+                    <span class="pause-title">⏸️ GAME PAUSED</span>
+                  </div>
+                  <div class="pause-card-body">
+                    <p class="pause-desc">Take a breath! Adults can adjust the alien descent speed here:</p>
+                    <div class="pause-speed-box">
+                      <div class="speed-display-row">
+                        <span class="speed-label">Alien Descent Speed:</span>
+                        <span id="pause-speed-display-val" class="speed-value-badge">1.0x</span>
+                      </div>
+                      <input id="pause-speed-slider" class="speed-range-slider" type="range" min="0.2" max="2.0" step="0.1" value="1.0" />
+                      <div class="speed-presets-row">
+                        <button class="speed-preset-btn pause-preset" data-speed="0.4">0.4x Slow</button>
+                        <button class="speed-preset-btn pause-preset" data-speed="0.7">0.7x Gentle</button>
+                        <button class="speed-preset-btn pause-preset" data-speed="1.0">1.0x Normal</button>
+                        <button class="speed-preset-btn pause-preset" data-speed="1.5">1.5x Fast</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="pause-card-actions">
+                    <button id="btn-resume-game" class="primary-btn pause-resume-btn">▶️ RESUME GAME</button>
+                    <button id="btn-pause-return-map" class="secondary-btn pause-map-btn">🗺️ RETURN TO MAP</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Canvas On-Screen Lane Overlay Hints -->
+              <div class="canvas-lane-click-hints">
+                <div class="lane-click-col" data-lane="0"><span>LANE 1</span></div>
+                <div class="lane-click-col" data-lane="1"><span>LANE 2</span></div>
+                <div class="lane-click-col active" data-lane="2"><span>LANE 3</span></div>
+                <div class="lane-click-col" data-lane="3"><span>LANE 4</span></div>
+                <div class="lane-click-col" data-lane="4"><span>LANE 5</span></div>
+              </div>
+            </div>
+
+            <!-- Bottom Tactical Lane & Math Bar -->
+            <div id="math-hud-layer" class="math-hud-overlay">
+              <!-- 5 Lane Selector Buttons -->
+              <div class="lane-selector-bar">
+                <button class="lane-btn" data-lane="0"><span class="k-hint">[1]</span><span>LANE 1</span><div class="lane-indicator-dot"></div></button>
+                <button class="lane-btn" data-lane="1"><span class="k-hint">[2]</span><span>LANE 2</span><div class="lane-indicator-dot"></div></button>
+                <button class="lane-btn active" data-lane="2"><span class="k-hint">[3]</span><span>LANE 3</span><div class="lane-indicator-dot"></div></button>
+                <button class="lane-btn" data-lane="3"><span class="k-hint">[4]</span><span>LANE 4</span><div class="lane-indicator-dot"></div></button>
+                <button class="lane-btn" data-lane="4"><span class="k-hint">[5]</span><span>LANE 5</span><div class="lane-indicator-dot"></div></button>
+              </div>
+
+              <!-- Active Math Prompt & Input Card -->
+              <div id="math-card" class="math-card">
+                <div class="math-prompt-row">
+                  <span class="target-lane-tag" id="math-lane-tag">TARGET: LANE 3</span>
+                  <div class="equation-container">
+                    <span id="math-question" class="equation-text">4 + 5 = </span>
+                    <span id="math-input-display" class="input-display blink-cursor">?</span>
+                  </div>
+                  <div id="math-feedback" class="feedback-msg"></div>
+                </div>
+
+                <!-- Kid-Friendly Virtual Numpad (Manual Entry Mode) -->
+                <div id="virtual-numpad" class="numpad-grid">
+                  <button class="num-key" data-val="1">1</button>
+                  <button class="num-key" data-val="2">2</button>
+                  <button class="num-key" data-val="3">3</button>
+                  <button class="num-key" data-val="4">4</button>
+                  <button class="num-key" data-val="5">5</button>
+                  <button class="num-key" data-val="6">6</button>
+                  <button class="num-key action-key clear-key" data-action="backspace">⌫</button>
+                  <button class="num-key" data-val="7">7</button>
+                  <button class="num-key" data-val="8">8</button>
+                  <button class="num-key" data-val="9">9</button>
+                  <button class="num-key" data-val="0">0</button>
+                  <button class="num-key action-key sign-key" data-action="neg">(-)</button>
+                  <button class="num-key action-key submit-key" data-action="submit">FIRE 🚀</button>
+                </div>
+
+                <!-- 5 Multiple Choice Options Grid (Multiple Choice Mode) -->
+                <div id="multiple-choice-container" class="multiple-choice-grid hidden"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Non-Blocking In-Game Upgrade Side Panel (Aliens continue descending!) -->
+          <aside id="upgrade-side-panel" class="upgrade-side-drawer closed">
+            <div class="drawer-header">
+              <span class="drawer-title">⚡ SHIP UPGRADE</span>
+              <button id="btn-minimize-upgrade" class="drawer-toggle-btn" title="Toggle Upgrade Panel">◀</button>
+            </div>
+            
+            <div class="drawer-content">
+              <div class="upgrade-status-box">
+                <div class="tier-label" id="side-tier-label">Tier 1: Starter Scout</div>
+                <div class="next-tier-label" id="side-next-tier-label">Next: Tier 2 Dual-Wing Hunter</div>
+                <div class="progress-track">
+                  <div class="progress-fill" id="side-upgrade-progress-fill" style="width: 0%;"></div>
+                </div>
+                <div class="progress-caption" id="side-upgrade-caption">0 / 1 Problems Solved</div>
+              </div>
+
+              <div id="side-problem-box" class="upgrade-problem-box">
+                <span class="upg-inst">Solve when you have a spare second:</span>
+                <div class="upg-math-row">
+                  <span id="side-upg-question" class="upg-equation">3 + 4 = </span>
+                  <span id="side-upg-input" class="upg-input">?</span>
+                </div>
+                <div id="side-upg-feedback" class="upg-feedback"></div>
+
+                <!-- Mini Numpad for Upgrade Panel -->
+                <div class="mini-numpad-grid" id="side-mini-numpad">
+                  <button class="mini-key upg-digit" data-v="1">1</button>
+                  <button class="mini-key upg-digit" data-v="2">2</button>
+                  <button class="mini-key upg-digit" data-v="3">3</button>
+                  <button class="mini-key upg-digit" data-v="4">4</button>
+                  <button class="mini-key upg-digit" data-v="5">5</button>
+                  <button class="mini-key upg-digit" data-v="6">6</button>
+                  <button class="mini-key upg-digit" data-v="7">7</button>
+                  <button class="mini-key upg-digit" data-v="8">8</button>
+                  <button class="mini-key upg-digit" data-v="9">9</button>
+                  <button class="mini-key sign-mini-key" id="btn-upg-neg">(-)</button>
+                  <button class="mini-key upg-digit" data-v="0">0</button>
+                  <button class="mini-key clear-mini-key" id="btn-upg-clear">⌫</button>
+                  <button class="mini-key submit-mini-key" id="btn-upg-submit" style="grid-column: span 3;">⚡ BUFF</button>
+                </div>
+
+                <!-- 5 Multiple Choice Options for Upgrade Drawer -->
+                <div id="side-upg-multiple-choice" class="upg-multiple-choice-grid hidden"></div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <!-- Global Modals Container -->
+    <div id="modals-root"></div>
+  </div>
+
+</body>
+</html>
