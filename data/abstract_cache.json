@@ -1015,7 +1015,7 @@
     "abstract": "GastroHep is a journal published by Wiley. It is an international, peer reviewed, quality publication focusing on current and cutting edge research in academic and clinical gastroenterology and hepatology.",
     "abstract_source": "openalex",
     "doi": "10.1002/ygh2.v1.6",
-    "last_verified_at": "2026-09-11T07:07:07.040668+00:00",
+    "last_verified_at": "2026-10-11T08:27:57.534240+00:00",
     "mesh_terms": [],
     "openalex_concepts": [
       "Inflammatory bowel disease",
@@ -1953,5 +1953,38 @@
     "summary": "An AI system tested for measuring bowel wall thickness on intestinal ultrasound scans of inflammatory bowel disease patients produced measurements that closely matched those of medical experts.",
     "summary_generated_at": "2026-08-01T05:32:57.597557+00:00",
     "summary_model": "gemini-3.5-flash"
+  },
+  "https://openalex.org/W7221182453": {
+    "abstract": "ABSTRACT Background and Aims Ulcerative colitis (UC) is a chronic inflammatory bowel disease with a relapsing course and significant morbidity. In outpatients with moderate‐to‐severe UC assessment of treatment response is often delayed, limiting timely treatment optimisation. Intestinal ultrasonography (IUS) is a noninvasive point‐of‐care modality with high correlation to endoscopic activity. Early changes in bowel wall thickness (BWT) may predict treatment response in hospitalised patients with acute severe UC, but prospective validation in the outpatient setting is lacking. This study aims to evaluate whether early changes in IUS parameters, particularly BWT, can predict treatment response and the need for treatment escalation in outpatients initiating systemic corticosteroids, biologics or small molecules. Methods This is a prospective, nonrandomised, double‐blinded and multicentre study conducted across seven Nordic inflammatory bowel disease centres. Outpatients with moderate‐to‐severe UC extending beyond the rectum, initiating systemic corticosteroids or advanced therapy, will be included. IUS will be performed at baseline and repeated at day 2 ± 1, day 7 ± 1, day 90 ± 14 and at week 52 ± 4 using standardised protocols and evaluated by central reading. Clinical indices, biomarkers, endoscopy and patient‐reported outcomes will be collected and correlated with IUS longitudinally. The primary endpoint is the association between early changes in BWT on days 2 and 7 and treatment escalation at 3 and 12 months. Secondary and exploratory endpoints include remission outcomes, time to response, quality of life and integration of multiomics data. Results Results are pending; recruitment is planned from March 2026 to February 2028. Discussion This multicentre double‐blinded study will prospectively evaluate early IUS as a noninvasive predictor of treatment response in outpatients with moderate‐to‐severe UC. The design enables rapid point‐of‐care assessment of therapeutic efficacy and results will allow for an individualised, dynamic and treat‐to‐target management approach. Key strengths include standardised IUS protocols, blinded evaluations, integration of endoscopic, biochemical and multiomics data, and the creation of an image repository that enables future artificial intelligence applications. Limitations of this study includes the observational design, causal inferences cannot be established and residual confounding may persist despite multivariable adjustment; additionally, treatment heterogeneity, including concomitant corticosteroid use, may complicate interpretation of early imaging changes. Furthermore, exclusion of patients with isolated proctitis and the exploratory nature of the omics analyses may limit generalisability and require external validation. Trial Registration Clinicaltrials.gov. EU CT number: 2026‐527929‐35‐00",
+    "abstract_source": "openalex",
+    "doi": "10.1002/jcc5.70093",
+    "last_verified_at": null,
+    "mesh_terms": [],
+    "openalex_concepts": [
+      "Medicine",
+      "Ulcerative colitis",
+      "Internal medicine",
+      "Inflammatory bowel disease",
+      "Clinical endpoint",
+      "Prospective cohort study",
+      "Quality of life (healthcare)",
+      "Disease",
+      "Severity of illness",
+      "Endoscopy",
+      "Outpatient clinic",
+      "Clinical trial",
+      "Colonoscopy",
+      "Gastroenterology",
+      "Clinical Practice",
+      "Vedolizumab",
+      "Ultrasonography",
+      "Regimen",
+      "Crohn's disease",
+      "Surrogate endpoint"
+    ],
+    "pmid": null,
+    "summary": null,
+    "summary_generated_at": null,
+    "summary_model": null
   }
 }
