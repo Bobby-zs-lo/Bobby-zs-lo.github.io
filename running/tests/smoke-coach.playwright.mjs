@@ -133,6 +133,15 @@ export async function coachSteps({ step, newPage, go, overflow, SHOTS }) {
     assert.equal(await count(page, '.goal-form'), 0);
     await page.waitForFunction(() => document.activeElement.matches('[data-goal-new]'));
 
+    // A dated goal with a distance changes what the plan should be: the card says so and offers the rebuild.
+    assert.match(await page.textContent('.goal-stale'), /Your goals have changed since this plan was built/);
+    assert.match(await page.locator('.goal', { hasText: '10 km under 50:00' }).locator('.goal-outlook').textContent(), /^Your 5K predicts \d+:\d\d\. The target needs a 5K near/);
+    page.once('dialog', d => d.accept());
+    await page.click('[data-plan-rebuild]');
+    await page.waitForFunction(() => !document.querySelector('.goal-stale'));
+    assert.equal(posts(log, '/api/plan/rebuild').length, 1);
+    assert.match(await page.locator('.goal', { hasText: 'Halvmaraton' }).locator('.goal-outlook').textContent(), /Your 5K predicts 1:\d\d:\d\d\. The target needs a 5K near/);
+
     // The marathon gets a target time; its name and date are not for this form.
     await page.click('[data-goal-edit="main"]');
     assert.equal(await count(page, '#g-title'), 0);

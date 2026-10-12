@@ -144,6 +144,32 @@ export function goalFacts(goal, today) {
   ].filter(Boolean).join(' · ');
 }
 
+const VERDICTS = {
+  ahead: 'your 5K already points past it',
+  within_reach: 'within reach',
+  ambitious: 'ambitious',
+  beyond: 'well ahead of your current fitness, so race pace is set to what is within reach for now',
+};
+
+/**
+ * How a goal looks from the current 5K time, in a sentence. `event` is the plan's own record of the
+ * goal (GET /api/coach → plan.events): predictedSeconds, and with a target requiredFiveKSeconds and
+ * a verdict. '' when the plan does not hold the goal.
+ */
+export function outlookLine(event) {
+  if (!event || !event.predictedSeconds) return '';
+  const predicts = `Your 5K predicts ${formatMmSs(event.predictedSeconds)}`;
+  if (!event.targetSeconds || !event.verdict) return `${predicts}.`;
+  return `${predicts}. The target needs a 5K near ${formatMmSs(event.requiredFiveKSeconds)}: ${VERDICTS[event.verdict] || event.verdict}.`;
+}
+
+const NOT_IN_PLAN = {
+  after_main_race: 'Not in the plan: it comes after the main race. Ask the coach to make it the main race when you get there.',
+  no_room: 'Not in the plan: that week already holds another goal, or it falls in the taper or the first two weeks.',
+};
+/** Why a dated goal is not in the plan, from plan.notInPlan; '' when it is, or would be after a rebuild. */
+export const notInPlanLine = (goalId, notInPlan) => NOT_IN_PLAN[((notInPlan || []).find(x => x.id === goalId) || {}).reason] || '';
+
 /** Active goals by date (dated first), then the achieved and the dropped. */
 export function sortGoals(items) {
   const rank = g => (g.status === 'active' ? 0 : g.status === 'achieved' ? 1 : 2);

@@ -17,6 +17,14 @@ const NOTIFS = [
   ['coach', 'Coach replies', 'When the coach has answered a message of yours'],
 ];
 
+// The distances a plan is built for. One stored that is none of these (an 8 km race) is shown as it is.
+const DISTANCES = [[5, '5 km'], [10, '10 km'], [21.0975, 'Half marathon'], [42.195, 'Marathon']];
+const distanceOptions = km => {
+  const known = DISTANCES.some(([d]) => Math.abs(d - km) < 0.3);
+  return [...DISTANCES, ...(known || !(km > 0) ? [] : [[km, `${Math.round(km * 10) / 10} km`]])]
+    .map(([d, label]) => html`<option value="${d}"${Math.abs(d - km) < 0.3 ? raw(' selected') : ''}>${label}</option>`);
+};
+
 const homeText = home => (home ? `Home: ${formatLatLng([home.lat, home.lng])}` : 'Not set');
 
 const hourOptions = sel => Array.from({ length: 24 }, (_, h) =>
@@ -63,11 +71,15 @@ export async function render(el, ctx) {
       <h2 class="section-title">Race and fitness</h2>
       <div class="field"><label for="raceName">Race</label>
         <input id="raceName" name="raceName" type="text" maxlength="80" value="${s.raceName || ''}" required></div>
-      <div class="field"><label for="raceDate">Race date</label>
-        <input id="raceDate" name="raceDate" type="date" value="${s.raceDate || ''}" required></div>
+      <div class="field-pair">
+        <div class="field"><label for="raceDate">Race date</label>
+          <input id="raceDate" name="raceDate" type="date" value="${s.raceDate || ''}" required></div>
+        <div class="field"><label for="raceDistance">Distance</label>
+          <select id="raceDistance" name="raceDistance">${distanceOptions(s.raceDistanceKm)}</select></div>
+      </div>
       <div class="field"><label for="fiveK">Current 5K time</label>
         <input id="fiveK" name="fiveK" type="text" inputmode="numeric" placeholder="23:30" pattern="\\d{1,2}:[0-5]\\d" value="${formatMmSs(s.fiveKSeconds)}" aria-describedby="fiveK-help" class="num input--short">
-        <p class="help" id="fiveK-help">mm:ss. Type the digits and the colon fills in: 2330 gives 23:30. Sets your training paces. Changing the race or the 5K time regenerates all <strong>future</strong> weeks; past weeks and their statuses stay.</p></div>
+        <p class="help" id="fiveK-help">mm:ss. Type the digits and the colon fills in: 2330 gives 23:30. Sets your training paces. Changing the race, its distance or the 5K time regenerates all <strong>future</strong> weeks; past weeks and their statuses stay.</p></div>
       ${toggle('hasWatch', 'I have a GPS watch', 'Sessions can use pace and heart-rate targets', !!s.hasWatch)}
 
       <h2 class="section-title">Notifications</h2>
@@ -160,6 +172,8 @@ export async function render(el, ctx) {
     }
     const next = {
       raceName: form.raceName.value.trim(), raceDate: form.raceDate.value, fiveKSeconds,
+      // The option that stands for the stored distance keeps the stored figure (21.1 is "Half marathon" too).
+      raceDistanceKm: Math.abs(+form.raceDistance.value - s.raceDistanceKm) < 0.3 ? s.raceDistanceKm : +form.raceDistance.value,
       hasWatch: form.hasWatch.checked,
       notify: Object.fromEntries(NOTIFS.map(([k]) => [k, form[`notify.${k}`].checked])),
       morningHour: +form.morningHour.value, eveningHour: +form.eveningHour.value,
@@ -167,7 +181,7 @@ export async function render(el, ctx) {
     const patch = {};
     for (const [k, v] of Object.entries(next)) if (JSON.stringify(v) !== JSON.stringify(s[k])) patch[k] = v;
     if (!Object.keys(patch).length) { toast('Nothing changed'); return; }
-    const regen = ['raceName', 'raceDate', 'fiveKSeconds'].some(k => k in patch);
+    const regen = ['raceName', 'raceDate', 'raceDistanceKm', 'fiveKSeconds'].some(k => k in patch);
     if (regen && !confirm('This regenerates all future weeks of the plan from tomorrow. Past weeks stay. Continue?')) return;
     await busy(form.querySelector('button[type=submit]'), async () => {
       try {

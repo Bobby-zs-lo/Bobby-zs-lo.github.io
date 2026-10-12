@@ -6,7 +6,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   parseAbout, aboutParam, aboutLabel, aboutHref, outcomeLines, OUTCOME_TAGS, waitingState, newReplies, foldThread,
-  checkMessage, countdown, goalFacts, sortGoals, goalFromForm, parseTarget, MAX_MESSAGE_CHARS,
+  checkMessage, countdown, goalFacts, sortGoals, goalFromForm, parseTarget, outlookLine, notInPlanLine, MAX_MESSAGE_CHARS,
 } from '../js/coach.js';
 import { describeChange } from '../js/changes.js';
 import { createMockApi } from './mock-api.mjs';
@@ -62,7 +62,7 @@ test('outcome: what waits for him first, then what was done, then what could not
   };
   const lines = outcomeLines(result, lookup);
   assert.deepEqual(lines.map(l => [l.kind, l.text, l.reason]), [
-    ['proposed', 'Move the race to Sun 31 Oct 2027 (Frankfurt Marathon): every future week is rebuilt', 'You asked'],
+    ['proposed', 'Make the main race Sun 31 Oct 2027 (Frankfurt Marathon): every future week is rebuilt', 'You asked'],
     ['applied', 'Change Long run (Sat 17 Oct): 6 km', 'Easier week'],
     ['goal', 'Goal added: Half marathon, target 1:45:00', null],
     ['goal', 'Goal updated: the marathon, target 3:45:00', null],
@@ -81,7 +81,7 @@ test('outcome: what waits for him first, then what was done, then what could not
     [['waiting', 'Needs you'], ['accepted', 'Accepted'], ['declined', 'Declined'], ['proposed', 'Proposed'], ['proposed', 'Proposed']]);
   assert.deepEqual(outcomeLines(null), []);
   assert.deepEqual(outcomeLines({}), []);
-  assert.equal(describeChange({ op: 'set_race', raceDate: '2027-10-31' }), 'Move the race to Sun 31 Oct 2027: every future week is rebuilt');
+  assert.equal(describeChange({ op: 'set_race', raceDate: '2027-10-31' }), 'Make the main race Sun 31 Oct 2027: every future week is rebuilt');
 });
 
 // ── waiting ─────────────────────────────────────────────────────────────────
@@ -154,6 +154,25 @@ test('goal form: what he typed becomes what the API takes, or the field to go ba
   for (const half of ['1:4', '1:45:0', '1:75:00', '1:45:75', '0:00:05']) assert.match(parseTarget(half).error, /Type the digits only/, half);
 });
 
+test('outlook: how a goal looks from the 5K time, and why one is not in the plan', () => {
+  const event = { id: 'main', predictedSeconds: 6486, targetSeconds: 6300, requiredFiveKSeconds: 1370, verdict: 'within_reach' };
+  assert.equal(outlookLine(event), 'Your 5K predicts 1:48:06. The target needs a 5K near 22:50: within reach.');
+  assert.match(outlookLine({ ...event, verdict: 'ahead' }), /your 5K already points past it\.$/);
+  assert.match(outlookLine({ ...event, verdict: 'ambitious' }), /: ambitious\.$/);
+  assert.match(outlookLine({ ...event, verdict: 'beyond' }), /well ahead of your current fitness, so race pace is set to what is within reach for now\.$/);
+  assert.equal(outlookLine({ id: 'g', predictedSeconds: 2925, targetSeconds: null, verdict: null }), 'Your 5K predicts 48:45.');
+  assert.deepEqual([outlookLine(null), outlookLine(undefined), outlookLine({})], ['', '', '']);
+  const notInPlan = [{ id: 'late', reason: 'after_main_race' }, { id: 'tight', reason: 'no_room' }];
+  assert.match(notInPlanLine('late', notInPlan), /after the main race/);
+  assert.match(notInPlanLine('tight', notInPlan), /already holds another goal/);
+  assert.deepEqual([notInPlanLine('other', notInPlan), notInPlanLine('late', null)], ['', '']);
+  // The two operations on the plan as a whole read as what they do.
+  assert.equal(describeChange({ op: 'rebuild_plan' }), 'Rebuild every future week for your goals');
+  assert.equal(describeChange({ op: 'rebuild_plan', level: { weeklyRunKm: 30, longRunKm: 14 } }), 'Rebuild every future week for your goals, starting from 30 km a week and a 14 km long run');
+  assert.equal(describeChange({ op: 'set_race', raceDate: '2027-04-11', raceName: 'City Half', distanceKm: 21.0975, targetSeconds: 6300 }),
+    'Make the main race Sun 11 Apr 2027 (City Half, 21.1 km, target 1:45:00): every future week is rebuilt');
+});
+
 // ── the mock's coach ────────────────────────────────────────────────────────
 
 function mockCoach({ replyDelayMs = 1000 } = {}) {
@@ -167,7 +186,7 @@ test('mock: the page opens on a seeded thread, the marathon as main goal, and tw
   const { call } = mockCoach();
   const { status, json } = await call('GET', '/api/coach');
   assert.equal(status, 200);
-  assert.deepEqual(Object.keys(json).sort(), ['goals', 'messages', 'notes', 'status']);
+  assert.deepEqual(Object.keys(json).sort(), ['goals', 'messages', 'notes', 'plan', 'status']);
   assert.deepEqual(json.messages.map(m => m.role), ['user', 'coach']);
   assert.deepEqual(json.status, { state: 'idle' });
   assert.deepEqual([json.goals.main.id, json.goals.main.title, json.goals.main.date, json.goals.main.targetSeconds], ['main', 'Berlin Marathon', '2027-09-26', null]);
@@ -248,4 +267,29 @@ test('mock: the Coach replies switch is a setting like the others', async () => 
   const saved = await call('PUT', '/api/settings', { notify: { coach: false } });
   assert.equal(saved.json.notify.coach, false);
   assert.equal(saved.json.notify.weekly, true);
+});
+
+test('mock: the plan goes stale when a goal that shapes it changes, and Rebuild makes it current', async () => {
+  const { call } = mockCoach();
+  const plan = async () => (await call('GET', '/api/coach')).json.plan;
+  const first = await plan();
+  assert.deepEqual([first.stale, first.notInPlan, first.events.map(e => [e.id, e.main, e.kind])], [false, [], [['main', true, 'race'], ['g1', false, 'trial']]]);
+  assert.ok(first.events[0].predictedSeconds > 3 * 3600 && first.events[1].verdict, 'each goal has its outlook');
+  await call('PUT', '/api/goals/main', { targetSeconds: 13500, note: null });
+  assert.equal((await plan()).stale, true);
+  assert.equal((await plan()).events[0].targetSeconds, null, 'the plan still is what it was built for');
+  assert.deepEqual((await call('POST', '/api/plan/rebuild')).json, { ok: true });
+  const rebuilt = await plan();
+  assert.deepEqual([rebuilt.stale, rebuilt.events[0].targetSeconds], [false, 13500]);
+  // A note or a goal without a date changes nothing about the plan; one after the main race is not in it.
+  await call('PUT', '/api/goals/main', { targetSeconds: 13500, note: 'Flat course' });
+  await call('POST', '/api/goals', { title: 'Run three times a week' });
+  assert.equal((await plan()).stale, false);
+  const late = (await call('POST', '/api/goals', { title: 'Frankfurt', kind: 'race', date: '2027-10-31', distanceKm: 42.195 })).json.goal;
+  assert.deepEqual((await plan()).notInPlan, [{ id: late.id, name: 'Frankfurt', date: '2027-10-31', reason: 'after_main_race' }]);
+  // The distance in Settings is his to set, within bounds.
+  assert.equal((await call('GET', '/api/state')).json.settings.raceDistanceKm, 42.195);
+  assert.equal((await call('PUT', '/api/settings', { raceDistanceKm: 21.0975 })).json.raceDistanceKm, 21.0975);
+  assert.equal((await call('PUT', '/api/settings', { raceDistanceKm: 1 })).status, 400);
+  assert.equal((await call('GET', '/api/coach')).json.goals.main.distanceKm, 21.0975);
 });

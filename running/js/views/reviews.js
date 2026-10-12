@@ -168,7 +168,7 @@ export async function render(el, ctx) {
   /** The two cards take the data in; `force` names the one whose own save this follows ('goals' or 'notes'). */
   const drawSides = (force = null) => {
     if (!hasCoach) return;
-    goalsUi.set(coach.goals, today, { force: force === 'goals' });
+    goalsUi.set(coach.goals, today, { force: force === 'goals', plan: coach.plan || null });
     notesUi.set(coach.notes, { force: force === 'notes' });
   };
 
@@ -347,7 +347,11 @@ export async function render(el, ctx) {
 
   arrange();
   if (hasCoach) {
-    goalsUi = goalsCard(part.goals, { onChanged: () => reloadCoach('goals'), onAbout: a => setAbout(a) });
+    goalsUi = goalsCard(part.goals, {
+      onChanged: () => reloadCoach('goals'), onAbout: a => setAbout(a),
+      // Every future week again: the plan, its log of changes and how it stands to the goals all move.
+      onRebuild: async () => { await api.post('/api/plan/rebuild'); await reloadLists(); await reloadCoach('goals'); },
+    });
     notesUi = notesCard(part.notes, { onChanged: () => reloadCoach('notes') });
   }
   drawHead();

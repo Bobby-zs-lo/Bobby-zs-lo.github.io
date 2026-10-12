@@ -208,5 +208,6 @@ export function exerciseFamily(type) {
 export const PHASE_NAMES = {
   reentry: 'Re-entry', base: 'Base', halfbuild: 'Half-marathon build', recovery: 'Recovery',
   base2: 'Base II', marathon: 'Marathon build', taper: 'Taper',
+  tenbuild: '10K build', fivebuild: '5K build',
 };
 export const STATUS_NAMES = { planned: 'Planned', done: 'Done', partial: 'Partial', skipped: 'Skipped', moved: 'Moved' };

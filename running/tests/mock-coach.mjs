@@ -16,6 +16,11 @@
 //   easier, shorter, kortere → reports one applied plan change (the mock's plan itself stays as it is)
 //   impossible, umulig      → reports one change that was refused
 //   silence, stilhed        → no reply: the status turns stalled, and Try again gets one
+// GET /api/coach also carries `plan`: { stale, events, notInPlan }, how the plan stands to the goals.
+// The mock has no generator, so "the plan" here is only what it was last built for: stale turns
+// true when the main target or a dated goal with a distance has changed since, and POST
+// /api/plan/rebuild makes it current again. Each goal's outlook is worked out with Riegel's rule of
+// thumb from the 5K time, which is close to the backend's VDOT figures and nothing more.
 // Everything lives in the store made here, one per mock; the fixtures are never written.
 
 const MAX_MESSAGE_CHARS = 2000;
@@ -113,12 +118,48 @@ export function createCoachStore({ settings, findWorkout, reviews, proposals, fa
   function goalsView() {
     const s = settings();
     return {
-      main: { id: MAIN, title: s.raceName, kind: 'race', date: s.raceDate, distanceKm: 42.195, targetSeconds: main.targetSeconds, note: main.note },
+      main: { id: MAIN, title: s.raceName, kind: 'race', date: s.raceDate, distanceKm: s.raceDistanceKm ?? 42.195, targetSeconds: main.targetSeconds, note: main.note },
       items: structuredClone(goals),
     };
   }
 
-  const snapshot = () => ({ messages: structuredClone(messages), status: status(), goals: goalsView(), notes: structuredClone(notes) });
+  // ---------- how the plan stands to the goals ----------
+
+  /** The goals a plan would be built for: the main race, then active goals with a date before it and a distance. */
+  function plannable() {
+    const s = settings();
+    const mainEvent = { id: MAIN, name: s.raceName, date: s.raceDate, distanceKm: s.raceDistanceKm ?? 42.195, kind: 'race', main: true, targetSeconds: main.targetSeconds };
+    const onTheWay = goals.filter((g) => g.status === 'active' && g.date && g.distanceKm > 0 && g.date < s.raceDate)
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map((g) => ({ id: g.id, name: g.title, date: g.date, distanceKm: g.distanceKm, kind: g.kind === 'race' || g.distanceKm > 12 ? 'race' : 'trial', main: false, targetSeconds: g.targetSeconds }));
+    return [mainEvent, ...onTheWay];
+  }
+  const signature = () => JSON.stringify([settings().fiveKSeconds, plannable().map((e) => [e.id, e.date, e.distanceKm, e.kind, e.targetSeconds])]);
+  function outlook(e) {
+    const fiveK = settings().fiveKSeconds;
+    const scale = (e.distanceKm / 5) ** 1.06; // Riegel
+    const predictedSeconds = Math.round(fiveK * scale);
+    if (!e.targetSeconds) return { ...e, predictedSeconds, requiredFiveKSeconds: null, verdict: null };
+    const ratio = e.targetSeconds / predictedSeconds;
+    const verdict = ratio >= 1 ? 'ahead' : ratio >= 0.965 ? 'within_reach' : ratio >= 0.93 ? 'ambitious' : 'beyond';
+    return { ...e, predictedSeconds, requiredFiveKSeconds: Math.round(e.targetSeconds / scale), verdict };
+  }
+  let built = { signature: signature(), events: plannable().map(outlook) };
+  function planState() {
+    const s = settings();
+    return {
+      stale: built.signature !== signature(),
+      events: structuredClone(built.events),
+      notInPlan: goals.filter((g) => g.status === 'active' && g.date && g.distanceKm > 0 && g.date >= s.raceDate)
+        .map((g) => ({ id: g.id, name: g.title, date: g.date, reason: 'after_main_race' })),
+    };
+  }
+  function rebuild() {
+    built = { signature: signature(), events: plannable().map(outlook) };
+    return { ok: true };
+  }
+
+  const snapshot = () => ({ messages: structuredClone(messages), status: status(), goals: goalsView(), notes: structuredClone(notes), plan: planState() });
 
   /** GET /api/coach: what there is once time has had its say. */
   function view() {
@@ -238,5 +279,5 @@ export function createCoachStore({ settings, findWorkout, reviews, proposals, fa
     return { ok: true };
   }
 
-  return { view, send, retry, addGoal, updateGoal, removeGoal, addNote, removeNote };
+  return { view, send, retry, addGoal, updateGoal, removeGoal, addNote, removeNote, rebuild };
 }

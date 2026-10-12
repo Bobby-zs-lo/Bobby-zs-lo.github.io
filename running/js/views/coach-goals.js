@@ -5,21 +5,25 @@ import { html, raw, mount } from '../dom.js';
 import { api } from '../api.js';
 import { toast, busy, timeField } from '../ui.js';
 import { formatHms, HMS } from '../format.js';
-import { goalFacts, sortGoals, goalFromForm, parseTarget, MAIN_GOAL, MAX_NOTE_CHARS } from '../coach.js';
+import { goalFacts, sortGoals, goalFromForm, parseTarget, outlookLine, notInPlanLine, MAIN_GOAL, MAX_NOTE_CHARS } from '../coach.js';
 
 const STATUS_NAMES = { active: 'Active', achieved: 'Achieved', dropped: 'Dropped' };
 const opt = (value, label, selected) => html`<option value="${value}"${value === selected ? raw(' selected') : ''}>${label}</option>`;
 
 // ── goals ───────────────────────────────────────────────────────────────────
 
-function goalRow(g, today, { main = false } = {}) {
+function goalRow(g, today, { main = false, plan = null } = {}) {
   const facts = goalFacts(g, today);
+  // What the plan says of this goal: how it looks from the 5K time, or why it holds no place for it.
+  const outlook = g.status === 'achieved' || g.status === 'dropped' ? ''
+    : outlookLine(((plan && plan.events) || []).find(e => e.id === g.id)) || notInPlanLine(g.id, plan && plan.notInPlan);
   return html`<li class="goal${main ? ' goal--main' : ''}${g.status && g.status !== 'active' ? ` is-${g.status}` : ''}" data-goal="${g.id}">
     <div class="goal-main">
       <p class="goal-title">${main ? html`<span class="race-mark" aria-hidden="true">★ </span>` : ''}${g.title}${main ? html` <span class="tag tag--race">Main goal</span>`
         : g.status !== 'active' ? html` <span class="tag">${STATUS_NAMES[g.status] || g.status}</span>` : g.kind === 'race' ? html` <span class="tag">Race</span>` : ''}</p>
       ${facts ? html`<p class="goal-facts num">${facts}</p>` : ''}
       ${main && !g.targetSeconds ? html`<p class="goal-facts muted">No target time yet.</p>` : ''}
+      ${outlook ? html`<p class="goal-outlook">${outlook}</p>` : ''}
       ${g.note ? html`<p class="goal-note">${g.note}</p>` : ''}
     </div>
     <div class="goal-actions">
@@ -66,30 +70,35 @@ function goalForm(g) {
 
 /**
  * The goals card in `host`. hooks: onChanged() after a save or a removal (the page reloads the
- * goals and calls set), onAbout({ type: 'goal', id }) when he wants to write about one.
- * → { set(goals, today, { force }) }: takes the goals in, and redraws when they differ from what
+ * goals and calls set), onAbout({ type: 'goal', id }) when he wants to write about one, onRebuild()
+ * when he asks for the plan to be built again for the goals as they stand.
+ * → { set(goals, today, { force, plan }) }: takes the goals in (and `plan`, how the plan stands to them), and redraws when they differ from what
  * is shown, unless a form is open (a redraw would throw away what he is typing). `force` lets
  * it redraw over a form too: after his own save, when the form has done its work.
  */
 export function goalsCard(host, hooks) {
-  let goals = { main: null, items: [] }, today = null;
+  let goals = { main: null, items: [] }, today = null, plan = null;
   let editing = null; // null, 'new' or a goal id
   let drawn = null;   // what the card showed last, so an unchanged answer redraws nothing
 
   const find = id => (id === MAIN_GOAL ? goals.main : goals.items.find(g => g.id === id));
 
-  const shown = () => JSON.stringify([goals, today, editing]);
+  const shown = () => JSON.stringify([goals, today, editing, plan]);
 
   function draw() {
     drawn = shown();
     const items = sortGoals(goals.items);
     const edited = editing && editing !== 'new' ? find(editing) : null;
     mount(host, html`<section class="card goals" aria-labelledby="goals-h">
-      <h2 class="section-title" id="goals-h">What you are training for</h2>
+      <h2 class="section-title" id="goals-h" tabindex="-1">What you are training for</h2>
       <ul class="plain goal-list">
-        ${goals.main ? goalRow(goals.main, today, { main: true }) : ''}
-        ${items.map(g => goalRow(g, today))}
+        ${goals.main ? goalRow(goals.main, today, { main: true, plan }) : ''}
+        ${items.map(g => goalRow(g, today, { plan }))}
       </ul>
+      ${plan && plan.stale ? html`<div class="banner goal-stale" role="status">
+        <p><strong>Your goals have changed since this plan was built.</strong> The coach will propose a new plan, or build it now from the goals as they stand.</p>
+        <button type="button" class="btn btn--primary" data-plan-rebuild>Rebuild the plan</button>
+      </div>` : ''}
       ${editing === 'new' ? goalForm(null) : edited ? goalForm(edited)
         : html`<button type="button" class="btn" data-goal-new>Add a goal</button>
                <p class="help">A tune-up race, a time to hit by a date. Or tell the coach, and it adds the goal and plans toward it.</p>`}
@@ -114,6 +123,16 @@ export function goalsCard(host, hooks) {
       (host.querySelector('#g-title') || host.querySelector('#g-target')).focus();
     }));
     host.querySelectorAll('[data-goal-about]').forEach(b => b.addEventListener('click', () => hooks.onAbout({ type: 'goal', id: b.dataset.goalAbout })));
+    host.querySelector('[data-plan-rebuild]')?.addEventListener('click', e => {
+      if (!confirm('Rebuild every future week from tomorrow, for the goals as they stand? Past weeks stay. Changes made by hand to future weeks are replaced. You can undo it under Plan changes.')) return;
+      busy(e.currentTarget, async () => {
+        try {
+          await hooks.onRebuild();
+          toast('The plan is rebuilt for your goals', { kind: 'ok' });
+          host.querySelector('#goals-h')?.focus(); // the notice and its button are gone
+        } catch (ex) { toast(ex.message, { kind: 'error' }); }
+      });
+    });
 
     const form = host.querySelector('[data-goal-form]');
     if (!form) return;
@@ -168,9 +187,10 @@ export function goalsCard(host, hooks) {
   }
 
   return {
-    set(nextGoals, nextToday, { force = false } = {}) {
+    set(nextGoals, nextToday, { force = false, plan: nextPlan = null } = {}) {
       goals = nextGoals || { main: null, items: [] };
       today = nextToday;
+      plan = nextPlan;
       if ((force || editing == null) && shown() !== drawn) draw();
     },
   };

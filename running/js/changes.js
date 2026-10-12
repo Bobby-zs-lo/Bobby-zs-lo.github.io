@@ -50,7 +50,15 @@ export function describeChange(c, lookup) {
     case 'repeat_week': return `Repeat week ${c.weekIndex} next week (later weeks shift; race date unchanged)`;
     case 'set_week_target': return `Set week ${c.weekIndex} running volume to ${formatDistance(c.targetRunKm)}`;
     case 'set_paces': return `Update training paces from a 5K of ${formatMmSs(c.fiveKSeconds)}`;
-    case 'set_race': return `Move the race to ${formatDate(c.raceDate, { year: true })}${c.raceName ? ` (${c.raceName})` : ''}: every future week is rebuilt`;
+    case 'set_race': {
+      const what = [c.raceName, c.distanceKm != null && formatDistance(Math.round(c.distanceKm * 10) / 10), c.targetSeconds != null && `target ${formatMmSs(c.targetSeconds)}`].filter(Boolean).join(', ');
+      return `Make the main race ${formatDate(c.raceDate, { year: true })}${what ? ` (${what})` : ''}: every future week is rebuilt`;
+    }
+    case 'rebuild_plan': {
+      const lv = c.level;
+      const from = lv ? `, starting from ${formatDistance(lv.weeklyRunKm)} a week${lv.longRunKm != null ? ` and a ${formatDistance(lv.longRunKm)} long run` : ''}` : '';
+      return `Rebuild every future week for your goals${from}`;
+    }
     default: return `Unknown change (${String(c.op)})`;
   }
 }

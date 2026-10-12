@@ -105,6 +105,11 @@
 .goal--main .goal-title { font-family: var(--serif); font-weight: 500; font-size: 21px; letter-spacing: -0.3px; }
 .goal-facts { font-size: 14px; color: var(--ink-2); }
 .goal-note { font-size: 14px; color: var(--ink-3); overflow-wrap: anywhere; }
+.goal-outlook { font-size: 14px; line-height: 1.45; color: var(--ink-2); }
+.goal-stale { margin-top: 12px; }
+.goal-stale > * + * { margin-top: 10px; }
+.goal-stale p { color: var(--ink); }
+.goals h2:focus { outline: none; }
 .goal.is-achieved .goal-title { color: var(--ok); }
 .goal.is-dropped .goal-title { color: var(--ink-3); text-decoration: line-through; }
 /* Text buttons on a row of their own, pulled left so their words line up with the goal's. */

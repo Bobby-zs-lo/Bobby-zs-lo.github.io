@@ -340,6 +340,9 @@ try {
     assert.match(await page.textContent('#view'), /\/ingest\/health/);
     assert.match(await page.textContent('#view'), /X-Ingest-Key/);
     assert.equal(await page.inputValue('#fiveK'), '23:30');
+    // The race's distance: read from its name until it is set, and his to change.
+    assert.equal(await page.$eval('#raceDistance', el => el.selectedOptions[0].textContent), 'Marathon');
+    assert.deepEqual(await page.$$eval('#raceDistance option', els => els.map(e => e.textContent)), ['5 km', '10 km', 'Half marathon', 'Marathon']);
     // A number pad has no colon: the digits alone give the time back.
     await page.fill('#fiveK', '');
     await page.type('#fiveK', '2330');

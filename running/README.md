@@ -182,6 +182,12 @@ resize.
   colons in: a phone shows a number pad for it, which has no colon, so 14500 becomes 1:45:00
   and 02230 becomes 0:22:30 (`maskTime` in `js/format.js`, `timeField` in `js/ui.js`; the 5K
   field in Settings does the same with `mm:ss`).
+- **The plan and the goals.** `GET /api/coach` carries `plan: { stale, events, notInPlan }`. Each goal
+  the plan holds shows how it looks from the 5K time ("Your 5K predicts 1:48:06. The target needs
+  a 5K near 22:50: within reach."); a dated goal after the main race says it is not in the plan.
+  When the goals have changed since the plan was built the card says so and offers *Rebuild the
+  plan* (`POST /api/plan/rebuild`, after a confirm): every future week again, for the goals as
+  they stand. Nothing rebuilds by itself. The race's distance is in Settings beside its date.
 - **Notes** are the standing instructions the coach works from (`POST`, `DELETE /api/coach/notes`).
 - A card with a form open keeps it across the page's own redraws; it catches up on save or cancel.
 
@@ -264,7 +270,7 @@ Adding a view means three registrations: `VIEWS` and `TITLES` in `js/app.js`, `R
 
 ## Setup status
 
-Live since 5 October 2026 and fully set up; **v0.10.1** since 12 October 2026 (the version shows
+Live since 5 October 2026 and fully set up; **v0.11.0** since 13 October 2026 (the version shows
 under Settings in the app and in `js/config.js`). `js/config.js` holds the real `API_BASE` and
 `FIREBASE_CONFIG`; both Firebase values are public identifiers, not secrets.
 
