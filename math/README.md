@@ -20,7 +20,8 @@ An educational, retro arcade-style math game heavily inspired by *Space Invaders
   - **8. klasse:** Ligninger med $x$ på begge sider, kvadratrødder ($\sqrt{64} = 8$).
   - **9. klasse:** Parentesligninger, to ligninger med to ubekendte ($x+y=10, x-y=4$).
   - **10. klasse:** Andengradsligninger med heltalsrødder, Pythagoras ($a^2 + b^2 = c^2$).
-- **⚙️ Overhauled Settings Modal:** Clean, structured modal layout featuring Language selector, 10-button Grade Grid with live curriculum detail cards, Answer Mode toggles, Adult Descent Speed slider, and collapsible advanced options.
+- **🗣️ Oplæsning af regnestykker (Text-to-Speech):** Hver opgave læses automatisk højt (f.eks. "4 plus 5?" eller "What is 4 plus 5?"), det valgte svar læses op, og der gives mundtlig feedback ("9. Rigtigt!" / "7. Forkert, prøv igen!"). Kan slås til/fra via `🗣️ / 🔇` i topbaren eller i indstillinger.
+- **⚙️ Overhauled Settings Modal:** Clean, structured modal layout featuring Language selector, 10-button Grade Grid with live curriculum detail cards, Answer Mode toggles, Read-Aloud / TTS switch, Adult Descent Speed slider, and collapsible advanced options.
 - **Strict Lane-Lock Math Requirement:** The player ship only changes lane when the targeted math problem is answered correctly.
 - **Multiple Answer Modes:** Kid-friendly virtual numpad entry or 5 multiple-choice options with 1 correct answer.
 - **Real-Time Ship Upgrades:** Upgrade the starship live during combat across 4 tiers (Starter Scout, Dual-Wing Hunter, Plasma Cruiser, and Neon Flagship).
