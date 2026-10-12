@@ -145,27 +145,34 @@ export function goalFacts(goal, today) {
 }
 
 const VERDICTS = {
-  ahead: 'your 5K already points past it',
+  in_hand: 'your 5K already points past it',
   within_reach: 'within reach',
   ambitious: 'ambitious',
   beyond: 'well ahead of your current fitness, so race pace is set to what is within reach for now',
 };
 
+// A goal on the way that the plan's long runs do not reach by its date (the plan holds it all the same).
+const unprepared = event => (event.prepared === false
+  ? ` The longest run in the plan before it is ${event.longestRunBeforeKm} km, short for this distance: run it easy, or ask the coach to move it.`
+  : '');
+
 /**
- * How a goal looks from the current 5K time, in a sentence. `event` is the plan's own record of the
- * goal (GET /api/coach → plan.events): predictedSeconds, and with a target requiredFiveKSeconds and
- * a verdict. '' when the plan does not hold the goal.
+ * How a goal looks from the current 5K time, in a sentence or two. `event` is the plan's own record
+ * of the goal (GET /api/coach → plan.events): predictedSeconds, with a target requiredFiveKSeconds
+ * and a verdict, and for a goal on the way longestRunBeforeKm and prepared. '' when the plan does
+ * not hold the goal.
  */
 export function outlookLine(event) {
   if (!event || !event.predictedSeconds) return '';
   const predicts = `Your 5K predicts ${formatMmSs(event.predictedSeconds)}`;
-  if (!event.targetSeconds || !event.verdict) return `${predicts}.`;
-  return `${predicts}. The target needs a 5K near ${formatMmSs(event.requiredFiveKSeconds)}: ${VERDICTS[event.verdict] || event.verdict}.`;
+  if (!event.targetSeconds || !event.verdict) return `${predicts}.${unprepared(event)}`;
+  return `${predicts}. The target needs a 5K near ${formatMmSs(event.requiredFiveKSeconds)}: ${VERDICTS[event.verdict] || event.verdict}.${unprepared(event)}`;
 }
 
 const NOT_IN_PLAN = {
   after_main_race: 'Not in the plan: it comes after the main race. Ask the coach to make it the main race when you get there.',
   no_room: 'Not in the plan: that week already holds another goal, or it falls in the taper or the first two weeks.',
+  no_distance: 'Not in the plan: give it a distance and the plan can make room for it.',
 };
 /** Why a dated goal is not in the plan, from plan.notInPlan; '' when it is, or would be after a rebuild. */
 export const notInPlanLine = (goalId, notInPlan) => NOT_IN_PLAN[((notInPlan || []).find(x => x.id === goalId) || {}).reason] || '';

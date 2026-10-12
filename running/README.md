@@ -184,10 +184,12 @@ resize.
   field in Settings does the same with `mm:ss`).
 - **The plan and the goals.** `GET /api/coach` carries `plan: { stale, events, notInPlan }`. Each goal
   the plan holds shows how it looks from the 5K time ("Your 5K predicts 1:48:06. The target needs
-  a 5K near 22:50: within reach."); a dated goal after the main race says it is not in the plan.
-  When the goals have changed since the plan was built the card says so and offers *Rebuild the
-  plan* (`POST /api/plan/rebuild`, after a confirm): every future week again, for the goals as
-  they stand. Nothing rebuilds by itself. The race's distance is in Settings beside its date.
+  a 5K near 22:50: within reach."), and a goal on the way that the plan's long runs do not reach
+  by its date says that too (`prepared: false`). A dated goal the plan does not hold says why:
+  after the main race, no room, or a race without a distance. When the goals or the 5K time have
+  changed since the plan was built the card says so and offers *Rebuild the plan*
+  (`POST /api/plan/rebuild`, after a confirm): every future week again, for the goals as they
+  stand. Nothing rebuilds by itself. The race's distance is in Settings beside its date.
 - **Notes** are the standing instructions the coach works from (`POST`, `DELETE /api/coach/notes`).
 - A card with a form open keeps it across the page's own redraws; it catches up on save or cancel.
 

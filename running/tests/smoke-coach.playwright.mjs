@@ -134,7 +134,7 @@ export async function coachSteps({ step, newPage, go, overflow, SHOTS }) {
     await page.waitForFunction(() => document.activeElement.matches('[data-goal-new]'));
 
     // A dated goal with a distance changes what the plan should be: the card says so and offers the rebuild.
-    assert.match(await page.textContent('.goal-stale'), /Your goals have changed since this plan was built/);
+    assert.match(await page.textContent('.goal-stale'), /Your goals or your 5K time have changed since this plan was built/);
     assert.match(await page.locator('.goal', { hasText: '10 km under 50:00' }).locator('.goal-outlook').textContent(), /^Your 5K predicts \d+:\d\d\. The target needs a 5K near/);
     page.once('dialog', d => d.accept());
     await page.click('[data-plan-rebuild]');

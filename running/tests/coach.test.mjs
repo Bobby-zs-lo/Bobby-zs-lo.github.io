@@ -157,12 +157,18 @@ test('goal form: what he typed becomes what the API takes, or the field to go ba
 test('outlook: how a goal looks from the 5K time, and why one is not in the plan', () => {
   const event = { id: 'main', predictedSeconds: 6486, targetSeconds: 6300, requiredFiveKSeconds: 1370, verdict: 'within_reach' };
   assert.equal(outlookLine(event), 'Your 5K predicts 1:48:06. The target needs a 5K near 22:50: within reach.');
-  assert.match(outlookLine({ ...event, verdict: 'ahead' }), /your 5K already points past it\.$/);
+  assert.match(outlookLine({ ...event, verdict: 'in_hand' }), /your 5K already points past it\.$/);
+  // A goal on the way the plan cannot prepare says so, with or without a target; a prepared one says nothing more.
+  const short = { id: 'g', predictedSeconds: 6486, targetSeconds: null, verdict: null, longestRunBeforeKm: 11, prepared: false };
+  assert.equal(outlookLine(short), 'Your 5K predicts 1:48:06. The longest run in the plan before it is 11 km, short for this distance: run it easy, or ask the coach to move it.');
+  assert.match(outlookLine({ ...event, longestRunBeforeKm: 11, prepared: false }), /: within reach\. The longest run in the plan before it is 11 km/);
+  assert.equal(outlookLine({ ...short, longestRunBeforeKm: 18, prepared: true }), 'Your 5K predicts 1:48:06.');
   assert.match(outlookLine({ ...event, verdict: 'ambitious' }), /: ambitious\.$/);
   assert.match(outlookLine({ ...event, verdict: 'beyond' }), /well ahead of your current fitness, so race pace is set to what is within reach for now\.$/);
   assert.equal(outlookLine({ id: 'g', predictedSeconds: 2925, targetSeconds: null, verdict: null }), 'Your 5K predicts 48:45.');
   assert.deepEqual([outlookLine(null), outlookLine(undefined), outlookLine({})], ['', '', '']);
-  const notInPlan = [{ id: 'late', reason: 'after_main_race' }, { id: 'tight', reason: 'no_room' }];
+  const notInPlan = [{ id: 'late', reason: 'after_main_race' }, { id: 'tight', reason: 'no_room' }, { id: 'open', reason: 'no_distance' }];
+  assert.match(notInPlanLine('open', notInPlan), /give it a distance/);
   assert.match(notInPlanLine('late', notInPlan), /after the main race/);
   assert.match(notInPlanLine('tight', notInPlan), /already holds another goal/);
   assert.deepEqual([notInPlanLine('other', notInPlan), notInPlanLine('late', null)], ['', '']);
@@ -287,6 +293,10 @@ test('mock: the plan goes stale when a goal that shapes it changes, and Rebuild 
   assert.equal((await plan()).stale, false);
   const late = (await call('POST', '/api/goals', { title: 'Frankfurt', kind: 'race', date: '2027-10-31', distanceKm: 42.195 })).json.goal;
   assert.deepEqual((await plan()).notInPlan, [{ id: late.id, name: 'Frankfurt', date: '2027-10-31', reason: 'after_main_race' }]);
+  // A dated race without a distance cannot be placed, and says so; a goal on the way says whether the plan prepares it.
+  const open = (await call('POST', '/api/goals', { title: 'A race in March', kind: 'race', date: '2027-03-07' })).json.goal;
+  assert.deepEqual((await plan()).notInPlan.map(x => [x.id, x.reason]), [[late.id, 'after_main_race'], [open.id, 'no_distance']]);
+  assert.deepEqual(rebuilt.events.map(e => [e.main, e.prepared]), [[true, undefined], [false, true]]);
   // The distance in Settings is his to set, within bounds.
   assert.equal((await call('GET', '/api/state')).json.settings.raceDistanceKm, 42.195);
   assert.equal((await call('PUT', '/api/settings', { raceDistanceKm: 21.0975 })).json.raceDistanceKm, 21.0975);

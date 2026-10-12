@@ -135,13 +135,15 @@ export function createCoachStore({ settings, findWorkout, reviews, proposals, fa
     return [mainEvent, ...onTheWay];
   }
   const signature = () => JSON.stringify([settings().fiveKSeconds, plannable().map((e) => [e.id, e.date, e.distanceKm, e.kind, e.targetSeconds])]);
-  function outlook(e) {
+  const LONGEST_RUN_KM = 18; // what the mock's plan has him run in one go before any goal on the way
+  const outlook = (e) => (e.main ? looks(e) : { ...looks(e), longestRunBeforeKm: LONGEST_RUN_KM, prepared: e.distanceKm <= LONGEST_RUN_KM * 1.5 });
+  function looks(e) {
     const fiveK = settings().fiveKSeconds;
     const scale = (e.distanceKm / 5) ** 1.06; // Riegel
     const predictedSeconds = Math.round(fiveK * scale);
     if (!e.targetSeconds) return { ...e, predictedSeconds, requiredFiveKSeconds: null, verdict: null };
     const ratio = e.targetSeconds / predictedSeconds;
-    const verdict = ratio >= 1 ? 'ahead' : ratio >= 0.965 ? 'within_reach' : ratio >= 0.93 ? 'ambitious' : 'beyond';
+    const verdict = ratio >= 1 ? 'in_hand' : ratio >= 0.965 ? 'within_reach' : ratio >= 0.93 ? 'ambitious' : 'beyond';
     return { ...e, predictedSeconds, requiredFiveKSeconds: Math.round(e.targetSeconds / scale), verdict };
   }
   let built = { signature: signature(), events: plannable().map(outlook) };
@@ -150,8 +152,12 @@ export function createCoachStore({ settings, findWorkout, reviews, proposals, fa
     return {
       stale: built.signature !== signature(),
       events: structuredClone(built.events),
-      notInPlan: goals.filter((g) => g.status === 'active' && g.date && g.distanceKm > 0 && g.date >= s.raceDate)
-        .map((g) => ({ id: g.id, name: g.title, date: g.date, reason: 'after_main_race' })),
+      notInPlan: [
+        ...goals.filter((g) => g.status === 'active' && g.date && g.distanceKm > 0 && g.date >= s.raceDate)
+          .map((g) => ({ id: g.id, name: g.title, date: g.date, reason: 'after_main_race' })),
+        ...goals.filter((g) => g.status === 'active' && g.kind === 'race' && g.date && !(g.distanceKm > 0))
+          .map((g) => ({ id: g.id, name: g.title, date: g.date, reason: 'no_distance' })),
+      ],
     };
   }
   function rebuild() {

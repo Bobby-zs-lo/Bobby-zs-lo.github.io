@@ -96,7 +96,7 @@ export function goalsCard(host, hooks) {
         ${items.map(g => goalRow(g, today, { plan }))}
       </ul>
       ${plan && plan.stale ? html`<div class="banner goal-stale" role="status">
-        <p><strong>Your goals have changed since this plan was built.</strong> The coach will propose a new plan, or build it now from the goals as they stand.</p>
+        <p><strong>Your goals or your 5K time have changed since this plan was built.</strong> The coach will propose a new plan, or build it now from the goals as they stand.</p>
         <button type="button" class="btn btn--primary" data-plan-rebuild>Rebuild the plan</button>
       </div>` : ''}
       ${editing === 'new' ? goalForm(null) : edited ? goalForm(edited)
