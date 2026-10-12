@@ -1,6 +1,6 @@
 // Small shared UI pieces: toasts, loading/error states, status chips.
 import { html, raw, mount } from './dom.js';
-import { STATUS_NAMES } from './format.js';
+import { STATUS_NAMES, maskTime } from './format.js';
 
 export function toast(message, { kind = 'info', ms = 3800 } = {}) {
   const host = document.getElementById('toasts');
@@ -33,6 +33,19 @@ export function errorState(el, err, retry) {
 export function statusChip(status) {
   const s = status || 'planned';
   return html`<span class="chip chip--${s}">${s === 'done' ? raw('<span aria-hidden="true">✓ </span>') : ''}${STATUS_NAMES[s] || s}</span>`;
+}
+
+/**
+ * Makes a text input a time field for a number pad: he types digits, the colons fill themselves
+ * in (maskTime in js/format.js). `groups` is HMS or MMSS. The value is always the masked one.
+ */
+export function timeField(input, groups) {
+  const apply = () => {
+    const masked = maskTime(input.value, groups);
+    if (masked !== input.value) input.value = masked;
+  };
+  input.addEventListener('input', apply);
+  apply();
 }
 
 /** Disable a button while an async action runs. */

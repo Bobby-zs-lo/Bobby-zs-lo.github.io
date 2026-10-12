@@ -2,7 +2,7 @@
 // reads, what the page says while a reply is awaited, and how goals are written and read.
 // No DOM and no network, so tests/coach.test.mjs can hold it to its word. The views are
 // js/views/coach-thread.js and js/views/coach-goals.js.
-import { formatDate, formatWeekRange, formatDistance, formatMmSs, parseMmSs, diffDays } from './format.js';
+import { formatDate, formatWeekRange, formatDistance, formatMmSs, diffDays } from './format.js';
 import { describeChange } from './changes.js';
 
 export const MAX_MESSAGE_CHARS = 2000;
@@ -173,12 +173,18 @@ export function goalFromForm(values) {
   return { body };
 }
 
-/** '1:45:00' or '22:30' → { seconds }; '' → { seconds: null }; anything else → { error }. */
+/**
+ * A target time as the goal form holds it: always h:mm:ss, typed as digits on a number pad with
+ * the colons filled in (maskTime with HMS). '1:45:00' → { seconds: 6300 }; '0:22:30' → 1350;
+ * a time stopped after the minutes is taken as whole minutes ('1:45' → 1:45:00), after the hour
+ * as whole hours; '' → { seconds: null }; anything else → { error }.
+ */
 export function parseTarget(str) {
-  const t = String(str || '').trim();
-  if (!t) return { seconds: null };
-  const seconds = parseMmSs(t);
-  return seconds == null || seconds < 10
-    ? { error: 'Enter the time as h:mm:ss or mm:ss, e.g. 1:45:00 or 22:30.' }
-    : { seconds };
+  const digits = String(str || '').replace(/\D/g, '');
+  if (!digits) return { seconds: null };
+  const error = { error: 'Enter the time as h:mm:ss. Type the digits only: 14500 gives 1:45:00, 02230 gives 0:22:30.' };
+  if (![1, 3, 5].includes(digits.length)) return error;
+  const [h, m, s] = [digits.slice(0, 1), digits.slice(1, 3) || '0', digits.slice(3, 5) || '0'].map(Number);
+  const seconds = h * 3600 + m * 60 + s;
+  return m > 59 || s > 59 || seconds < 10 ? error : { seconds };
 }

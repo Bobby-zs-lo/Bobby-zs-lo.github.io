@@ -144,13 +144,14 @@ test('goal form: what he typed becomes what the API takes, or the field to go ba
   assert.equal(goalFromForm({ title: 'x'.repeat(81) }).field, 'title');
   assert.equal(goalFromForm({ title: 'x', distanceKm: 'far' }).field, 'distanceKm');
   assert.equal(goalFromForm({ title: 'x', distanceKm: '0' }).field, 'distanceKm');
-  assert.equal(goalFromForm({ title: 'x', target: '1h45' }).field, 'target');
+  assert.equal(goalFromForm({ title: 'x', target: '1:75:00' }).field, 'target');
   assert.equal(goalFromForm({ title: 'x', note: 'n'.repeat(301) }).field, 'note');
+  // The target field is always h:mm:ss, its colons filled in as he types digits (maskTime).
   assert.deepEqual(parseTarget(''), { seconds: null });
-  assert.deepEqual(parseTarget('22:30'), { seconds: 1350 });
   assert.deepEqual(parseTarget('3:45:00'), { seconds: 13500 });
-  assert.match(parseTarget('fast').error, /h:mm:ss or mm:ss/);
-  assert.match(parseTarget('0:05').error, /h:mm:ss or mm:ss/);
+  assert.deepEqual(parseTarget('0:22:30'), { seconds: 1350 });
+  assert.deepEqual([parseTarget('1:45'), parseTarget('3')], [{ seconds: 6300 }, { seconds: 10800 }], 'stopped after the minutes, or after the hour');
+  for (const half of ['1:4', '1:45:0', '1:75:00', '1:45:75', '0:00:05']) assert.match(parseTarget(half).error, /Type the digits only/, half);
 });
 
 // ── the mock's coach ────────────────────────────────────────────────────────

@@ -110,14 +110,23 @@ export async function coachSteps({ step, newPage, go, overflow, SHOTS }) {
     await page.selectOption('#g-kind', 'race');
     await page.fill('#g-date', '2027-04-18');
     await page.fill('#g-km', '21,1');
-    await page.fill('#g-target', '1h45');
+    // The phone shows a number pad for the time, which has no colon: digits alone must do.
+    assert.equal(await page.getAttribute('#g-target', 'inputmode'), 'numeric');
+    await page.type('#g-target', '175');
+    assert.equal(await page.inputValue('#g-target'), '1:75');
     await page.click('.goal-form button[type=submit]');
-    assert.match(await page.textContent('[data-goal-error]'), /h:mm:ss or mm:ss/);
+    assert.match(await page.textContent('[data-goal-error]'), /Type the digits only/);
     assert.equal(await page.getAttribute('#g-target', 'aria-invalid'), 'true');
     assert.equal(posts(log, '/api/goals').length, 0);
     await fits(page, 'the goal form');
     await shot(page, 'phone-coach-goal-form');
-    await page.fill('#g-target', '1:45:00');
+    await page.fill('#g-target', '');
+    await page.type('#g-target', '14500');
+    assert.equal(await page.inputValue('#g-target'), '1:45:00', 'the colons filled themselves in');
+    await page.keyboard.press('Backspace');
+    await page.keyboard.press('Backspace');
+    assert.equal(await page.inputValue('#g-target'), '1:45', 'and go again with the digits');
+    await page.type('#g-target', '00');
     await page.click('.goal-form button[type=submit]');
     await page.waitForFunction(() => document.querySelectorAll('.goal').length === 3);
     assert.deepEqual(posts(log, '/api/goals')[0].body, { title: 'Halvmaraton', kind: 'race', date: '2027-04-18', distanceKm: 21.1, targetSeconds: 6300, note: null });
@@ -127,9 +136,13 @@ export async function coachSteps({ step, newPage, go, overflow, SHOTS }) {
     // The marathon gets a target time; its name and date are not for this form.
     await page.click('[data-goal-edit="main"]');
     assert.equal(await count(page, '#g-title'), 0);
-    await page.fill('#g-target', '3:45:00');
+    await page.type('#g-target', '34500');
     await page.click('.goal-form button[type=submit]');
     await page.waitForFunction(() => /target 3:45:00/.test(document.querySelector('.goal--main').textContent));
+    // Opened again, the field holds the time in the form it is typed in.
+    await page.click('[data-goal-edit="main"]');
+    assert.equal(await page.inputValue('#g-target'), '3:45:00');
+    await page.click('[data-goal-cancel]');
     await page.waitForFunction(() => document.activeElement.matches('[data-goal-edit="main"]'));
     assert.equal(await page.getAttribute('[data-goal-edit="main"]', 'aria-label'), 'Edit Berlin Marathon', 'the name holds the word on the button');
     assert.deepEqual(log.find(l => l.method === 'PUT' && l.path === '/api/goals/main').body, { targetSeconds: 13500, note: null });

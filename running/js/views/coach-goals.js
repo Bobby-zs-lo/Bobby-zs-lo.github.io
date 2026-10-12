@@ -3,8 +3,8 @@
 // he tells it something that should last. The rules are in js/coach.js.
 import { html, raw, mount } from '../dom.js';
 import { api } from '../api.js';
-import { toast, busy } from '../ui.js';
-import { formatMmSs } from '../format.js';
+import { toast, busy, timeField } from '../ui.js';
+import { formatHms, HMS } from '../format.js';
 import { goalFacts, sortGoals, goalFromForm, parseTarget, MAIN_GOAL, MAX_NOTE_CHARS } from '../coach.js';
 
 const STATUS_NAMES = { active: 'Active', achieved: 'Achieved', dropped: 'Dropped' };
@@ -48,9 +48,9 @@ function goalForm(g) {
       ${main ? '' : html`<div class="field"><label for="g-km">Distance, km <span class="opt">optional</span></label>
         <input id="g-km" name="distanceKm" type="text" inputmode="decimal" class="num" value="${v.distanceKm ?? ''}" placeholder="21.1"></div>`}
       <div class="field"><label for="g-target">Target time${main ? '' : html` <span class="opt">optional</span>`}</label>
-        <input id="g-target" name="target" type="text" inputmode="numeric" class="num" value="${v.targetSeconds ? formatMmSs(v.targetSeconds) : ''}" placeholder="${main ? '3:45:00' : '1:45:00'}" aria-describedby="g-target-help"></div>
+        <input id="g-target" name="target" type="text" inputmode="numeric" class="num" value="${v.targetSeconds ? formatHms(v.targetSeconds) : ''}" placeholder="${main ? '3:45:00' : '1:45:00'}" autocomplete="off" aria-describedby="g-target-help"></div>
     </div>
-    <p class="help" id="g-target-help">h:mm:ss or mm:ss.${main ? ' The race itself and its date are changed in Settings, or by asking the coach.' : ''}</p>
+    <p class="help" id="g-target-help">h:mm:ss. Type the digits and the colons fill in: 14500 gives 1:45:00, 02230 gives 0:22:30.${main ? ' The race itself and its date are changed in Settings, or by asking the coach.' : ''}</p>
     <div class="field"><label for="g-note">Note <span class="opt">optional</span></label>
       <input id="g-note" name="note" type="text" maxlength="300" value="${v.note || ''}"></div>
     ${fresh || main ? '' : html`<div class="field"><label for="g-status">Status</label>
@@ -117,6 +117,7 @@ export function goalsCard(host, hooks) {
 
     const form = host.querySelector('[data-goal-form]');
     if (!form) return;
+    timeField(form.querySelector('#g-target'), HMS);
     const id = form.dataset.goalForm;
     // form.elements, never form.<name>: a field called title or target would hide the form's own property.
     const fields = form.elements;

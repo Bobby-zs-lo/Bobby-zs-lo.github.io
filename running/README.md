@@ -178,7 +178,10 @@ resize.
 - **Goals.** The marathon is the main goal; its form sets a target time and a note only (the
   race and its date are changed in Settings, or by the coach as a proposal). Sub-goals are added,
   edited, marked achieved or dropped, and removed here (`POST`, `PUT`, `DELETE /api/goals`); the
-  coach adds them too when told. Times are typed as `h:mm:ss` or `mm:ss`.
+  coach adds them too when told. A target time is always `h:mm:ss`, and the field fills its own
+  colons in: a phone shows a number pad for it, which has no colon, so 14500 becomes 1:45:00
+  and 02230 becomes 0:22:30 (`maskTime` in `js/format.js`, `timeField` in `js/ui.js`; the 5K
+  field in Settings does the same with `mm:ss`).
 - **Notes** are the standing instructions the coach works from (`POST`, `DELETE /api/coach/notes`).
 - A card with a form open keeps it across the page's own redraws; it catches up on save or cancel.
 
@@ -261,7 +264,7 @@ Adding a view means three registrations: `VIEWS` and `TITLES` in `js/app.js`, `R
 
 ## Setup status
 
-Live since 5 October 2026 and fully set up; **v0.10.0** since 12 October 2026 (the version shows
+Live since 5 October 2026 and fully set up; **v0.10.1** since 12 October 2026 (the version shows
 under Settings in the app and in `js/config.js`). `js/config.js` holds the real `API_BASE` and
 `FIREBASE_CONFIG`; both Firebase values are public identifiers, not secrets.
 

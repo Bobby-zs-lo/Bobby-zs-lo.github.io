@@ -2,9 +2,9 @@ import { html, raw, mount } from '../dom.js';
 import { api, clearApiCache } from '../api.js';
 import { signOut as authSignOut } from '../auth.js';
 import { getState, patchState, invalidate } from '../store.js';
-import { loading, errorState, toast, busy } from '../ui.js';
+import { loading, errorState, toast, busy, timeField } from '../ui.js';
 import { clearParams, navigate } from '../router.js';
-import { formatMmSs, parseMmSs, formatTimestamp } from '../format.js';
+import { formatMmSs, parseMmSs, formatTimestamp, MMSS } from '../format.js';
 import { enablePush, permissionState, pushSupported, currentSubscription } from '../push.js';
 import { API_BASE, APP_VERSION } from '../config.js';
 import { currentPosition, formatLatLng } from '../geolocate.js';
@@ -67,7 +67,7 @@ export async function render(el, ctx) {
         <input id="raceDate" name="raceDate" type="date" value="${s.raceDate || ''}" required></div>
       <div class="field"><label for="fiveK">Current 5K time</label>
         <input id="fiveK" name="fiveK" type="text" inputmode="numeric" placeholder="23:30" pattern="\\d{1,2}:[0-5]\\d" value="${formatMmSs(s.fiveKSeconds)}" aria-describedby="fiveK-help" class="num input--short">
-        <p class="help" id="fiveK-help">mm:ss. Sets your training paces. Changing the race or the 5K time regenerates all <strong>future</strong> weeks; past weeks and their statuses stay.</p></div>
+        <p class="help" id="fiveK-help">mm:ss. Type the digits and the colon fills in: 2330 gives 23:30. Sets your training paces. Changing the race or the 5K time regenerates all <strong>future</strong> weeks; past weeks and their statuses stay.</p></div>
       ${toggle('hasWatch', 'I have a GPS watch', 'Sessions can use pace and heart-rate targets', !!s.hasWatch)}
 
       <h2 class="section-title">Notifications</h2>
@@ -141,11 +141,12 @@ export async function render(el, ctx) {
   `);
 
   const form = el.querySelector('#settings-form');
+  timeField(form.fiveK, MMSS);
   form.addEventListener('submit', async e => {
     e.preventDefault();
     const fiveKSeconds = parseMmSs(form.fiveK.value);
     if (fiveKSeconds == null || fiveKSeconds < 12 * 60 || fiveKSeconds > 60 * 60) {
-      toast('Enter the 5K time as mm:ss, e.g. 23:30.', { kind: 'error' });
+      toast('Enter the 5K time as mm:ss: type 2330 for 23:30.', { kind: 'error' });
       form.fiveK.setAttribute('aria-invalid', 'true');
       form.fiveK.focus();
       return;

@@ -124,3 +124,18 @@ test('Health Connect exercise types have a name and a sport family', () => {
   assert.equal(exerciseFamily('yoga'), 'other');
   assert.equal(exerciseFamily(undefined), 'other');
 });
+
+// A phone's number pad has no colon, so time fields fill their own in (js/ui.js timeField).
+test('maskTime: digits fill the groups from the left and the colons come by themselves', async () => {
+  const { maskTime, formatHms, HMS, MMSS } = await import('../js/format.js');
+  assert.deepEqual(['1', '14', '145', '1450', '14500'].map(x => maskTime(x, HMS)), ['1', '1:4', '1:45', '1:45:0', '1:45:00']);
+  assert.deepEqual(['2', '23', '233', '2330'].map(x => maskTime(x, MMSS)), ['2', '23', '23:3', '23:30']);
+  // A digit too many is dropped; a time typed or pasted with separators comes out the same; backspace over a colon leaves no colon behind.
+  assert.equal(maskTime('145009', HMS), '1:45:00');
+  assert.deepEqual(['1:45:00', '1.45.00', '1 45 00', '1:45:'].map(x => maskTime(x, HMS)), ['1:45:00', '1:45:00', '1:45:00', '1:45']);
+  assert.deepEqual(['', 'abc', null, undefined].map(x => maskTime(x, HMS)), ['', '', '', '']);
+  assert.deepEqual([6300, 1350, 13500, 3000, 59].map(formatHms), ['1:45:00', '0:22:30', '3:45:00', '0:50:00', '0:00:59']);
+  assert.equal(formatHms(null), '');
+  // What a masked field holds, masked again, is itself: redrawing a form changes nothing.
+  for (const sec of [6300, 1350, 13500]) assert.equal(maskTime(formatHms(sec), HMS), formatHms(sec));
+});

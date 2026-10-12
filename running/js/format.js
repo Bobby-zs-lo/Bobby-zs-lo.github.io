@@ -106,6 +106,30 @@ export function formatMmSs(sec) {
   const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), r = s % 60;
   return h ? `${h}:${pad2(m)}:${pad2(r)}` : `${m}:${pad2(r)}`;
 }
+/** Seconds as h:mm:ss, always with the hour ('0:22:30'): what a field masked with HMS holds. */
+export function formatHms(sec) {
+  if (sec == null || !isFinite(sec)) return '';
+  const s = Math.round(sec);
+  return `${Math.floor(s / 3600)}:${pad2(Math.floor((s % 3600) / 60))}:${pad2(s % 60)}`;
+}
+
+// The digit groups of a time field: one hour digit, minutes, seconds; or minutes and seconds.
+export const HMS = [1, 2, 2];
+export const MMSS = [2, 2];
+
+/**
+ * A time as it is typed on a phone's number pad, which has no colon: the digits fill `groups`
+ * from the left and the colons come by themselves. maskTime('14500', HMS) → '1:45:00', and a
+ * time half typed is shown half ('145' → '1:45'). Anything that is no digit is dropped, so a
+ * time typed or pasted with its colons comes out the same.
+ */
+export function maskTime(raw, groups) {
+  const digits = String(raw ?? '').replace(/\D/g, '').slice(0, groups.reduce((a, b) => a + b, 0));
+  const parts = [];
+  for (let at = 0, i = 0; at < digits.length; at += groups[i++]) parts.push(digits.slice(at, at + groups[i]));
+  return parts.join(':');
+}
+
 /** 'mm:ss' or 'h:mm:ss' → seconds, or null when malformed */
 export function parseMmSs(str) {
   const t = String(str || '').trim();

@@ -340,6 +340,10 @@ try {
     assert.match(await page.textContent('#view'), /\/ingest\/health/);
     assert.match(await page.textContent('#view'), /X-Ingest-Key/);
     assert.equal(await page.inputValue('#fiveK'), '23:30');
+    // A number pad has no colon: the digits alone give the time back.
+    await page.fill('#fiveK', '');
+    await page.type('#fiveK', '2330');
+    assert.equal(await page.inputValue('#fiveK'), '23:30');
     await page.click('#settings-form [name=hasWatch] + .switch-ui');
     await page.click('#settings-form button[type=submit]');
     await page.waitForFunction(() => document.querySelectorAll('.toast').length >= 2);
