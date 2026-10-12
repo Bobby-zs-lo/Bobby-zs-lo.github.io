@@ -261,7 +261,7 @@ Adding a view means three registrations: `VIEWS` and `TITLES` in `js/app.js`, `R
 
 ## Setup status
 
-Live since 5 October 2026 and fully set up; **v0.9.2** since 10 October 2026 (the version shows
+Live since 5 October 2026 and fully set up; **v0.10.0** since 12 October 2026 (the version shows
 under Settings in the app and in `js/config.js`). `js/config.js` holds the real `API_BASE` and
 `FIREBASE_CONFIG`; both Firebase values are public identifiers, not secrets.
 
