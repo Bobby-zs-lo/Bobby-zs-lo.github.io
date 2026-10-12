@@ -12,13 +12,14 @@
 // against the live API. The behaviour mirrors functions/src/app.js closely enough for the
 // front end (auth, range validation, route-request validation, settings merge, a planned route
 // through given points: tests/mock-plan.mjs, the sessions that count for a workout:
-// tests/mock-links.mjs), and the fixtures are re-read when their file changes, so rebuilding
-// them needs no server restart.
+// tests/mock-links.mjs, the thread with the coach, goals and notes: tests/mock-coach.mjs), and
+// the fixtures are re-read when their file changes, so rebuilding them needs no server restart.
 //
 // Each createMockApi() call has its own state, and the fixtures are never written. PUT
 // /api/settings changes its copy of the settings and GET /api/state reflects it. PUT
 // /api/workouts/:id/links and a status action (done, skip, undo) change which sessions count and
 // the workout statuses, and the week, the plan, the activities and the health rows reflect that.
+// Messages to the coach, goals and notes are kept too, and a canned coach answers (mock-coach.mjs).
 // Everything else is read-only (a workout moved to tomorrow is answered, it does not move).
 import { readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
@@ -26,6 +27,7 @@ import { addDays, mondayOf } from '../js/format.js';
 import { decodePolyline, encodePolyline } from '../js/polyline.js';
 import { planRoute } from './mock-plan.mjs';
 import { createLinkStore } from './mock-links.mjs';
+import { createCoachStore } from './mock-coach.mjs';
 
 export const MOCK_TOKENS = { owner: 'test-token', stranger: 'stranger-token' };
 
@@ -35,7 +37,7 @@ const KM_PER_DEG = 111.195;
 const DEFAULT_ROUTE_DELAY_MS = 600; // long enough that loading states are visible
 const DEFAULT_PLAN_DELAY_MS = 300;  // a re-plan after a drag: long enough to see the old line fade
 const SETTINGS_KEYS = ['raceDate', 'raceName', 'fiveKSeconds', 'hasWatch', 'morningHour', 'eveningHour', 'home', 'dashboard'];
-const NOTIFY_KEYS = ['morning', 'evening', 'activity', 'weekly'];
+const NOTIFY_KEYS = ['morning', 'evening', 'activity', 'weekly', 'coach'];
 
 class ApiError extends Error {
   constructor(status, message) {
@@ -172,9 +174,11 @@ function findWorkout(id, week, plan) {
 /** The Health Connect sessions in a list of daily health rows, each with its row's date. */
 const sessionsOf = (rows) => rows.flatMap((row) => ((row && row.exercise) || []).map((e) => ({ ...e, date: row.date })));
 
-export function createMockApi({ fixturesDir, routeDelayMs = DEFAULT_ROUTE_DELAY_MS, planDelayMs = DEFAULT_PLAN_DELAY_MS, settings: overrides = {} }) {
+export function createMockApi({ fixturesDir, routeDelayMs = DEFAULT_ROUTE_DELAY_MS, planDelayMs = DEFAULT_PLAN_DELAY_MS, replyDelayMs, now, settings: overrides = {} }) {
   const fx = fixtureReader(fixturesDir);
   let settings = structuredClone({ home: null, ...fx('state.json').settings, ...overrides });
+  // As getSettings does on the backend: a notification the stored settings predate is on.
+  settings.notify = { ...Object.fromEntries(NOTIFY_KEYS.map((k) => [k, true])), ...settings.notify };
   const links = createLinkStore({
     activities: () => fx('history.json'),
     // The year of health rows, and the fixture week's own: one of its days lies after "today", where the year ends.
@@ -184,6 +188,14 @@ export function createMockApi({ fixturesDir, routeDelayMs = DEFAULT_ROUTE_DELAY_
     },
     findWorkout: (id) => findWorkout(id, fx('week-2026-10-12.json'), fx('plan.json')),
     fail,
+  });
+
+  const coach = createCoachStore({
+    settings: () => settings,
+    findWorkout: (id) => findWorkout(id, fx('week-2026-10-12.json'), fx('plan.json')),
+    reviews: () => fx('reviews.json'),
+    proposals: () => fx('proposals.json'),
+    fail, replyDelayMs, now,
   });
 
   // Fixture rows as the API shows them now: with the links and the statuses this mock has been given.
@@ -291,6 +303,14 @@ export function createMockApi({ fixturesDir, routeDelayMs = DEFAULT_ROUTE_DELAY_
       return answer;
     }],
     ['PUT', /^\/api\/settings$/, ({ body }) => updateSettings(body)],
+    ['GET', /^\/api\/coach$/, () => coach.view()],
+    ['POST', /^\/api\/coach\/messages$/, ({ body }) => coach.send(body)],
+    ['POST', /^\/api\/coach\/retry$/, () => coach.retry()],
+    ['POST', /^\/api\/coach\/notes$/, ({ body }) => coach.addNote(body)],
+    ['DELETE', /^\/api\/coach\/notes\/([^/]+)$/, ({ params }) => coach.removeNote(decodeURIComponent(params[0]))],
+    ['POST', /^\/api\/goals$/, ({ body }) => coach.addGoal(body)],
+    ['PUT', /^\/api\/goals\/([^/]+)$/, ({ params, body }) => coach.updateGoal(decodeURIComponent(params[0]), body)],
+    ['DELETE', /^\/api\/goals\/([^/]+)$/, ({ params }) => coach.removeGoal(decodeURIComponent(params[0]))],
     ['POST', /^\/.*$/, () => ({ ok: true, sent: 1 })],
   ];
 

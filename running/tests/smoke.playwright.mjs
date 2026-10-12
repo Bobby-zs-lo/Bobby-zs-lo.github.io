@@ -23,6 +23,7 @@ import { formatDistance } from '../js/format.js';
 import { decodePolyline } from '../js/polyline.js';
 import { createMockApi, MOCK_TOKENS } from './mock-api.mjs';
 import { linkSteps } from './smoke-links.playwright.mjs';
+import { coachSteps } from './smoke-coach.playwright.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = join(HERE, '..', '..');
@@ -61,7 +62,7 @@ function serve() {
 // The behaviour is tests/mock-api.mjs (shared with the preview server); this only moves a
 // Playwright request into its { method, path, search, body, authz } form and its answer back out.
 // Fixtures are the invented ones in tests/fixtures/. The live API is never called.
-const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Authorization, Content-Type', 'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS' };
+const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Authorization, Content-Type', 'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS' };
 function apiRoute(api, log) {
   const answer = (route, status, data) => route.fulfill({ status, headers: { ...CORS, 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
   return async route => {
@@ -168,7 +169,8 @@ async function newPage({ user = 'owner', signInFails = 0, delay = 0, scheme = 'l
   });
   await ctx.route(url => EXTERNAL_HOST.test(url.hostname), r => r.abort());
   const log = [];
-  const api = createMockApi({ fixturesDir: FIXTURES, routeDelayMs: 0, planDelayMs: 0, ...(settings ? { settings } : {}) });
+  // replyDelayMs 0: the mock's coach has answered by the first request after a message (tests/mock-coach.mjs).
+  const api = createMockApi({ fixturesDir: FIXTURES, routeDelayMs: 0, planDelayMs: 0, replyDelayMs: 0, ...(settings ? { settings } : {}) });
   await ctx.route(`${new URL(API_BASE).origin}/**`, apiRoute(api, log));
   // Test mode must never load the real SDK; count any attempt.
   const sdkRequests = [];
@@ -306,7 +308,7 @@ try {
     await ctx.close();
   });
 
-  await step('Week, Health, Reviews, Settings render', async () => {
+  await step('Week, Health, Coach (reviews), Settings render', async () => {
     const { ctx, page, errors, log } = await newPage();
     await go(page, 'week');
     assert.equal(await page.$$eval('.day', e => e.length), 7);
@@ -702,6 +704,7 @@ try {
 
   // Which recorded sessions count for a workout: four steps of their own (tests/smoke-links.playwright.mjs).
   await linkSteps({ step, newPage, go, overflow, APP, SHOTS });
+  await coachSteps({ step, newPage, go, overflow, SHOTS });
 
   await step('phone (390 px): Routes (in the tab bar) and Overview (not) render without overflow', async () => {
     const { ctx, page, errors } = await newPage();

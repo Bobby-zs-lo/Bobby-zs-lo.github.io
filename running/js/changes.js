@@ -50,6 +50,7 @@ export function describeChange(c, lookup) {
     case 'repeat_week': return `Repeat week ${c.weekIndex} next week (later weeks shift; race date unchanged)`;
     case 'set_week_target': return `Set week ${c.weekIndex} running volume to ${formatDistance(c.targetRunKm)}`;
     case 'set_paces': return `Update training paces from a 5K of ${formatMmSs(c.fiveKSeconds)}`;
+    case 'set_race': return `Move the race to ${formatDate(c.raceDate, { year: true })}${c.raceName ? ` (${c.raceName})` : ''}: every future week is rebuilt`;
     default: return `Unknown change (${String(c.op)})`;
   }
 }

@@ -36,7 +36,7 @@ const TYPES = {
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Authorization, Content-Type',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
 };
 
 // Same shape as fakeAuth in smoke.playwright.mjs: a signed-in owner; sign-out and sign-in both work.

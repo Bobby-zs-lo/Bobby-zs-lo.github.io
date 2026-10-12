@@ -78,6 +78,7 @@ export async function api(path, { method = 'GET', body, auth = true } = {}) {
 api.get = (p, o) => api(p, { ...o, method: 'GET' });
 api.post = (p, body, o) => api(p, { ...o, method: 'POST', body: body ?? {} });
 api.put = (p, body, o) => api(p, { ...o, method: 'PUT', body });
+api.del = (p, o) => api(p, { ...o, method: 'DELETE' });
 
 function toLogin() {
   if (typeof location !== 'undefined' && !location.hash.startsWith('#/login')) location.hash = '#/login';

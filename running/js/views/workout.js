@@ -114,6 +114,8 @@ export async function render(el, ctx, { quiet = false } = {}) {
 
     ${actualSection(w, day)}
 
+    ${w.sport === 'rest' ? '' : html`<p><a class="link" href="${buildHash('reviews', { about: `workout:${w.id}` })}">Ask the coach about this session →</a></p>`}
+
     <div class="actions" id="workout-actions">
       ${actionable
         ? html`<button type="button" class="btn btn--primary" data-action="done">Done</button>

@@ -27,10 +27,10 @@ const VIEWS = {
 // phone, so the bottom bar shows the other six. Routes is on both: planning a run happens on the go too.
 const TABS = [
   ['overview', 'Overview', true], ['today', 'Today'], ['week', 'Week'], ['plan', 'Plan'],
-  ['routes', 'Routes'], ['health', 'Health'], ['reviews', 'Reviews'],
+  ['routes', 'Routes'], ['health', 'Health'], ['reviews', 'Coach'],
 ];
 const TITLES = {
-  login: 'Sign in', today: 'Today', week: 'Week', plan: 'Plan', health: 'Health', reviews: 'Reviews',
+  login: 'Sign in', today: 'Today', week: 'Week', plan: 'Plan', health: 'Health', reviews: 'Coach',
   settings: 'Settings', workout: 'Session', activity: 'Activity', overview: 'Overview', routes: 'Routes',
 };
 

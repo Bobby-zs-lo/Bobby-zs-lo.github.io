@@ -14,6 +14,7 @@ const NOTIFS = [
   ['evening', 'Evening', 'Nudge if today’s run isn’t logged yet'],
   ['activity', 'After an activity', 'A note when Strava gets a new activity'],
   ['weekly', 'Weekly review', 'When the Monday review is in'],
+  ['coach', 'Coach replies', 'When the coach has answered a message of yours'],
 ];
 
 const homeText = home => (home ? `Home: ${formatLatLng([home.lat, home.lng])}` : 'Not set');
