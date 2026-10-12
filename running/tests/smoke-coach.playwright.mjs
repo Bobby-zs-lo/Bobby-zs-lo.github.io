@@ -122,6 +122,7 @@ export async function coachSteps({ step, newPage, go, overflow, SHOTS }) {
     await page.waitForFunction(() => document.querySelectorAll('.goal').length === 3);
     assert.deepEqual(posts(log, '/api/goals')[0].body, { title: 'Halvmaraton', kind: 'race', date: '2027-04-18', distanceKm: 21.1, targetSeconds: 6300, note: null });
     assert.equal(await count(page, '.goal-form'), 0);
+    await page.waitForFunction(() => document.activeElement.matches('[data-goal-new]'));
 
     // The marathon gets a target time; its name and date are not for this form.
     await page.click('[data-goal-edit="main"]');
@@ -129,6 +130,8 @@ export async function coachSteps({ step, newPage, go, overflow, SHOTS }) {
     await page.fill('#g-target', '3:45:00');
     await page.click('.goal-form button[type=submit]');
     await page.waitForFunction(() => /target 3:45:00/.test(document.querySelector('.goal--main').textContent));
+    await page.waitForFunction(() => document.activeElement.matches('[data-goal-edit="main"]'));
+    assert.equal(await page.getAttribute('[data-goal-edit="main"]', 'aria-label'), 'Edit Berlin Marathon', 'the name holds the word on the button');
     assert.deepEqual(log.find(l => l.method === 'PUT' && l.path === '/api/goals/main').body, { targetSeconds: 13500, note: null });
 
     // A note of his own, added and taken away again.
@@ -139,19 +142,43 @@ export async function coachSteps({ step, newPage, go, overflow, SHOTS }) {
     assert.equal(await page.inputValue('#note-text'), '');
     await page.click('.note:last-child [data-note-remove]');
     await page.waitForFunction(() => document.querySelectorAll('.note').length === 2);
+    await page.waitForFunction(() => document.activeElement.id === 'note-text');
     assert.ok(log.some(l => l.method === 'DELETE' && l.path.startsWith('/api/coach/notes/')));
 
     // The canned coach stays silent on the word: the wait gives way to Try again, and that gets an answer.
     await say(page, 'silence');
+    // The wait line changes with this answer; the thread, the goals and the focus do not.
+    await page.focus('[data-goal-edit="main"]');
+    await page.evaluate(() => { document.querySelector('.msg').kept = true; document.querySelector('.goal').kept = true; });
     await pollNow(page);
     await page.waitForSelector('.coach-wait--stalled [data-retry]');
+    assert.deepEqual(await page.evaluate(() => [document.querySelector('.msg').kept, document.querySelector('.goal').kept, document.activeElement.matches('[data-goal-edit="main"]')]),
+      [true, true, true], 'an answer that changes nothing redraws nothing and leaves the focus where it was');
     assert.match(await page.textContent('.coach-wait'), /No reply yet/);
     await page.click('[data-retry]');
     await page.waitForSelector('.coach-wait--thinking');
     assert.equal(posts(log, '/api/coach/retry').length, 1);
+    await page.waitForFunction(() => document.activeElement.id === 'coach-text'); // the button went with the wait
     await pollNow(page);
     await page.waitForFunction(() => !document.querySelector('.coach-wait'));
     assert.equal(await count(page, '.msg.is-pending'), 0);
+    assert.deepEqual(errors, []);
+    await ctx.close();
+  });
+
+  await step('phone (390 px) Coach: a backend without the thread still shows proposals and reviews', async () => {
+    const { ctx, page, errors } = await newPage();
+    // GET /api/coach answers 404, as a backend deployed before v0.10.0 does. The handler stays for the
+    // life of the page (see smoke-links: a handler taken away mid-request lets the request out).
+    await page.route(/\/api\/coach$/, route => (route.request().method() === 'GET'
+      ? route.fulfill({ status: 404, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' }, body: JSON.stringify({ error: 'Not found' }) })
+      : route.fallback()));
+    await go(page, 'reviews');
+    assert.equal(await page.textContent('#view h1'), 'Coach');
+    assert.deepEqual([await count(page, '.proposal'), await count(page, '.review'), await count(page, '[data-undo]')], [1, 1, 1]);
+    assert.deepEqual([await count(page, '.coach-thread'), await count(page, '.goal'), await count(page, '.note'), await count(page, '[data-comment]')], [0, 0, 0, 0],
+      'no thread, and so nothing to comment to');
+    await fits(page, 'the Coach page without a thread');
     assert.deepEqual(errors, []);
     await ctx.close();
   });
@@ -176,7 +203,7 @@ export async function coachSteps({ step, newPage, go, overflow, SHOTS }) {
     assert.equal(await page.inputValue('#g-title'), 'Half a goal');
     // One column, in the phone's order: what needs him first.
     const order = await page.$$eval('#view > *', els => els.map(e => e.id || e.className.split(' ').pop()));
-    assert.deepEqual(order, ['page-head', 'r-proposals', 'coach-thread', 'r-goals', 'r-notes', 'r-reviews', 'r-changes']);
+    assert.deepEqual(order, ['r-head', 'r-proposals', 'coach-thread', 'r-goals', 'r-notes', 'r-reviews', 'r-changes']);
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.waitForSelector('.coach-cols .coach-thread');
     assert.equal(await page.inputValue('#g-title'), 'Half a goal');

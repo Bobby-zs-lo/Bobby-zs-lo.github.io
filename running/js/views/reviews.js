@@ -1,9 +1,10 @@
 // The Coach page (#/reviews): what waits for Bobby's approval, the thread with the coach, his
 // goals, the notes the coach keeps, the weekly reviews and the log of plan changes.
 //
-// The page is drawn in regions, each redrawn on its own, because a reply takes minutes: while one
-// is awaited the page asks GET /api/coach every few seconds, and a whole redraw would take the
-// words out of the composer. #/reviews?about=workout:<id> opens with the composer set to that.
+// The page is drawn in regions, each redrawn on its own and only when what it shows has changed,
+// because a reply takes minutes: while one is awaited the page asks GET /api/coach every few
+// seconds, and a whole redraw would take the words out of the composer and the focus off whatever
+// he is on. #/reviews?about=workout:<id> opens with the composer set to that.
 import { html, raw, mount } from '../dom.js';
 import { api } from '../api.js';
 import { getState, getPlan, patchState } from '../store.js';
@@ -33,13 +34,16 @@ export async function render(el, ctx) {
   const loadLists = async () => {
     [proposals, reviews, changesets] = await Promise.all([api.get('/api/proposals'), api.get('/api/reviews'), api.get('/api/changesets')]);
   };
+  // A backend from before the thread answers 404: the page then is what it was, proposals and reviews.
+  const loadCoach = () => api.get('/api/coach').catch(e => { if (e.status === 404) return null; throw e; });
   try {
-    [coach, { today }] = await Promise.all([api.get('/api/coach'), getState(), loadLists(), loadPlanLookup()]);
+    [coach, { today }] = await Promise.all([loadCoach(), getState(), loadLists(), loadPlanLookup()]);
   } catch (e) {
     if (ctx.isCurrent()) errorState(el, e, () => render(el, ctx));
     return undefined;
   }
   if (!ctx.isCurrent()) return undefined;
+  const hasCoach = !!coach;
 
   // What the next message is about: from the address once, then from the Comment buttons.
   let about = null, expanded = false, timer = null, goalsUi = null, notesUi = null;
@@ -62,10 +66,31 @@ export async function render(el, ctx) {
 
   // ── regions ───────────────────────────────────────────────────────────────
   const region = id => el.querySelector(`#${id}`);
+  const shown = new Map();
+  /** Mounts `tpl()` in a region unless `key` says the region already shows it. */
+  const draw = (id, key, tpl) => {
+    const k = JSON.stringify(key);
+    if (shown.get(id) === k) return;
+    shown.set(id, k);
+    mount(region(id), tpl());
+  };
+  // Without a thread there is nobody to comment to.
+  const comment = (what, label) => (hasCoach
+    ? html`<button type="button" class="btn btn--quiet" data-comment="${what}" aria-label="${label}">Comment</button>` : '');
+  let planStamp = 0; // counts reloads of the plan: changes are named after the plan as it is now
+
+  const drawHead = () => {
+    const main = hasCoach ? coach.goals.main : null;
+    const days = main?.date ? diffDays(today, main.date) : null;
+    draw('r-head', [main?.title, days], () => html`<header class="page-head">
+      <p class="eyebrow">${main?.title || 'Training'}${days != null && days > 0 ? ` · ${days} days to go` : ''}</p>
+      <h1>Coach</h1>
+    </header>`);
+  };
 
   const drawProposals = () => {
     const pending = (proposals || []).filter(p => p.status === 'pending');
-    mount(region('r-proposals'), pending.length ? html`<section aria-labelledby="prop-h" class="stack">
+    draw('r-proposals', [pending, planStamp], () => (pending.length ? html`<section aria-labelledby="prop-h" class="stack">
       <h2 class="section-title" id="prop-h">Awaiting your approval</h2>
       ${pending.map(p => html`<article class="card proposal" data-id="${p.id}">
         <p class="eyebrow">Proposal · ${formatTimestamp(p.createdAt)}</p>
@@ -77,14 +102,14 @@ export async function render(el, ctx) {
         <div class="actions">
           <button type="button" class="btn btn--primary" data-accept>Accept</button>
           <button type="button" class="btn" data-reject>Reject</button>
-          <button type="button" class="btn btn--quiet" data-comment="proposal:${p.id}">Comment</button>
+          ${comment(`proposal:${p.id}`, 'Comment on this proposal to the coach')}
         </div>
       </article>`)}
-    </section>` : '');
+    </section>` : ''));
   };
 
   const drawReviews = () => {
-    mount(region('r-reviews'), html`<section aria-labelledby="rev-h" class="stack">
+    draw('r-reviews', reviews, () => html`<section aria-labelledby="rev-h" class="stack">
       <h2 class="section-title" id="rev-h">Weekly reviews</h2>
       ${(reviews || []).length ? reviews.map((r, i) => {
         const b = parseReviewBody(r.body);
@@ -101,7 +126,7 @@ export async function render(el, ctx) {
           ${b.goalAssessment ? html`<h4 class="mini-h">Goal</h4><p>${b.goalAssessment}</p>` : ''}
           <div class="review-foot">
             <p class="help">${formatTimestamp(r.createdAt)}</p>
-            <button type="button" class="btn btn--sm btn--quiet" data-comment="review:${r.id}">Comment</button>
+            ${comment(`review:${r.id}`, `Comment on the review of ${formatWeekRange(r.weekStart)} to the coach`)}
           </div>
         </article>`;
       }) : html`<div class="card"><p class="muted">No reviews yet. The first one arrives on Monday morning.</p></div>`}
@@ -110,7 +135,7 @@ export async function render(el, ctx) {
 
   const drawChanges = () => {
     const undoId = undoableId(changesets);
-    mount(region('r-changes'), html`<section aria-labelledby="cs-h">
+    draw('r-changes', changesets, () => html`<section aria-labelledby="cs-h">
       <h2 class="section-title" id="cs-h">Plan changes</h2>
       ${(changesets || []).length ? html`<ul class="plain card changesets">${changesets.map(c => html`<li class="cs${c.undone ? ' is-undone' : ''}" data-id="${c.id}">
         <div class="cs-main">
@@ -122,15 +147,29 @@ export async function render(el, ctx) {
     </section>`);
   };
 
+  // What became of the proposal a reply made, for the tag beside it in the thread.
+  const proposalOf = id => (proposals || []).find(p => p.messageId === id)?.status ?? null;
+  let logKey = null, waitKey = null;
+
+  /** The thread and the line under it, each only when it would read differently. */
   const drawThread = () => {
-    drawLog(el, coach.messages, { lookup, expanded });
-    drawWait(el, coach.status);
+    if (!hasCoach) return;
+    const key = JSON.stringify([expanded, planStamp, coach.messages.map(m => [m.id, m.status ?? '', proposalOf(m.id)])]);
+    if (key !== logKey) {
+      logKey = key;
+      drawLog(el, coach.messages, { lookup, expanded, proposalOf });
+    }
+    if (coach.status.state !== waitKey) {
+      waitKey = coach.status.state;
+      drawWait(el, coach.status);
+    }
   };
 
-  // The cards keep a form he is filling in over a redraw, unless it is forced (after his own save).
-  const drawSides = ({ force = false } = {}) => {
-    goalsUi.set(coach.goals, today, { force });
-    notesUi.set(coach.notes, { force });
+  /** The two cards take the data in; `force` names the one whose own save this follows ('goals' or 'notes'). */
+  const drawSides = (force = null) => {
+    if (!hasCoach) return;
+    goalsUi.set(coach.goals, today, { force: force === 'goals' });
+    notesUi.set(coach.notes, { force: force === 'notes' });
   };
 
   /** The plan-side lists again: after a reply, an accept, a reject or an undo, any of them may have moved. */
@@ -140,42 +179,55 @@ export async function render(el, ctx) {
     try { await getPlan({ force: true }); } catch { /* the copy in memory still names the workouts */ }
     await loadPlanLookup();
     if (!ctx.isCurrent()) return;
+    planStamp++;
     drawProposals();
     drawReviews();
     drawChanges();
+    drawThread();
   };
 
   // ── the thread: taking in a new state, and asking again while a reply is awaited ──
-  const takeCoach = async (next, { quiet = false } = {}) => {
+  // Answers can arrive out of order (a poll that left before a send comes back after it). Each
+  // request takes a number, and an answer older than one already taken in is dropped.
+  let asked = 0, taken = 0;
+  const ask = async request => {
+    const id = ++asked;
+    const value = await request();
+    const stale = id < taken;
+    if (!stale) taken = id;
+    return { value, stale };
+  };
+
+  const takeCoach = async (next, { quiet = false, force = null } = {}) => {
+    if (!ctx.isCurrent()) return;
     const fresh = newReplies(coach.messages, next.messages);
     coach = next;
+    drawHead();
     drawThread();
-    drawSides();
-    if (fresh.length) {
-      if (!quiet) toast('The coach replied', { kind: 'ok' });
-      await reloadLists();
-      if (ctx.isCurrent()) drawThread(); // a reply's changes are named after the plan as it is now
-    }
+    drawSides(force);
     schedule();
+    if (!fresh.length) return;
+    if (!quiet) toast('The coach replied', { kind: 'ok' });
+    try { await reloadLists(); } catch { /* the lists are read again on the next visit */ }
   };
   const schedule = () => {
     clearTimeout(timer);
-    if (ctx.isCurrent() && waitingState(coach.status).poll) timer = setTimeout(poll, POLL_MS);
+    if (hasCoach && ctx.isCurrent() && waitingState(coach.status).poll) timer = setTimeout(poll, POLL_MS);
   };
   const poll = async () => {
     if (!ctx.isCurrent()) return;
     if (document.hidden) { schedule(); return; }
-    try { await takeCoach(await api.get('/api/coach')); } catch { schedule(); /* offline for a moment: ask again */ }
+    try {
+      const { value, stale } = await ask(() => api.get('/api/coach'));
+      if (stale) schedule(); else await takeCoach(value);
+    } catch { schedule(); /* offline for a moment: ask again */ }
   };
-  const reloadCoach = async () => {
-    const next = await api.get('/api/coach');
-    if (!ctx.isCurrent()) return;
-    coach = next;
-    drawThread();
-    drawSides({ force: true });
-    schedule();
+  /** After a change of his own: the thread's state again. A reply that came in meanwhile counts as one. */
+  const reloadCoach = async (force = null) => {
+    if (!hasCoach) return;
+    const { value, stale } = await ask(() => api.get('/api/coach'));
+    if (!stale) await takeCoach(value, { force });
   };
-
   /** After a change that may have moved the race: the cached state holds its date and name too. */
   const reloadGoal = async () => {
     try { await getState({ force: true }); } catch { /* the next page load reads it again */ }
@@ -183,13 +235,8 @@ export async function render(el, ctx) {
   };
 
   // ── the frame: built once; a change of layout only moves its parts ────────
-  const days = coach.goals.main?.date ? diffDays(today, coach.goals.main.date) : null;
   const slot = id => html`<div class="region" id="${id}"></div>`;
-  mount(el, html`<header class="page-head">
-      <p class="eyebrow">${coach.goals.main?.title || 'Training'}${days != null && days > 0 ? ` · ${days} days to go` : ''}</p>
-      <h1>Coach</h1>
-    </header>
-    ${slot('r-proposals')}${threadFrame()}${slot('r-goals')}${slot('r-notes')}${slot('r-reviews')}${slot('r-changes')}`);
+  mount(el, html`${slot('r-head')}${slot('r-proposals')}${hasCoach ? threadFrame() : ''}${slot('r-goals')}${slot('r-notes')}${slot('r-reviews')}${slot('r-changes')}`);
   const part = {
     proposals: region('r-proposals'), thread: el.querySelector('.coach-thread'), goals: region('r-goals'),
     notes: region('r-notes'), reviews: region('r-reviews'), changes: region('r-changes'),
@@ -197,6 +244,7 @@ export async function render(el, ctx) {
   const div = name => Object.assign(document.createElement('div'), { className: name });
   const cols = div('coach-cols'), main = div('coach-main'), side = div('coach-side');
   cols.append(main, side);
+  const present = nodes => nodes.filter(Boolean); // the thread is not there on a backend without it
 
   /**
    * One column on a phone, in the order he needs it; two on a desk, with what needs him beside the
@@ -205,46 +253,56 @@ export async function render(el, ctx) {
   const arrange = () => {
     const focused = document.activeElement;
     if (isDesk()) {
-      main.append(part.thread, part.reviews);
+      main.append(...present([part.thread, part.reviews]));
       side.append(part.proposals, part.goals, part.notes, part.changes);
       el.append(cols);
     } else {
       cols.remove();
-      el.append(part.proposals, part.thread, part.goals, part.notes, part.reviews, part.changes);
+      el.append(...present([part.proposals, part.thread, part.goals, part.notes, part.reviews, part.changes]));
     }
     // Moving an element takes the focus off it.
     if (focused instanceof HTMLElement && el.contains(focused) && document.activeElement !== focused) focused.focus({ preventScroll: true });
   };
 
+  const wireThreadPart = () => wireThread(el, {
+    onSend: async text => {
+      const { value: res, stale } = await ask(() => api.post('/api/coach/messages', about ? { text, about: { type: about.type, id: about.id } } : { text }));
+      // The message is stored. What follows only redraws, and must not come back to him as "not sent".
+      about = null;
+      drawAbout(el, null);
+      expanded = false;
+      if (!stale) await takeCoach(res, { quiet: true }).catch(() => {});
+      if (res.fire && res.fire.reason === 'fire_failed') toast('Saved, but the coach could not be started. Try again in a moment.', { kind: 'error', ms: 6000 });
+    },
+    onRetry: btn => busy(btn, async () => {
+      try {
+        const { value: res, stale } = await ask(() => api.post('/api/coach/retry'));
+        if (!stale) await takeCoach(res, { quiet: true });
+        if (res.fire && !res.fire.fired && res.fire.reason !== 'in_flight') {
+          toast(res.fire.reason === 'too_soon' ? 'Give it a few seconds, then try again.' : 'The coach could not be started. Try again in a few minutes.', { kind: 'error', ms: 6000 });
+        }
+        if (!el.querySelector('[data-retry]')) focusComposer(el); // the button went with the wait
+      } catch (ex) { toast(ex.message, { kind: 'error' }); }
+    }),
+    onEarlier: () => {
+      expanded = true;
+      drawThread();
+      el.querySelector('#coach-log .msg')?.focus(); // the button is gone: on to the oldest message
+    },
+    onAboutClear: () => { about = null; drawAbout(el, null); },
+  });
+
   const wire = () => {
-    wireThread(el, {
-      onSend: async text => {
-        const res = await api.post('/api/coach/messages', about ? { text, about: { type: about.type, id: about.id } } : { text });
-        about = null;
-        drawAbout(el, null);
-        expanded = false;
-        await takeCoach(res, { quiet: true });
-        if (res.fire && res.fire.reason === 'fire_failed') toast('Saved, but the coach could not be started. Try again in a moment.', { kind: 'error', ms: 6000 });
-      },
-      onRetry: btn => busy(btn, async () => {
-        try {
-          const res = await api.post('/api/coach/retry');
-          await takeCoach(res, { quiet: true });
-          if (res.fire && !res.fire.fired && res.fire.reason !== 'in_flight') toast('The coach could not be started. Try again in a few minutes.', { kind: 'error', ms: 6000 });
-        } catch (ex) { toast(ex.message, { kind: 'error' }); }
-      }),
-      onEarlier: () => { expanded = true; drawThread(); },
-      onAboutClear: () => { about = null; drawAbout(el, null); },
-    });
+    if (hasCoach) wireThreadPart();
 
     // Comment on a review or a proposal: the composer takes it from there.
-    for (const id of ['r-proposals', 'r-reviews']) {
-      region(id).addEventListener('click', e => {
+    for (const host of [part.proposals, part.reviews]) {
+      host.addEventListener('click', e => {
         const b = e.target instanceof Element && e.target.closest('[data-comment]');
         if (b) setAbout(parseAbout(b.dataset.comment));
       });
     }
-    region('r-proposals').addEventListener('click', e => {
+    part.proposals.addEventListener('click', e => {
       const btn = e.target instanceof Element && e.target.closest('[data-accept], [data-reject]');
       if (!btn) return;
       const id = btn.closest('.proposal').dataset.id;
@@ -260,7 +318,7 @@ export async function render(el, ctx) {
         } catch (ex) { toast(ex.message, { kind: 'error' }); }
       });
     });
-    region('r-changes').addEventListener('click', e => {
+    part.changes.addEventListener('click', e => {
       const undo = e.target instanceof Element && e.target.closest('[data-undo]');
       if (!undo) return;
       busy(undo, async () => {
@@ -278,7 +336,7 @@ export async function render(el, ctx) {
 
   // Listeners outside the view take themselves away once another page has it.
   const onLayout = () => { if (ctx.isCurrent()) arrange(); else stop(); };
-  const onVisible = () => { if (!ctx.isCurrent()) stop(); else if (!document.hidden && waitingState(coach.status).poll) poll(); };
+  const onVisible = () => { if (!ctx.isCurrent()) stop(); else if (hasCoach && !document.hidden && waitingState(coach.status).poll) poll(); };
   const stop = () => {
     clearTimeout(timer);
     window.removeEventListener('layout:change', onLayout);
@@ -288,15 +346,18 @@ export async function render(el, ctx) {
   document.addEventListener('visibilitychange', onVisible);
 
   arrange();
-  goalsUi = goalsCard(part.goals, { onChanged: reloadCoach, onAbout: a => setAbout(a) });
-  notesUi = notesCard(part.notes, { onChanged: reloadCoach });
+  if (hasCoach) {
+    goalsUi = goalsCard(part.goals, { onChanged: () => reloadCoach('goals'), onAbout: a => setAbout(a) });
+    notesUi = notesCard(part.notes, { onChanged: () => reloadCoach('notes') });
+  }
+  drawHead();
   drawProposals();
   drawThread();
-  drawSides({ force: true });
+  drawSides();
   drawReviews();
   drawChanges();
   wire();
-  setAbout(parseAbout(ctx.params.about), { focus: !!ctx.params.about });
+  if (hasCoach) setAbout(parseAbout(ctx.params.about), { focus: !!ctx.params.about });
   schedule();
   return stop;
 }

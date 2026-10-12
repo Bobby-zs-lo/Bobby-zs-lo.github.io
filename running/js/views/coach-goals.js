@@ -23,8 +23,8 @@ function goalRow(g, today, { main = false } = {}) {
       ${g.note ? html`<p class="goal-note">${g.note}</p>` : ''}
     </div>
     <div class="goal-actions">
-      <button type="button" class="btn btn--sm btn--quiet" data-goal-edit="${g.id}" aria-label="Edit ${g.title}">${main && !g.targetSeconds ? 'Set target' : 'Edit'}</button>
-      <button type="button" class="btn btn--sm btn--quiet" data-goal-about="${g.id}" aria-label="Write to the coach about ${g.title}">Comment</button>
+      <button type="button" class="btn btn--sm btn--quiet" data-goal-edit="${g.id}" aria-label="${main && !g.targetSeconds ? 'Set target for' : 'Edit'} ${g.title}">${main && !g.targetSeconds ? 'Set target' : 'Edit'}</button>
+      <button type="button" class="btn btn--sm btn--quiet" data-goal-about="${g.id}" aria-label="Comment on ${g.title} to the coach">Comment</button>
     </div>
   </li>`;
 }
@@ -67,16 +67,21 @@ function goalForm(g) {
 /**
  * The goals card in `host`. hooks: onChanged() after a save or a removal (the page reloads the
  * goals and calls set), onAbout({ type: 'goal', id }) when he wants to write about one.
- * → { set(goals, today, { force }) }: takes the goals in, and redraws unless a form is open (a
- * redraw would throw away what he is typing). `force` redraws anyway: after his own save.
+ * → { set(goals, today, { force }) }: takes the goals in, and redraws when they differ from what
+ * is shown, unless a form is open (a redraw would throw away what he is typing). `force` lets
+ * it redraw over a form too: after his own save, when the form has done its work.
  */
 export function goalsCard(host, hooks) {
   let goals = { main: null, items: [] }, today = null;
   let editing = null; // null, 'new' or a goal id
+  let drawn = null;   // what the card showed last, so an unchanged answer redraws nothing
 
   const find = id => (id === MAIN_GOAL ? goals.main : goals.items.find(g => g.id === id));
 
+  const shown = () => JSON.stringify([goals, today, editing]);
+
   function draw() {
+    drawn = shown();
     const items = sortGoals(goals.items);
     const edited = editing && editing !== 'new' ? find(editing) : null;
     mount(host, html`<section class="card goals" aria-labelledby="goals-h">
@@ -92,11 +97,13 @@ export function goalsCard(host, hooks) {
     wire();
   }
 
-  function close(focusSelector) {
+  // The button that opens a goal's form, or the one for a new goal when that goal is gone.
+  const opener = id => (id !== 'new' && host.querySelector(`[data-goal-edit="${CSS.escape(id)}"]`)) || host.querySelector('[data-goal-new]');
+
+  function close(id) {
     editing = null;
     draw();
-    const back = focusSelector && host.querySelector(focusSelector);
-    if (back) back.focus();
+    opener(id)?.focus();
   }
 
   function wire() {
@@ -120,7 +127,7 @@ export function goalsCard(host, hooks) {
       const input = field && fields[field];
       if (input) { input.setAttribute('aria-invalid', 'true'); input.focus(); }
     };
-    form.querySelector('[data-goal-cancel]').addEventListener('click', () => close(id === 'new' ? '[data-goal-new]' : `[data-goal-edit="${id}"]`));
+    form.querySelector('[data-goal-cancel]').addEventListener('click', () => close(id));
     form.addEventListener('submit', e => {
       e.preventDefault();
       form.querySelectorAll('[aria-invalid]').forEach(i => i.removeAttribute('aria-invalid'));
@@ -141,6 +148,7 @@ export function goalsCard(host, hooks) {
           editing = null;
           toast(id === 'new' ? 'Goal added' : 'Goal saved', { kind: 'ok' });
           await hooks.onChanged();
+          opener(id)?.focus(); // the form is gone: back to where he came from
         } catch (ex) { fail(ex.message); }
       });
     });
@@ -152,6 +160,7 @@ export function goalsCard(host, hooks) {
           editing = null;
           toast('Goal removed', { kind: 'ok' });
           await hooks.onChanged();
+          opener('new')?.focus();
         } catch (ex) { fail(ex.message); }
       });
     });
@@ -161,7 +170,7 @@ export function goalsCard(host, hooks) {
     set(nextGoals, nextToday, { force = false } = {}) {
       goals = nextGoals || { main: null, items: [] };
       today = nextToday;
-      if (force || editing == null) draw();
+      if ((force || editing == null) && shown() !== drawn) draw();
     },
   };
 }
@@ -170,12 +179,15 @@ export function goalsCard(host, hooks) {
 
 /**
  * The notes card in `host`. hooks: onChanged() after an add or a removal.
- * → { set(notes, { force }) }: redraws unless the add field holds text, which a redraw would lose.
+ * → { set(notes, { force }) }: redraws when the notes differ from what is shown, unless the add
+ * field holds text, which a redraw would lose; `force` redraws over it (after his own add).
  */
 export function notesCard(host, hooks) {
   let notes = [];
+  let drawn = null; // what the card showed last
 
   function draw() {
+    drawn = JSON.stringify(notes);
     mount(host, html`<section class="card notes" aria-labelledby="notes-h">
       <h2 class="section-title" id="notes-h">What the coach keeps in mind</h2>
       ${notes.length ? html`<ul class="plain note-list">${notes.map(n => html`<li class="note">
@@ -212,6 +224,7 @@ export function notesCard(host, hooks) {
       try {
         await api.del(`/api/coach/notes/${encodeURIComponent(b.dataset.noteRemove)}`);
         await hooks.onChanged();
+        host.querySelector('#note-text')?.focus(); // the row and its button are gone
       } catch (ex) { fail(ex.message); }
     })));
   }
@@ -219,7 +232,7 @@ export function notesCard(host, hooks) {
   return {
     set(next, { force = false } = {}) {
       notes = next || [];
-      if (force || !host.querySelector('#note-text')?.value) draw();
+      if ((force || !host.querySelector('#note-text')?.value) && JSON.stringify(notes) !== drawn) draw();
     },
   };
 }

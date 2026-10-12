@@ -41,8 +41,8 @@ function aboutLine(about) {
   return html`<p class="msg-about"><span class="msg-re">Re</span> ${href ? html`<a href="${href}">${label}</a>` : label}</p>`;
 }
 
-function outcome(result, lookup) {
-  const lines = outcomeLines(result, lookup);
+function outcome(result, lookup, proposal) {
+  const lines = outcomeLines(result, lookup, proposal);
   if (!lines.length) return '';
   return html`<ul class="plain msg-outcome">${lines.map(l => html`<li class="out out--${l.kind}">
     <span class="out-tag">${OUTCOME_TAGS[l.kind]}</span>
@@ -50,19 +50,23 @@ function outcome(result, lookup) {
   </li>`)}</ul>`;
 }
 
-function message(m, lookup) {
+function message(m, lookup, proposal) {
   const mine = m.role === 'user';
-  return html`<article class="msg msg--${mine ? 'user' : 'coach'}${mine && m.status === 'pending' ? ' is-pending' : ''}" data-msg="${m.id}">
+  // tabindex -1: "Show earlier" hands the focus to the first message it brought back.
+  return html`<article class="msg msg--${mine ? 'user' : 'coach'}${mine && m.status === 'pending' ? ' is-pending' : ''}" data-msg="${m.id}" tabindex="-1">
     <p class="msg-meta"><span class="msg-who">${mine ? 'You' : 'Coach'}</span><time datetime="${m.createdAt}">${formatTimestamp(m.createdAt)}</time>${mine && m.status === 'pending' ? html`<span class="msg-state">Not answered yet</span>` : ''}</p>
     ${aboutLine(m.about)}
     <div class="msg-body md">${raw(renderMarkdown(m.text))}</div>
-    ${mine ? '' : outcome(m.result, lookup)}
-    ${!mine && m.result && (m.result.proposed || []).length ? html`<p class="help"><a class="link" href="#r-proposals" data-to-proposals>Go to what needs your approval</a></p>` : ''}
+    ${mine ? '' : outcome(m.result, lookup, proposal)}
+    ${!mine && proposal === 'pending' ? html`<p class="help"><a class="link" href="#r-proposals" data-to-proposals>Go to what needs your approval</a></p>` : ''}
   </article>`;
 }
 
-/** `expanded` shows the whole thread; otherwise the last few, with a button for the rest. */
-export function drawLog(el, messages, { lookup, expanded }) {
+/**
+ * `expanded` shows the whole thread; otherwise the last few, with a button for the rest.
+ * `proposalOf(messageId)` says what became of the proposal a reply made (see outcomeLines).
+ */
+export function drawLog(el, messages, { lookup, expanded, proposalOf = () => null }) {
   const host = el.querySelector('#coach-log');
   if (!host) return;
   if (!messages.length) {
@@ -74,8 +78,8 @@ export function drawLog(el, messages, { lookup, expanded }) {
   }
   const { hidden, shown } = expanded ? { hidden: 0, shown: messages } : foldThread(messages, VISIBLE);
   mount(host, html`
-    ${hidden ? html`<button type="button" class="btn btn--sm btn--quiet coach-earlier" data-earlier>Show ${hidden} earlier message${hidden === 1 ? '' : 's'}</button>` : ''}
-    ${shown.map(m => message(m, lookup))}`);
+    ${hidden ? html`<button type="button" class="btn btn--quiet coach-earlier" data-earlier>Show ${hidden} earlier message${hidden === 1 ? '' : 's'}</button>` : ''}
+    ${shown.map(m => message(m, lookup, proposalOf(m.id)))}`);
 }
 
 export function drawWait(el, status) {
@@ -85,7 +89,7 @@ export function drawWait(el, status) {
   mount(host, w.line ? html`<div class="coach-wait coach-wait--${status.state}" role="status">
     ${w.poll ? html`<span class="coach-dots" aria-hidden="true"><i></i><i></i><i></i></span>` : ''}
     <p>${w.line}</p>
-    ${w.retry ? html`<button type="button" class="btn btn--sm" data-retry>Try again</button>` : ''}
+    ${w.retry ? html`<button type="button" class="btn" data-retry>Try again</button>` : ''}
   </div>` : '');
 }
 
@@ -109,7 +113,7 @@ export function focusComposer(el) {
 }
 
 /**
- * Wires the section once per frame. hooks: onSend(text) → resolves when the message is stored
+ * Wires the section once. hooks: onSend(text) → resolves when the message is stored
  * (and rejects with the error to show), onRetry(button), onEarlier(), onAboutClear().
  */
 export function wireThread(el, hooks) {
@@ -136,7 +140,8 @@ export function wireThread(el, hooks) {
     submit.setAttribute('aria-busy', 'true');
     try {
       await hooks.onSend(checked.text);
-      ta.value = '';
+      // Only what was sent is taken away: the request can take seconds, and he may have typed on.
+      if (ta.value.trim() === checked.text) ta.value = '';
       showCount();
       showError('');
     } catch (ex) {

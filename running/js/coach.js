@@ -55,14 +55,17 @@ function goalText(a) {
 
 /**
  * What a reply did, one line each, in the order Bobby needs it: what waits for him, what changed,
- * what could not be done. `lookup(id)` finds a workout in the plan for its title.
- * → [{ kind: 'proposed' | 'applied' | 'goal' | 'note' | 'rejected', text, reason }]
+ * what could not be done. `lookup(id)` finds a workout in the plan for its title. `proposal` is
+ * what became of the reply's proposal: 'pending', 'accepted', 'rejected', or null when the page
+ * no longer knows (the list of proposals holds only the latest).
+ * → [{ kind: 'waiting' | 'proposed' | 'accepted' | 'declined' | 'applied' | 'goal' | 'note' | 'rejected', text, reason }]
  */
-export function outcomeLines(result, lookup) {
+export function outcomeLines(result, lookup, proposal = null) {
   if (!result) return [];
   const change = (kind, c, reason) => ({ kind, text: describeChange(c, lookup), reason: reason || null });
+  const proposed = PROPOSAL_KINDS[proposal] || 'proposed';
   return [
-    ...(result.proposed || []).map(c => change('proposed', c, c.reason)),
+    ...(result.proposed || []).map(c => change(proposed, c, c.reason)),
     ...(result.applied || []).map(c => change('applied', c, c.reason)),
     ...((result.goals && result.goals.applied) || []).map(a => ({ kind: 'goal', text: goalText(a), reason: null })),
     ...((result.notes && result.notes.applied) || []).map(a => ({ kind: 'note', text: `${NOTE_VERBS[a.op] || 'Note'}: “${(a.note && a.note.text) || ''}”`, reason: null })),
@@ -72,7 +75,11 @@ export function outcomeLines(result, lookup) {
   ];
 }
 
-export const OUTCOME_TAGS = { proposed: 'Needs you', applied: 'Done', goal: 'Goal', note: 'Note', rejected: 'Not possible' };
+const PROPOSAL_KINDS = { pending: 'waiting', accepted: 'accepted', rejected: 'declined' };
+export const OUTCOME_TAGS = {
+  waiting: 'Needs you', proposed: 'Proposed', accepted: 'Accepted', declined: 'Declined',
+  applied: 'Done', goal: 'Goal', note: 'Note', rejected: 'Not possible',
+};
 
 // ── waiting for a reply ─────────────────────────────────────────────────────
 

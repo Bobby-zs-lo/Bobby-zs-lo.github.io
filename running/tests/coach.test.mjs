@@ -75,6 +75,10 @@ test('outcome: what waits for him first, then what was done, then what could not
     ['rejected', 'A note change', 'No such note'],
   ]);
   for (const l of lines) assert.ok(OUTCOME_TAGS[l.kind], `a tag for ${l.kind}`);
+  // What became of the proposal shows on the reply that made it; unknown (an old reply) says only that it was one.
+  const fate = proposal => { const [first] = outcomeLines(result, lookup, proposal); return [first.kind, OUTCOME_TAGS[first.kind]]; };
+  assert.deepEqual([fate('pending'), fate('accepted'), fate('rejected'), fate(null), fate(undefined)],
+    [['waiting', 'Needs you'], ['accepted', 'Accepted'], ['declined', 'Declined'], ['proposed', 'Proposed'], ['proposed', 'Proposed']]);
   assert.deepEqual(outcomeLines(null), []);
   assert.deepEqual(outcomeLines({}), []);
   assert.equal(describeChange({ op: 'set_race', raceDate: '2027-10-31' }), 'Move the race to Sun 31 Oct 2027: every future week is rebuilt');

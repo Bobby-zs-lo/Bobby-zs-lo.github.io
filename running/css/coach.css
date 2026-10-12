@@ -12,6 +12,8 @@
 .coach-log:empty { display: none; }
 
 .msg { min-width: 0; }
+.msg:focus { outline: none; }
+.msg:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 .msg > * + * { margin-top: 6px; }
 .msg--coach { padding-left: 14px; border-left: 3px solid var(--accent); }
 .msg--user { margin-left: clamp(20px, 9%, 56px); padding: 12px 14px; background: var(--paper-2); border-radius: var(--radius); }
@@ -38,8 +40,9 @@
 .out-tag { font-family: var(--mono); font-size: 10px; letter-spacing: 1.2px; text-transform: uppercase; font-weight: 500; color: var(--ink-3); }
 .out-text { font-size: 15px; color: var(--ink); overflow-wrap: anywhere; }
 .out-reason { display: block; font-size: 13.5px; color: var(--ink-3); }
-.out--applied .out-tag { color: var(--ok); }
-.out--proposed .out-tag { color: var(--accent); }
+.out--applied .out-tag, .out--accepted .out-tag { color: var(--ok); }
+.out--waiting .out-tag { color: var(--accent); }
+.out--declined .out-text { color: var(--ink-2); }
 .out--rejected .out-text { color: var(--ink-2); }
 .out--rejected .out-tag { color: var(--warn); }
 
@@ -126,6 +129,7 @@
 /* ── reviews: a comment button at the foot of each ────────────────────── */
 .review-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .review-foot .help { margin-top: 0; }
+.review-foot .btn { min-height: var(--touch); }
 
 /* ── desk: the thread and the reviews to read, what needs him beside them ─ */
 html[data-layout="desk"] body[data-route="reviews"] .view { max-width: 1200px; }

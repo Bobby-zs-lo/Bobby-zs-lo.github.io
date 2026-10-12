@@ -3,8 +3,9 @@
 Private, single-user marathon-training PWA (front end only). The backend is the
 `running-claude` Firebase project (Cloud Functions + Firestore) in `Bobby-zs-lo/Running-with-Claude`.
 Design specs there, under `docs/superpowers/specs/`: `2026-10-04-running-coach-design.md` (the app,
-sections 4.6 and 5), `2026-10-06-desktop-dashboard-routes-design.md` (desk layout, maps, routes) and
-`2026-10-10-manual-activity-links-design.md` (which recorded sessions count); read each one's
+sections 4.6 and 5), `2026-10-06-desktop-dashboard-routes-design.md` (desk layout, maps, routes),
+`2026-10-10-manual-activity-links-design.md` (which recorded sessions count) and
+`2026-10-12-coach-chat-design.md` (the thread with the coach, goals, notes); read each one's
 amendments first.
 
 **Hidden:** not linked from the site, `noindex,nofollow`, `Disallow: /running/` in
@@ -19,6 +20,7 @@ amendments first.
 | `css/running.css` | Portfolio tokens, light + dark themes |
 | `css/desk.css` | Desk layout: masthead, left rail, view column, and the grammar the desk views share (tiles, filter bar, chips, charts) |
 | `css/overview.css`, `css/routes.css`, `css/map.css` | Overview (with a plain phone fallback), Routes, and the maps with the Activity page that carries one |
+| `css/coach.css` | The Coach page: the thread, goals, notes, and its two columns on a desk |
 | `js/config.js` | `API_BASE` and `FIREBASE_CONFIG` (fill in at setup) and `APP_VERSION` (bump on every deploy: it names the SW cache) |
 | `js/auth.js` | Firebase Auth wrapper (Google sign-in), the only file that loads the Firebase SDK |
 | `js/app.js` | Shell: header, tab bar (a left rail on a desk), offline badge, routing |
@@ -30,6 +32,8 @@ amendments first.
 | `js/geolocate.js` | The device's location, for a route start (Routes and Settings) |
 | `js/views/workout.js` | `#/workout/<id>` — one session step by step: every segment with its target pace window and the time one repetition should take, why the session exists, and how what was recorded compared. `workout-links.js` is its "What you actually did" card and the editor that chooses which recorded sessions count (see Linking) |
 | `js/links.js` | Pure helpers (tested) for that choice: the sessions of a day, what is ticked, the request body, the summed distance |
+| `js/views/reviews.js` | `#/reviews` — the Coach page (see Coach): proposals, the thread with the coach, goals, notes, weekly reviews, plan changes. `coach-thread.js` draws the thread and the composer, `coach-goals.js` the goals and notes cards |
+| `js/coach.js` | Pure helpers (tested) for that page: what a message is about, how a reply's outcome reads, what to say while a reply is awaited, goal forms |
 | `js/views/activity.js` | `#/activity/<id>` — one Strava activity in full, with kilometre splits marked against the target window of the session it matched |
 | `js/push.js` | Notification permission and Web Push subscription |
 | `js/views/overview.js` | `#/overview` — the desk dashboard. `overview-model.js` computes every number from the loaded data and owns the tile catalogue and layout logic (pure, tested); `tiles.js`, `tiles-charts.js`, `tiles-table.js` and `tiles-map.js` draw the tiles; `overview-layout.js` is *Customise* |
@@ -146,6 +150,38 @@ workout's own sport was recorded, so the ride to work does not prompt on a plann
 does the Activity page (*Change*, or *Link it to …* for each session planned that day). Today, Week
 and the session page show a linked Health Connect session as a row beside the Strava ones.
 
+## Coach
+
+`#/reviews` is the Coach page (the tab says *Coach*; the route kept its name so old notification
+links open). It holds, in the phone's order: proposals awaiting approval, the thread with the
+coach, goals, the notes the coach keeps, the weekly reviews and the log of plan changes. On a
+desk the thread and the reviews sit in a left column and the rest in a right one; the parts are
+moved between the two arrangements, never redrawn, so a half-written message or goal survives a
+resize.
+
+- **The thread.** `GET /api/coach` is `{ messages, status, goals: { main, items }, notes }`.
+  *Send* posts `{ text, about? }` to `/api/coach/messages`. The coach is a claude.ai routine the
+  backend starts, so a reply takes two to three minutes: while `status.state` is `thinking` the
+  page asks again every 8 s (and at once when the tab becomes visible) and redraws only the
+  thread, never the composer. `stalled` offers *Try again* (`POST /api/coach/retry`); `offline`
+  says the message waits for the weekly review. A reply lists what it did: `Needs you` (a
+  proposal, shown above the thread; `Accepted` or `Declined` once he has decided, from the
+  `messageId` on `GET /api/proposals`), `Done`, `Goal`, `Note`, `Not possible` with the reason.
+  A region is redrawn only when what it shows has changed, so a poll that brings nothing new
+  touches nothing; an answer older than one already taken in is dropped; and when the backend
+  has no `GET /api/coach` (404, a backend from before v0.10.0) the page is shown without the thread.
+- **What a message is about.** *Comment* on a review or a proposal, *Comment* on a goal, and
+  *Ask the coach about this session* on `#/workout/<id>` (which opens
+  `#/reviews?about=workout:<id>`; the address drops the parameter at once) put a chip above the
+  composer. Only `{ type, id }` is sent; the server looks the thing up. An activity can never be
+  referenced: that would hand Strava data to the coach.
+- **Goals.** The marathon is the main goal; its form sets a target time and a note only (the
+  race and its date are changed in Settings, or by the coach as a proposal). Sub-goals are added,
+  edited, marked achieved or dropped, and removed here (`POST`, `PUT`, `DELETE /api/goals`); the
+  coach adds them too when told. Times are typed as `h:mm:ss` or `mm:ss`.
+- **Notes** are the standing instructions the coach works from (`POST`, `DELETE /api/coach/notes`).
+- A card with a form open keeps it across the page's own redraws; it catches up on save or cancel.
+
 ## Maps
 
 Leaflet 1.9.4 loads from cdnjs with subresource integrity, only once a map is about to show, so a
@@ -172,10 +208,12 @@ The smoke test serves the repo root, fakes Firebase Auth (see above), answers th
 shared mock (`tests/mock-api.mjs`; a planned route is made up in `tests/mock-plan.mjs`, and a point
 dropped in the Øresund east of the fictional home answers 502 as OpenRouteService would; the links
 endpoint, with the backend's rules and messages, is `tests/mock-links.mjs`, and what it changes
-lasts as long as that mock) on the
+lasts as long as that mock; the coach's routes are `tests/mock-coach.mjs`, where a canned coach
+answers by a few words in the message, so every kind of outcome can be looked at) on the
 invented data in `tests/fixtures/` (rebuild with
 `node running/tests/fixtures/build-fixtures.mjs`), and saves screenshots. Its steps for linking
-recorded sessions live in `tests/smoke-links.playwright.mjs`, which the one command runs too.
+recorded sessions live in `tests/smoke-links.playwright.mjs` and those for the Coach page in
+`tests/smoke-coach.playwright.mjs`; the one command runs both.
 
 The live API must never be asked for anything by a test. Two things see to that: every request
 to its origin is answered by the mock, and the browser is started with a resolver rule under which
