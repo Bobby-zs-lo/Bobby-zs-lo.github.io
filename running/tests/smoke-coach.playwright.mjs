@@ -136,10 +136,29 @@ export async function coachSteps({ step, newPage, go, overflow, SHOTS }) {
     // A dated goal with a distance changes what the plan should be: the card says so and offers the rebuild.
     assert.match(await page.textContent('.goal-stale'), /Your goals or your 5K time have changed since this plan was built/);
     assert.match(await page.locator('.goal', { hasText: '10 km under 50:00' }).locator('.goal-outlook').textContent(), /^Your 5K predicts \d+:\d\d\. The target needs a 5K near/);
-    page.once('dialog', d => d.accept());
-    await page.click('[data-plan-rebuild]');
-    await page.waitForFunction(() => !document.querySelector('.goal-stale'));
-    assert.equal(posts(log, '/api/plan/rebuild').length, 1);
+    // The rebuild asks first, in the card: what it does, and where he is now if he wants to say.
+    await page.click('.goal-stale [data-plan-rebuild]');
+    await page.waitForFunction(() => document.activeElement.id === 'rb-weekly');
+    assert.match(await page.textContent('[data-rebuild-form]'), /Every week from tomorrow is built again for your goals/);
+    await page.type('#rb-long', '14');
+    await page.click('[data-rebuild-form] button[type=submit]');
+    assert.match(await page.textContent('[data-rebuild-error]'), /Say how much you run a week as well/);
+    assert.equal(posts(log, '/api/plan/rebuild').length, 0, 'nothing is sent while the form is wrong');
+    await page.type('#rb-weekly', '27,5');
+    await page.click('[data-rebuild-form] button[type=submit]');
+    await page.waitForFunction(() => !document.querySelector('.goal-stale') && !document.querySelector('[data-rebuild-form]'));
+    assert.deepEqual(posts(log, '/api/plan/rebuild').map(p => p.body), [{ level: { weeklyRunKm: 27.5, longRunKm: 14 } }]);
+    // With the plan up to date the button is still there, quietly: he can always build it again.
+    assert.equal(await count(page, '.goal-plan [data-plan-rebuild]'), 1);
+    await page.waitForFunction(() => document.activeElement.matches('[data-plan-rebuild]'));
+    await page.click('.goal-plan [data-plan-rebuild]');
+    await page.click('[data-rebuild-cancel]');
+    assert.equal(await count(page, '[data-rebuild-form]'), 0);
+    assert.equal(posts(log, '/api/plan/rebuild').length, 1, 'Cancel sends nothing');
+    await page.click('.goal-plan [data-plan-rebuild]');
+    await page.click('[data-rebuild-form] button[type=submit]');
+    await page.waitForFunction(() => !document.querySelector('[data-rebuild-form]'));
+    assert.deepEqual(posts(log, '/api/plan/rebuild')[1].body, {}, 'empty fields: from the plan\'s own weeks');
     assert.match(await page.locator('.goal', { hasText: 'Halvmaraton' }).locator('.goal-outlook').textContent(), /Your 5K predicts 1:\d\d:\d\d\. The target needs a 5K near/);
 
     // The marathon gets a target time; its name and date are not for this form.
@@ -155,6 +174,19 @@ export async function coachSteps({ step, newPage, go, overflow, SHOTS }) {
     await page.waitForFunction(() => document.activeElement.matches('[data-goal-edit="main"]'));
     assert.equal(await page.getAttribute('[data-goal-edit="main"]', 'aria-label'), 'Edit Berlin Marathon', 'the name holds the word on the button');
     assert.deepEqual(log.find(l => l.method === 'PUT' && l.path === '/api/goals/main').body, { targetSeconds: 13500, note: null });
+
+    // The Plan page leads here: the line under its heading opens the Coach page on the goals, where the rebuild is.
+    await page.evaluate(() => { location.hash = '#/plan'; });
+    await page.waitForSelector('a[href="#/reviews?show=goals"]');
+    await page.click('a[href="#/reviews?show=goals"]');
+    await page.waitForFunction(() => location.hash === '#/reviews' && document.activeElement && document.activeElement.id === 'goals-h');
+    assert.equal(await count(page, '[data-plan-rebuild]'), 1);
+    // And Settings holds the choice of race pace: at the target unless he says otherwise.
+    await page.evaluate(() => { location.hash = '#/settings'; });
+    await page.waitForSelector('#racePaceMode');
+    assert.equal(await page.inputValue('#racePaceMode'), 'target');
+    await page.evaluate(() => { location.hash = '#/reviews'; });
+    await page.waitForSelector('#note-text');
 
     // A note of his own, added and taken away again.
     await page.fill('#note-text', 'Travelling 20–27 Oct');

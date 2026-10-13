@@ -47,7 +47,8 @@ export async function render(el, ctx) {
 
   // What the next message is about: from the address once, then from the Comment buttons.
   let about = null, expanded = false, timer = null, goalsUi = null, notesUi = null;
-  if (ctx.params.about) clearParams();
+  const showGoals = ctx.params.show === 'goals'; // from the Plan page: straight to the goals and the rebuild
+  if (ctx.params.about || showGoals) clearParams();
 
   /** A bare { type, id } gains the title and date the label needs, from what the page already holds. */
   const fillAbout = a => {
@@ -350,7 +351,7 @@ export async function render(el, ctx) {
     goalsUi = goalsCard(part.goals, {
       onChanged: () => reloadCoach('goals'), onAbout: a => setAbout(a),
       // Every future week again: the plan, its log of changes and how it stands to the goals all move.
-      onRebuild: async () => { await api.post('/api/plan/rebuild'); await reloadLists(); await reloadCoach('goals'); },
+      onRebuilt: async () => { await reloadLists(); await reloadCoach('goals'); },
     });
     notesUi = notesCard(part.notes, { onChanged: () => reloadCoach('notes') });
   }
@@ -362,6 +363,8 @@ export async function render(el, ctx) {
   drawChanges();
   wire();
   if (hasCoach) setAbout(parseAbout(ctx.params.about), { focus: !!ctx.params.about });
+  // After this render the app moves focus into the view: the goals take it once that has happened.
+  if (showGoals && goalsUi) setTimeout(() => { if (ctx.isCurrent()) goalsUi.show(); }, 0);
   schedule();
   return stop;
 }

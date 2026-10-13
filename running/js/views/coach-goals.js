@@ -5,7 +5,7 @@ import { html, raw, mount } from '../dom.js';
 import { api } from '../api.js';
 import { toast, busy, timeField } from '../ui.js';
 import { formatHms, HMS } from '../format.js';
-import { goalFacts, sortGoals, goalFromForm, parseTarget, outlookLine, notInPlanLine, MAIN_GOAL, MAX_NOTE_CHARS } from '../coach.js';
+import { goalFacts, sortGoals, goalFromForm, levelFromForm, parseTarget, outlookLine, notInPlanLine, MAIN_GOAL, MAX_NOTE_CHARS } from '../coach.js';
 
 const STATUS_NAMES = { active: 'Active', achieved: 'Achieved', dropped: 'Dropped' };
 const opt = (value, label, selected) => html`<option value="${value}"${value === selected ? raw(' selected') : ''}>${label}</option>`;
@@ -68,10 +68,40 @@ function goalForm(g) {
   </form>`;
 }
 
+// Building the plan again is always on offer: as a notice when the goals have moved on from the plan,
+// as a quiet line when they have not (he may simply be ahead of it, or behind).
+function rebuildOffer(plan) {
+  const stale = !!(plan && plan.stale);
+  return html`<div class="${stale ? 'banner goal-stale' : 'goal-plan'}"${stale ? raw(' role="status"') : ''}>
+    <p>${stale ? html`<strong>Your goals or your 5K time have changed since this plan was built.</strong> The coach will propose a new plan, or build it now from the goals as they stand.`
+      : 'The plan is built for these goals. Build it again when you want it to start from where you are now.'}</p>
+    <button type="button" class="btn${stale ? ' btn--primary' : ''}" data-plan-rebuild>Rebuild the plan</button>
+  </div>`;
+}
+
+function rebuildForm() {
+  return html`<form class="goal-form rebuild-form" data-rebuild-form novalidate aria-labelledby="rb-h">
+    <h3 class="goal-form-title" id="rb-h">Rebuild the plan</h3>
+    <p>Every week from tomorrow is built again for your goals. Past weeks stay. Changes made by hand to future weeks are replaced. You can undo it under Plan changes.</p>
+    <div class="field-pair">
+      <div class="field"><label for="rb-weekly">Running a week now <span class="opt">km, optional</span></label>
+        <input id="rb-weekly" name="weekly" type="text" inputmode="decimal" autocomplete="off" class="num" aria-describedby="rb-help"></div>
+      <div class="field"><label for="rb-long">Longest recent run <span class="opt">km, optional</span></label>
+        <input id="rb-long" name="long" type="text" inputmode="decimal" autocomplete="off" class="num" aria-describedby="rb-help"></div>
+    </div>
+    <p class="help" id="rb-help">Fill these in and the plan starts from where you are. Leave them empty and it continues from its own weeks.</p>
+    <p class="form-error" data-rebuild-error role="alert" hidden></p>
+    <div class="actions">
+      <button type="submit" class="btn btn--primary">Rebuild</button>
+      <button type="button" class="btn" data-rebuild-cancel>Cancel</button>
+    </div>
+  </form>`;
+}
+
 /**
  * The goals card in `host`. hooks: onChanged() after a save or a removal (the page reloads the
- * goals and calls set), onAbout({ type: 'goal', id }) when he wants to write about one, onRebuild()
- * when he asks for the plan to be built again for the goals as they stand.
+ * goals and calls set), onAbout({ type: 'goal', id }) when he wants to write about one, onRebuilt()
+ * after he has had the plan built again (the page reloads what the plan touches).
  * → { set(goals, today, { force, plan }) }: takes the goals in (and `plan`, how the plan stands to them), and redraws when they differ from what
  * is shown, unless a form is open (a redraw would throw away what he is typing). `force` lets
  * it redraw over a form too: after his own save, when the form has done its work.
@@ -79,11 +109,12 @@ function goalForm(g) {
 export function goalsCard(host, hooks) {
   let goals = { main: null, items: [] }, today = null, plan = null;
   let editing = null; // null, 'new' or a goal id
+  let rebuilding = false; // the rebuild form is open
   let drawn = null;   // what the card showed last, so an unchanged answer redraws nothing
 
   const find = id => (id === MAIN_GOAL ? goals.main : goals.items.find(g => g.id === id));
 
-  const shown = () => JSON.stringify([goals, today, editing, plan]);
+  const shown = () => JSON.stringify([goals, today, editing, plan, rebuilding]);
 
   function draw() {
     drawn = shown();
@@ -95,11 +126,8 @@ export function goalsCard(host, hooks) {
         ${goals.main ? goalRow(goals.main, today, { main: true, plan }) : ''}
         ${items.map(g => goalRow(g, today, { plan }))}
       </ul>
-      ${plan && plan.stale ? html`<div class="banner goal-stale" role="status">
-        <p><strong>Your goals or your 5K time have changed since this plan was built.</strong> The coach will propose a new plan, or build it now from the goals as they stand.</p>
-        <button type="button" class="btn btn--primary" data-plan-rebuild>Rebuild the plan</button>
-      </div>` : ''}
-      ${editing === 'new' ? goalForm(null) : edited ? goalForm(edited)
+      ${rebuilding ? rebuildForm() : plan ? rebuildOffer(plan) : ''}
+      ${editing === 'new' ? goalForm(null) : edited ? goalForm(edited) : rebuilding ? ''
         : html`<button type="button" class="btn" data-goal-new>Add a goal</button>
                <p class="help">A tune-up race, a time to hit by a date. Or tell the coach, and it adds the goal and plans toward it.</p>`}
     </section>`);
@@ -116,23 +144,16 @@ export function goalsCard(host, hooks) {
   }
 
   function wire() {
-    host.querySelector('[data-goal-new]')?.addEventListener('click', () => { editing = 'new'; draw(); host.querySelector('#g-title').focus(); });
+    host.querySelector('[data-goal-new]')?.addEventListener('click', () => { editing = 'new'; rebuilding = false; draw(); host.querySelector('#g-title').focus(); });
     host.querySelectorAll('[data-goal-edit]').forEach(b => b.addEventListener('click', () => {
       editing = b.dataset.goalEdit;
+      rebuilding = false;
       draw();
       (host.querySelector('#g-title') || host.querySelector('#g-target')).focus();
     }));
     host.querySelectorAll('[data-goal-about]').forEach(b => b.addEventListener('click', () => hooks.onAbout({ type: 'goal', id: b.dataset.goalAbout })));
-    host.querySelector('[data-plan-rebuild]')?.addEventListener('click', e => {
-      if (!confirm('Rebuild every future week from tomorrow, for the goals as they stand? Past weeks stay. Changes made by hand to future weeks are replaced. You can undo it under Plan changes.')) return;
-      busy(e.currentTarget, async () => {
-        try {
-          await hooks.onRebuild();
-          toast('The plan is rebuilt for your goals', { kind: 'ok' });
-          host.querySelector('#goals-h')?.focus(); // the notice and its button are gone
-        } catch (ex) { toast(ex.message, { kind: 'error' }); }
-      });
-    });
+    host.querySelector('[data-plan-rebuild]')?.addEventListener('click', () => { rebuilding = true; editing = null; draw(); host.querySelector('#rb-weekly').focus(); });
+    wireRebuild(host.querySelector('[data-rebuild-form]'));
 
     const form = host.querySelector('[data-goal-form]');
     if (!form) return;
@@ -186,13 +207,45 @@ export function goalsCard(host, hooks) {
     });
   }
 
+  function wireRebuild(form) {
+    if (!form) return;
+    const fields = form.elements;
+    const error = form.querySelector('[data-rebuild-error]');
+    const fail = (msg, field) => {
+      error.textContent = msg;
+      error.hidden = false;
+      const input = field && fields[field];
+      if (input) { input.setAttribute('aria-invalid', 'true'); input.focus(); }
+    };
+    // Back to the button that opened it, or to the heading when the notice it stood in is gone.
+    const leave = () => { rebuilding = false; draw(); (host.querySelector('[data-plan-rebuild]') || host.querySelector('#goals-h')).focus(); };
+    form.querySelector('[data-rebuild-cancel]').addEventListener('click', leave);
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      form.querySelectorAll('[aria-invalid]').forEach(i => i.removeAttribute('aria-invalid'));
+      const parsed = levelFromForm({ weekly: fields.weekly.value, long: fields.long.value });
+      if (parsed.error) return fail(parsed.error, parsed.field);
+      return busy(form.querySelector('button[type=submit]'), async () => {
+        try {
+          await api.post('/api/plan/rebuild', parsed.level ? { level: parsed.level } : {});
+          rebuilding = false;
+          toast(parsed.level ? 'The plan is rebuilt from where you are' : 'The plan is rebuilt for your goals', { kind: 'ok' });
+          await hooks.onRebuilt();
+          leave();
+        } catch (ex) { fail(ex.message); }
+      });
+    });
+  }
+
   return {
     set(nextGoals, nextToday, { force = false, plan: nextPlan = null } = {}) {
       goals = nextGoals || { main: null, items: [] };
       today = nextToday;
       plan = nextPlan;
-      if ((force || editing == null) && shown() !== drawn) draw();
+      if ((force || (editing == null && !rebuilding)) && shown() !== drawn) draw();
     },
+    /** Brings the card into view with its heading focused: where the Plan page sends him to change goals or rebuild. */
+    show() { host.scrollIntoView({ block: 'start' }); host.querySelector('#goals-h')?.focus({ preventScroll: true }); },
   };
 }
 

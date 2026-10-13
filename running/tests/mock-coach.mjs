@@ -134,17 +134,20 @@ export function createCoachStore({ settings, findWorkout, reviews, proposals, fa
       .map((g) => ({ id: g.id, name: g.title, date: g.date, distanceKm: g.distanceKm, kind: g.kind === 'race' || g.distanceKm > 12 ? 'race' : 'trial', main: false, targetSeconds: g.targetSeconds }));
     return [mainEvent, ...onTheWay];
   }
-  const signature = () => JSON.stringify([settings().fiveKSeconds, plannable().map((e) => [e.id, e.date, e.distanceKm, e.kind, e.targetSeconds])]);
+  const signature = () => JSON.stringify([settings().fiveKSeconds, settings().racePaceMode, plannable().map((e) => [e.id, e.date, e.distanceKm, e.kind, e.targetSeconds])]);
   const LONGEST_RUN_KM = 18; // what the mock's plan has him run in one go before any goal on the way
   const outlook = (e) => (e.main ? looks(e) : { ...looks(e), longestRunBeforeKm: LONGEST_RUN_KM, prepared: e.distanceKm <= LONGEST_RUN_KM * 1.5 });
   function looks(e) {
     const fiveK = settings().fiveKSeconds;
     const scale = (e.distanceKm / 5) ** 1.06; // Riegel
     const predictedSeconds = Math.round(fiveK * scale);
-    if (!e.targetSeconds) return { ...e, predictedSeconds, requiredFiveKSeconds: null, verdict: null };
+    if (!e.targetSeconds) return { ...e, predictedSeconds, requiredFiveKSeconds: null, verdict: null, racePaceSec: Math.round(predictedSeconds / e.distanceKm), held: false };
     const ratio = e.targetSeconds / predictedSeconds;
     const verdict = ratio >= 1 ? 'in_hand' : ratio >= 0.965 ? 'within_reach' : ratio >= 0.93 ? 'ambitious' : 'beyond';
-    return { ...e, predictedSeconds, requiredFiveKSeconds: Math.round(e.targetSeconds / scale), verdict };
+    // As the backend: in `carried` a target ahead of the 5K time is held back, in `target` it is trained as it stands.
+    const held = settings().racePaceMode === 'carried' && (verdict === 'ambitious' || verdict === 'beyond');
+    const racePaceSec = Math.round((held ? predictedSeconds * 0.97 : e.targetSeconds) / e.distanceKm);
+    return { ...e, predictedSeconds, requiredFiveKSeconds: Math.round(e.targetSeconds / scale), verdict, racePaceSec, held };
   }
   let built = { signature: signature(), events: plannable().map(outlook) };
   function planState() {
@@ -160,7 +163,16 @@ export function createCoachStore({ settings, findWorkout, reviews, proposals, fa
       ],
     };
   }
-  function rebuild() {
+  // `body.level` is what he says he runs now; checked in the backend's words, and kept for the tests to read.
+  let lastLevel = null;
+  const within = (x, lo, hi) => Number.isFinite(x) && x >= lo && x <= hi;
+  function rebuild(body) {
+    const level = body && body.level != null ? body.level : null;
+    if (level !== null) {
+      if (typeof level !== 'object' || !within(level.weeklyRunKm, 0, 150)) fail(400, 'Level.weeklyRunKm must be 0–150');
+      if (level.longRunKm != null && !within(level.longRunKm, 0, 45)) fail(400, 'Level.longRunKm must be 0–45');
+    }
+    lastLevel = level;
     built = { signature: signature(), events: plannable().map(outlook) };
     return { ok: true };
   }
@@ -285,5 +297,5 @@ export function createCoachStore({ settings, findWorkout, reviews, proposals, fa
     return { ok: true };
   }
 
-  return { view, send, retry, addGoal, updateGoal, removeGoal, addNote, removeNote, rebuild };
+  return { view, send, retry, addGoal, updateGoal, removeGoal, addNote, removeNote, rebuild, lastLevel: () => lastLevel };
 }

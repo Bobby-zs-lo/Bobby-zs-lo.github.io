@@ -39,6 +39,7 @@ export async function render(el, ctx) {
     <header class="page-head">
       <p class="eyebrow">${plan.raceName || 'Race'} · ${raceDate ? formatDate(raceDate, { year: true }) : ''}</p>
       <h1>Plan</h1>
+      <p class="sub"><a href="#/reviews?show=goals">Built for your goals. Change them or rebuild the plan</a></p>
       ${daysToRace != null && daysToRace >= 0 ? html`<p class="sub num">${daysToRace === 0 ? 'Race day.' : `${daysToRace} days to go · ${weeksToRace} ${weeksToRace === 1 ? 'week' : 'weeks'}`}</p>` : ''}
     </header>
     ${groups.map(g => {

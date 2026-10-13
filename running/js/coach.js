@@ -147,9 +147,18 @@ export function goalFacts(goal, today) {
 const VERDICTS = {
   in_hand: 'your 5K already points past it',
   within_reach: 'within reach',
-  ambitious: 'ambitious, so race pace is held at what your 5K time can carry for now',
-  beyond: 'well ahead of your current fitness, so race pace is held at what your 5K time can carry for now',
+  ambitious: 'ambitious',
+  beyond: 'well ahead of your current fitness',
 };
+
+// What the plan does about a target ahead of the 5K time: holds the pace back, or goes for it because
+// he chose to (Settings › Race pace). A plan built before the choice existed says neither.
+function paceNote(event) {
+  if (event.verdict !== 'ambitious' && event.verdict !== 'beyond') return '';
+  if (!event.racePaceSec || event.held == null) return '';
+  const pace = `${formatMmSs(event.racePaceSec)}/km`;
+  return event.held ? `, so race pace is held at ${pace} for now` : `; the plan goes for ${pace} all the same, as you have chosen`;
+}
 
 // A goal on the way that the plan's long runs do not reach by its date (the plan holds it all the same).
 const unprepared = event => (event.prepared === false
@@ -166,7 +175,7 @@ export function outlookLine(event) {
   if (!event || !event.predictedSeconds) return '';
   const predicts = `Your 5K predicts ${formatMmSs(event.predictedSeconds)}`;
   if (!event.targetSeconds || !event.verdict) return `${predicts}.${unprepared(event)}`;
-  return `${predicts}. The target needs a 5K near ${formatMmSs(event.requiredFiveKSeconds)}: ${VERDICTS[event.verdict] || event.verdict}.${unprepared(event)}`;
+  return `${predicts}. The target needs a 5K near ${formatMmSs(event.requiredFiveKSeconds)}: ${VERDICTS[event.verdict] || event.verdict}${paceNote(event)}.${unprepared(event)}`;
 }
 
 const NOT_IN_PLAN = {
@@ -176,6 +185,20 @@ const NOT_IN_PLAN = {
 };
 /** Why a dated goal is not in the plan, from plan.notInPlan; '' when it is, or would be after a rebuild. */
 export const notInPlanLine = (goalId, notInPlan) => NOT_IN_PLAN[((notInPlan || []).find(x => x.id === goalId) || {}).reason] || '';
+
+/**
+ * The rebuild form's two optional fields as the API wants them: where he is now, in his own figures.
+ * → { level } (null when both are empty: the plan continues from its own weeks) or { error, field }.
+ */
+export function levelFromForm(values) {
+  const num = v => { const t = String(v ?? '').trim().replace(',', '.'); return t === '' ? null : Number(t); };
+  const weekly = num(values.weekly), long = num(values.long);
+  if (weekly == null && long == null) return { level: null };
+  if (weekly == null) return { error: 'Say how much you run a week as well, or leave both empty.', field: 'weekly' };
+  if (!Number.isFinite(weekly) || weekly < 0 || weekly > 150) return { error: 'Enter your weekly running in kilometres, 0 to 150.', field: 'weekly' };
+  if (long != null && (!Number.isFinite(long) || long < 0 || long > 45)) return { error: 'Enter your longest recent run in kilometres, 0 to 45.', field: 'long' };
+  return { level: long == null ? { weeklyRunKm: weekly } : { weeklyRunKm: weekly, longRunKm: long } };
+}
 
 /** Active goals by date (dated first), then the achieved and the dropped. */
 export function sortGoals(items) {

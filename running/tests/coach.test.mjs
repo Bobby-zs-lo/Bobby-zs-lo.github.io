@@ -6,7 +6,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   parseAbout, aboutParam, aboutLabel, aboutHref, outcomeLines, OUTCOME_TAGS, waitingState, newReplies, foldThread,
-  checkMessage, countdown, goalFacts, sortGoals, goalFromForm, parseTarget, outlookLine, notInPlanLine, MAX_MESSAGE_CHARS,
+  checkMessage, countdown, goalFacts, sortGoals, goalFromForm, levelFromForm, parseTarget, outlookLine, notInPlanLine, MAX_MESSAGE_CHARS,
 } from '../js/coach.js';
 import { describeChange } from '../js/changes.js';
 import { createMockApi } from './mock-api.mjs';
@@ -154,6 +154,16 @@ test('goal form: what he typed becomes what the API takes, or the field to go ba
   for (const half of ['1:4', '1:45:0', '1:75:00', '1:45:75', '0:00:05']) assert.match(parseTarget(half).error, /Type the digits only/, half);
 });
 
+test('levelFromForm: where he is now, in his own figures, or nothing', () => {
+  assert.deepEqual(levelFromForm({ weekly: '', long: '' }), { level: null });
+  assert.deepEqual(levelFromForm({ weekly: ' 30 ', long: '' }), { level: { weeklyRunKm: 30 } });
+  assert.deepEqual(levelFromForm({ weekly: '27,5', long: '14' }), { level: { weeklyRunKm: 27.5, longRunKm: 14 } });
+  assert.deepEqual(levelFromForm({ weekly: '0', long: '0' }), { level: { weeklyRunKm: 0, longRunKm: 0 } });
+  assert.equal(levelFromForm({ weekly: '', long: '12' }).field, 'weekly');
+  for (const weekly of ['-1', '151', 'lots']) assert.equal(levelFromForm({ weekly, long: '' }).field, 'weekly', weekly);
+  for (const long of ['-1', '46', 'far']) assert.equal(levelFromForm({ weekly: '30', long }).field, 'long', long);
+});
+
 test('outlook: how a goal looks from the 5K time, and why one is not in the plan', () => {
   const event = { id: 'main', predictedSeconds: 6486, targetSeconds: 6300, requiredFiveKSeconds: 1370, verdict: 'within_reach' };
   assert.equal(outlookLine(event), 'Your 5K predicts 1:48:06. The target needs a 5K near 22:50: within reach.');
@@ -163,8 +173,13 @@ test('outlook: how a goal looks from the 5K time, and why one is not in the plan
   assert.equal(outlookLine(short), 'Your 5K predicts 1:48:06. The longest run in the plan before it is 11 km, short for this distance: run it easy, or ask the coach to move it.');
   assert.match(outlookLine({ ...event, longestRunBeforeKm: 11, prepared: false }), /: within reach\. The longest run in the plan before it is 11 km/);
   assert.equal(outlookLine({ ...short, longestRunBeforeKm: 18, prepared: true }), 'Your 5K predicts 1:48:06.');
-  assert.match(outlookLine({ ...event, verdict: 'ambitious' }), /: ambitious, so race pace is held at what your 5K time can carry for now\.$/);
-  assert.match(outlookLine({ ...event, verdict: 'beyond' }), /well ahead of your current fitness, so race pace is held at what your 5K time can carry for now\.$/);
+  // A target ahead of the 5K time: held back, or gone for because he chose to (Settings › Race pace).
+  assert.match(outlookLine({ ...event, verdict: 'ambitious', racePaceSec: 298, held: true }), /: ambitious, so race pace is held at 4:58\/km for now\.$/);
+  assert.match(outlookLine({ ...event, verdict: 'ambitious', racePaceSec: 284, held: false }), /: ambitious; the plan goes for 4:44\/km all the same, as you have chosen\.$/);
+  assert.match(outlookLine({ ...event, verdict: 'beyond', racePaceSec: 275, held: true }), /: well ahead of your current fitness, so race pace is held at 4:35\/km for now\.$/);
+  // A plan built before the choice existed says only how the target looks; a target within reach needs no note.
+  assert.match(outlookLine({ ...event, verdict: 'ambitious' }), /: ambitious\.$/);
+  assert.match(outlookLine({ ...event, racePaceSec: 299, held: false }), /: within reach\.$/);
   assert.equal(outlookLine({ id: 'g', predictedSeconds: 2925, targetSeconds: null, verdict: null }), 'Your 5K predicts 48:45.');
   assert.deepEqual([outlookLine(null), outlookLine(undefined), outlookLine({})], ['', '', '']);
   const notInPlan = [{ id: 'late', reason: 'after_main_race' }, { id: 'tight', reason: 'no_room' }, { id: 'open', reason: 'no_distance' }];
@@ -285,6 +300,23 @@ test('mock: the plan goes stale when a goal that shapes it changes, and Rebuild 
   assert.equal((await plan()).stale, true);
   assert.equal((await plan()).events[0].targetSeconds, null, 'the plan still is what it was built for');
   assert.deepEqual((await call('POST', '/api/plan/rebuild')).json, { ok: true });
+  // His own rebuild may say where he is; a level out of range is refused in the backend's words.
+  assert.deepEqual((await call('POST', '/api/plan/rebuild', { level: { weeklyRunKm: 30, longRunKm: 14 } })).json, { ok: true });
+  const refused = await call('POST', '/api/plan/rebuild', { level: { weeklyRunKm: 400 } });
+  assert.deepEqual([refused.status, refused.json.error], [400, 'Level.weeklyRunKm must be 0–150']);
+  // The race pace is at the target by default: a target ahead of the 5K time is gone for, or held when he says so.
+  assert.equal((await call('GET', '/api/state')).json.settings.racePaceMode, 'target');
+  await call('PUT', '/api/goals/main', { targetSeconds: 11400, note: null });
+  await call('POST', '/api/plan/rebuild');
+  assert.deepEqual([(await plan()).events[0].held, (await plan()).events[0].verdict], [false, 'beyond']);
+  assert.equal((await call('PUT', '/api/settings', { racePaceMode: 'carried' })).json.racePaceMode, 'carried');
+  assert.equal((await plan()).stale, true, 'another pace is another plan');
+  await call('POST', '/api/plan/rebuild');
+  assert.equal((await plan()).events[0].held, true);
+  assert.equal((await call('PUT', '/api/settings', { racePaceMode: 'fast' })).status, 400);
+  await call('PUT', '/api/settings', { racePaceMode: 'target' });
+  await call('PUT', '/api/goals/main', { targetSeconds: 13500, note: null });
+  await call('POST', '/api/plan/rebuild');
   const rebuilt = await plan();
   assert.deepEqual([rebuilt.stale, rebuilt.events[0].targetSeconds], [false, 13500]);
   // A note or a goal without a date changes nothing about the plan; one after the main race is not in it.

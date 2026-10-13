@@ -106,6 +106,9 @@
 .goal-facts { font-size: 14px; color: var(--ink-2); }
 .goal-note { font-size: 14px; color: var(--ink-3); overflow-wrap: anywhere; }
 .goal-outlook { font-size: 14px; line-height: 1.45; color: var(--ink-2); }
+.goal-plan { margin-top: 12px; }
+.goal-plan > * + * { margin-top: 10px; }
+.goal-plan p { font-size: 14px; line-height: 1.45; color: var(--ink-2); }
 .goal-stale { margin-top: 12px; }
 .goal-stale > * + * { margin-top: 10px; }
 .goal-stale p { color: var(--ink); }

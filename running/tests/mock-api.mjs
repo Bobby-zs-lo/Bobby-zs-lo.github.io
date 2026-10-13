@@ -36,7 +36,7 @@ const KM_RANGE = { run: [2, 60], trail: [2, 60], ride: [10, 200] };
 const KM_PER_DEG = 111.195;
 const DEFAULT_ROUTE_DELAY_MS = 600; // long enough that loading states are visible
 const DEFAULT_PLAN_DELAY_MS = 300;  // a re-plan after a drag: long enough to see the old line fade
-const SETTINGS_KEYS = ['raceDate', 'raceName', 'raceDistanceKm', 'fiveKSeconds', 'hasWatch', 'morningHour', 'eveningHour', 'home', 'dashboard'];
+const SETTINGS_KEYS = ['raceDate', 'raceName', 'raceDistanceKm', 'fiveKSeconds', 'racePaceMode', 'hasWatch', 'morningHour', 'eveningHour', 'home', 'dashboard'];
 const NOTIFY_KEYS = ['morning', 'evening', 'activity', 'weekly', 'coach'];
 
 class ApiError extends Error {
@@ -181,6 +181,7 @@ export function createMockApi({ fixturesDir, routeDelayMs = DEFAULT_ROUTE_DELAY_
   // and a notification the stored settings predate is on.
   const fromName = (name) => (/half|halv/i.test(name) ? 21.0975 : /\b10\s?k/i.test(name) ? 10 : /\b5\s?k/i.test(name) ? 5 : 42.195);
   settings.raceDistanceKm ??= fromName(String(settings.raceName || ''));
+  settings.racePaceMode ??= 'target'; // the backend's default: the target's own pace
   settings.notify = { ...Object.fromEntries(NOTIFY_KEYS.map((k) => [k, true])), ...settings.notify };
   const links = createLinkStore({
     activities: () => fx('history.json'),
@@ -251,6 +252,7 @@ export function createMockApi({ fixturesDir, routeDelayMs = DEFAULT_ROUTE_DELAY_
     const next = { ...settings, ...pick(body, SETTINGS_KEYS) };
     if (body.notify) next.notify = { ...settings.notify, ...pick(body.notify, NOTIFY_KEYS) };
     if (!(Number.isFinite(next.raceDistanceKm) && next.raceDistanceKm >= 3 && next.raceDistanceKm <= 100)) fail(400, 'raceDistanceKm must be 3–100');
+    if (!['target', 'carried'].includes(next.racePaceMode)) fail(400, 'racePaceMode must be one of carried, target');
     validateHome(next.home);
     validateDashboard(next.dashboard);
     if (next.home) next.home = { lat: round(next.home.lat, 5), lng: round(next.home.lng, 5) };
@@ -313,7 +315,7 @@ export function createMockApi({ fixturesDir, routeDelayMs = DEFAULT_ROUTE_DELAY_
     ['POST', /^\/api\/coach\/notes$/, ({ body }) => coach.addNote(body)],
     ['DELETE', /^\/api\/coach\/notes\/([^/]+)$/, ({ params }) => coach.removeNote(decodeURIComponent(params[0]))],
     ['POST', /^\/api\/goals$/, ({ body }) => coach.addGoal(body)],
-    ['POST', /^\/api\/plan\/rebuild$/, () => coach.rebuild()],
+    ['POST', /^\/api\/plan\/rebuild$/, ({ body }) => coach.rebuild(body)],
     ['PUT', /^\/api\/goals\/([^/]+)$/, ({ params, body }) => coach.updateGoal(decodeURIComponent(params[0]), body)],
     ['DELETE', /^\/api\/goals\/([^/]+)$/, ({ params }) => coach.removeGoal(decodeURIComponent(params[0]))],
     ['POST', /^\/.*$/, () => ({ ok: true, sent: 1 })],

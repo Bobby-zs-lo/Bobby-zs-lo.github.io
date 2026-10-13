@@ -186,10 +186,19 @@ resize.
   the plan holds shows how it looks from the 5K time ("Your 5K predicts 1:48:06. The target needs
   a 5K near 22:50: within reach."), and a goal on the way that the plan's long runs do not reach
   by its date says that too (`prepared: false`). A dated goal the plan does not hold says why:
-  after the main race, no room, or a race without a distance. When the goals or the 5K time have
-  changed since the plan was built the card says so and offers *Rebuild the plan*
-  (`POST /api/plan/rebuild`, after a confirm): every future week again, for the goals as they
-  stand. Nothing rebuilds by itself. The race's distance is in Settings beside its date.
+  after the main race, no room, or a race without a distance. *Rebuild the plan* is always on
+  the card: as a notice when the goals or the 5K time have changed since the plan was built,
+  as a quiet line otherwise (it showed only when the plan was stale, and Bobby could not find
+  it). It opens a form in the card that says what a rebuild does and takes two optional
+  figures, the kilometres he runs a week now and his longest recent run; with them the plan
+  starts from where he is (`POST /api/plan/rebuild` with `{ level }`, `levelFromForm` in
+  `js/coach.js`). The Plan page and Settings link to it (`#/reviews?show=goals`). Nothing
+  rebuilds by itself.
+- **Race pace.** Settings holds the race's distance beside its date, and *Race pace*
+  (`settings.racePaceMode`): *Train at my target pace* (the default, his choice) or *Hold it to
+  what my 5K time can carry*. Changing it rebuilds the future like the other plan settings. A
+  target ahead of the 5K time then reads "ambitious; the plan goes for 4:44/km all the same,
+  as you have chosen" or "ambitious, so race pace is held at 4:58/km for now".
 - **Notes** are the standing instructions the coach works from (`POST`, `DELETE /api/coach/notes`).
 - A card with a form open keeps it across the page's own redraws; it catches up on save or cancel.
 
@@ -272,7 +281,7 @@ Adding a view means three registrations: `VIEWS` and `TITLES` in `js/app.js`, `R
 
 ## Setup status
 
-Live since 5 October 2026 and fully set up; **v0.11.0** since 13 October 2026 (the version shows
+Live since 5 October 2026 and fully set up; **v0.11.1** since 13 October 2026 (the version shows
 under Settings in the app and in `js/config.js`). `js/config.js` holds the real `API_BASE` and
 `FIREBASE_CONFIG`; both Firebase values are public identifiers, not secrets.
 

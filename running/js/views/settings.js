@@ -79,7 +79,14 @@ export async function render(el, ctx) {
       </div>
       <div class="field"><label for="fiveK">Current 5K time</label>
         <input id="fiveK" name="fiveK" type="text" inputmode="numeric" placeholder="23:30" pattern="\\d{1,2}:[0-5]\\d" value="${formatMmSs(s.fiveKSeconds)}" aria-describedby="fiveK-help" class="num input--short">
-        <p class="help" id="fiveK-help">mm:ss. Type the digits and the colon fills in: 2330 gives 23:30. Sets your training paces. Changing the race, its distance or the 5K time regenerates all <strong>future</strong> weeks; past weeks and their statuses stay.</p></div>
+        <p class="help" id="fiveK-help">mm:ss. Type the digits and the colon fills in: 2330 gives 23:30. Sets your training paces. Changing the race, its distance, the 5K time or the race pace regenerates all <strong>future</strong> weeks; past weeks and their statuses stay.</p></div>
+      <div class="field"><label for="racePaceMode">Race pace</label>
+        <select id="racePaceMode" name="racePaceMode" aria-describedby="racePaceMode-help">
+          <option value="target"${s.racePaceMode !== 'carried' ? raw(' selected') : ''}>Train at my target pace</option>
+          <option value="carried"${s.racePaceMode === 'carried' ? raw(' selected') : ''}>Hold it to what my 5K time can carry</option>
+        </select>
+        <p class="help" id="racePaceMode-help">How a target time sets the pace of race-pace sessions and of race day. At the target pace the sessions are as hard as the target is ambitious. Held back, a half is never trained faster than your threshold pace, and the pace catches up as your 5K time does.</p>
+        <p class="help"><a href="#/reviews?show=goals">Goals, target times and rebuilding the plan from where you are now</a></p></div>
       ${toggle('hasWatch', 'I have a GPS watch', 'Sessions can use pace and heart-rate targets', !!s.hasWatch)}
 
       <h2 class="section-title">Notifications</h2>
@@ -174,6 +181,7 @@ export async function render(el, ctx) {
       raceName: form.raceName.value.trim(), raceDate: form.raceDate.value, fiveKSeconds,
       // The option that stands for the stored distance keeps the stored figure (21.1 is "Half marathon" too).
       raceDistanceKm: Math.abs(+form.raceDistance.value - s.raceDistanceKm) < 0.3 ? s.raceDistanceKm : +form.raceDistance.value,
+      racePaceMode: form.racePaceMode.value,
       hasWatch: form.hasWatch.checked,
       notify: Object.fromEntries(NOTIFS.map(([k]) => [k, form[`notify.${k}`].checked])),
       morningHour: +form.morningHour.value, eveningHour: +form.eveningHour.value,
@@ -181,7 +189,7 @@ export async function render(el, ctx) {
     const patch = {};
     for (const [k, v] of Object.entries(next)) if (JSON.stringify(v) !== JSON.stringify(s[k])) patch[k] = v;
     if (!Object.keys(patch).length) { toast('Nothing changed'); return; }
-    const regen = ['raceName', 'raceDate', 'raceDistanceKm', 'fiveKSeconds'].some(k => k in patch);
+    const regen = ['raceName', 'raceDate', 'raceDistanceKm', 'fiveKSeconds', 'racePaceMode'].some(k => k in patch);
     if (regen && !confirm('This regenerates all future weeks of the plan from tomorrow. Past weeks stay. Continue?')) return;
     await busy(form.querySelector('button[type=submit]'), async () => {
       try {
