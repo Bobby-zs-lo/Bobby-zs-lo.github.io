@@ -69,7 +69,7 @@ export function loadLeaflet() {
   const needJs = !(typeof window !== 'undefined' && window.L && window.L.map);
   const needCss = !hasLeafletCss();
   if (!needJs && !needCss) {
-    leafletPromise = Promise.resolve(window.L);
+    leafletPromise = Promise.resolve(steady(window.L));
     return leafletPromise;
   }
   leafletPromise = new Promise((resolve, reject) => {
@@ -86,12 +86,29 @@ export function loadLeaflet() {
       if (settled || --waiting) return;
       if (!window.L) { fail(); return; }
       settled = true;
-      resolve(window.L);
+      resolve(steady(window.L));
     };
     if (needCss) nodes.push(appendAsset('link', { rel: 'stylesheet', href: LEAFLET.css, integrity: LEAFLET.cssSri }, loaded, fail));
     if (needJs) nodes.push(appendAsset('script', { src: LEAFLET.js, integrity: LEAFLET.jsSri, async: true }, loaded, fail));
   });
   return leafletPromise;
+}
+
+/**
+ * Leaflet 1.9.4's canvas renderer forgets a redraw it has queued for the next frame when a synchronous
+ * one runs first (a fit straight after the lines are added). Removing the map then cancels nothing, and
+ * the forgotten frame throws on a canvas that is gone ("reading 'save'"): leaving a map view within a
+ * frame of its drawing was enough. A redraw without a canvas has nothing to do. The library is pinned
+ * by version and integrity hash above, so this private method cannot change under the patch.
+ */
+function steady(L) {
+  const proto = L.Canvas && L.Canvas.prototype;
+  if (proto && !proto.steadied) {
+    const redraw = proto._redraw;
+    proto._redraw = function () { if (this._ctx) redraw.call(this); };
+    proto.steadied = true;
+  }
+  return L;
 }
 
 // --- map -------------------------------------------------------------------
