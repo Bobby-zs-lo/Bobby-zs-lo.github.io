@@ -147,8 +147,8 @@ export function goalFacts(goal, today) {
 const VERDICTS = {
   in_hand: 'your 5K already points past it',
   within_reach: 'within reach',
-  ambitious: 'ambitious',
-  beyond: 'well ahead of your current fitness, so race pace is set to what is within reach for now',
+  ambitious: 'ambitious, so race pace is held at what your 5K time can carry for now',
+  beyond: 'well ahead of your current fitness, so race pace is held at what your 5K time can carry for now',
 };
 
 // A goal on the way that the plan's long runs do not reach by its date (the plan holds it all the same).

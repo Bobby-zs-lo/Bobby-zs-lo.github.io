@@ -163,8 +163,8 @@ test('outlook: how a goal looks from the 5K time, and why one is not in the plan
   assert.equal(outlookLine(short), 'Your 5K predicts 1:48:06. The longest run in the plan before it is 11 km, short for this distance: run it easy, or ask the coach to move it.');
   assert.match(outlookLine({ ...event, longestRunBeforeKm: 11, prepared: false }), /: within reach\. The longest run in the plan before it is 11 km/);
   assert.equal(outlookLine({ ...short, longestRunBeforeKm: 18, prepared: true }), 'Your 5K predicts 1:48:06.');
-  assert.match(outlookLine({ ...event, verdict: 'ambitious' }), /: ambitious\.$/);
-  assert.match(outlookLine({ ...event, verdict: 'beyond' }), /well ahead of your current fitness, so race pace is set to what is within reach for now\.$/);
+  assert.match(outlookLine({ ...event, verdict: 'ambitious' }), /: ambitious, so race pace is held at what your 5K time can carry for now\.$/);
+  assert.match(outlookLine({ ...event, verdict: 'beyond' }), /well ahead of your current fitness, so race pace is held at what your 5K time can carry for now\.$/);
   assert.equal(outlookLine({ id: 'g', predictedSeconds: 2925, targetSeconds: null, verdict: null }), 'Your 5K predicts 48:45.');
   assert.deepEqual([outlookLine(null), outlookLine(undefined), outlookLine({})], ['', '', '']);
   const notInPlan = [{ id: 'late', reason: 'after_main_race' }, { id: 'tight', reason: 'no_room' }, { id: 'open', reason: 'no_distance' }];
