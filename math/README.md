@@ -27,7 +27,8 @@ An educational, retro arcade-style math game heavily inspired by *Space Invaders
 - **Real-Time Ship Upgrades:** Upgrade the starship live during combat across 4 tiers (Starter Scout, Dual-Wing Hunter, Plasma Cruiser, and Neon Flagship).
 - **5 Cosmic Planetary Sectors & Dreadnought Boss Battle:** Moon Base Alpha, Asteroid Belt, Mars Orbit, Jupiter Rings, and Deep Space Nebula Boss.
 - **Adult Descent Speed Control:** Real-time speed slider ($0.2\times$ to $2.0\times$) and quick presets (`0.4x Slow`, `0.7x Gentle`, `1.0x Normal`, `1.5x Fast`) accessible via in-game HUD and pause modal.
-- **Non-One-Hit Monster Balance:** Rebalanced alien health (Scouts: 6 HP, Crabs: 6 HP, Minion Drones: 4 HP) so starter weapons do not kill enemies in 1 shot.
+- **🗺️ Banegemning & Stjernekort (Stage Persistence):** Fejlrettelse af bølgeafslutning ved gennembrudte rumvæsner (`aliensBreached`). Hvis piloten overlever bølgen med mindst 1 skjold tilbage, fuldføres banen nu garanteret, point/stjerner tildeles, og den næste bane låses op på stjernekortet uden uendelige ekstra bølger.
+- **📱 Fuld Tablet- & Touch-Understøttelse:** Optimeret stjernekort til iPad og tablets med touch-responsive baneknapper, smaragdgrøn fremhævelse for gennemførte baner (`.stage-node.unlocked.completed`) og fejlsikker synkronisering af `localStorage` ved genindlæsning.
 - **Parent Learning Analytics:** Cumulative accuracy, response times, trouble spots tracking, and printable offline worksheets.
 
 ---
