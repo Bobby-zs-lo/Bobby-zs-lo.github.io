@@ -165,7 +165,7 @@ test('levelFromForm: where he is now, in his own figures, or nothing', () => {
 });
 
 test('outlook: how a goal looks from the 5K time, and why one is not in the plan', () => {
-  const event = { id: 'main', predictedSeconds: 6486, targetSeconds: 6300, requiredFiveKSeconds: 1370, verdict: 'within_reach' };
+  const event = { id: 'main', kind: 'race', predictedSeconds: 6486, targetSeconds: 6300, requiredFiveKSeconds: 1370, verdict: 'within_reach' };
   assert.equal(outlookLine(event), 'Your 5K predicts 1:48:06. The target needs a 5K near 22:50: within reach.');
   assert.match(outlookLine({ ...event, verdict: 'in_hand' }), /your 5K already points past it\.$/);
   // A goal on the way the plan cannot prepare says so, with or without a target; a prepared one says nothing more.
@@ -174,9 +174,13 @@ test('outlook: how a goal looks from the 5K time, and why one is not in the plan
   assert.match(outlookLine({ ...event, longestRunBeforeKm: 11, prepared: false }), /: within reach\. The longest run in the plan before it is 11 km/);
   assert.equal(outlookLine({ ...short, longestRunBeforeKm: 18, prepared: true }), 'Your 5K predicts 1:48:06.');
   // A target ahead of the 5K time: held back, or gone for because he chose to (Settings › Race pace).
-  assert.match(outlookLine({ ...event, verdict: 'ambitious', racePaceSec: 298, held: true }), /: ambitious, so race pace is held at 4:58\/km for now\.$/);
+  assert.match(outlookLine({ ...event, verdict: 'ambitious', racePaceSec: 298, held: true }), /: ambitious; race pace is held at 4:58\/km for now\.$/);
   assert.match(outlookLine({ ...event, verdict: 'ambitious', racePaceSec: 284, held: false }), /: ambitious; the plan goes for 4:44\/km all the same, as you have chosen\.$/);
-  assert.match(outlookLine({ ...event, verdict: 'beyond', racePaceSec: 275, held: true }), /: well ahead of your current fitness, so race pace is held at 4:35\/km for now\.$/);
+  assert.match(outlookLine({ ...event, verdict: 'beyond', racePaceSec: 275, held: true }), /: well ahead of your current fitness; race pace is held at 4:35\/km for now\.$/);
+  // Within reach of the 5K time and still faster than the pace above it: held, and said so.
+  assert.match(outlookLine({ ...event, racePaceSec: 298, held: true }), /: within reach; race pace is held at 4:58\/km for now\.$/);
+  // A milestone is a time trial at the pace he set: nothing is held and nothing was chosen.
+  assert.match(outlookLine({ ...event, kind: 'trial', verdict: 'beyond', racePaceSec: 240, held: false }), /: well ahead of your current fitness\.$/);
   // A plan built before the choice existed says only how the target looks; a target within reach needs no note.
   assert.match(outlookLine({ ...event, verdict: 'ambitious' }), /: ambitious\.$/);
   assert.match(outlookLine({ ...event, racePaceSec: 299, held: false }), /: within reach\.$/);

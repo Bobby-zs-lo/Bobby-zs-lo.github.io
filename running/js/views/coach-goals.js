@@ -228,11 +228,14 @@ export function goalsCard(host, hooks) {
       return busy(form.querySelector('button[type=submit]'), async () => {
         try {
           await api.post('/api/plan/rebuild', parsed.level ? { level: parsed.level } : {});
-          rebuilding = false;
-          toast(parsed.level ? 'The plan is rebuilt from where you are' : 'The plan is rebuilt for your goals', { kind: 'ok' });
+        } catch (ex) { return fail(ex.message); }
+        // It is done, whatever the reload does: a failure to refresh must not read as a failed rebuild and invite a second one.
+        rebuilding = false;
+        try {
           await hooks.onRebuilt();
-          leave();
-        } catch (ex) { fail(ex.message); }
+          toast(parsed.level ? 'The plan is rebuilt from where you are' : 'The plan is rebuilt for your goals', { kind: 'ok' });
+        } catch { toast('The plan is rebuilt, but this page could not refresh. Reload to see it.', { kind: 'error' }); }
+        return leave();
       });
     });
   }

@@ -151,13 +151,14 @@ const VERDICTS = {
   beyond: 'well ahead of your current fitness',
 };
 
-// What the plan does about a target ahead of the 5K time: holds the pace back, or goes for it because
-// he chose to (Settings › Race pace). A plan built before the choice existed says neither.
+// What the plan does about a race's target that is ahead of the 5K time: holds the pace back, or goes for
+// it because he chose to (Settings › Race pace). A plan built before the choice existed says neither, and
+// a milestone says neither: its time trial is run at the pace he set.
 function paceNote(event) {
-  if (event.verdict !== 'ambitious' && event.verdict !== 'beyond') return '';
-  if (!event.racePaceSec || event.held == null) return '';
+  if (event.kind !== 'race' || !event.racePaceSec || event.held == null) return '';
   const pace = `${formatMmSs(event.racePaceSec)}/km`;
-  return event.held ? `, so race pace is held at ${pace} for now` : `; the plan goes for ${pace} all the same, as you have chosen`;
+  if (event.held) return `; race pace is held at ${pace} for now`;
+  return event.verdict === 'ambitious' || event.verdict === 'beyond' ? `; the plan goes for ${pace} all the same, as you have chosen` : '';
 }
 
 // A goal on the way that the plan's long runs do not reach by its date (the plan holds it all the same).

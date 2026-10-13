@@ -181,7 +181,8 @@ export async function render(el, ctx) {
       raceName: form.raceName.value.trim(), raceDate: form.raceDate.value, fiveKSeconds,
       // The option that stands for the stored distance keeps the stored figure (21.1 is "Half marathon" too).
       raceDistanceKm: Math.abs(+form.raceDistance.value - s.raceDistanceKm) < 0.3 ? s.raceDistanceKm : +form.raceDistance.value,
-      racePaceMode: form.racePaceMode.value,
+      // A backend from before the choice existed has no race pace to change.
+      ...(s.racePaceMode ? { racePaceMode: form.racePaceMode.value } : {}),
       hasWatch: form.hasWatch.checked,
       notify: Object.fromEntries(NOTIFS.map(([k]) => [k, form[`notify.${k}`].checked])),
       morningHour: +form.morningHour.value, eveningHour: +form.eveningHour.value,
