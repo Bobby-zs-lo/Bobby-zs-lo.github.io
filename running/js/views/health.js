@@ -100,7 +100,7 @@ export async function render(el, ctx) {
 
     <section aria-labelledby="log-h">
       <h2 class="section-title" id="log-h">Daily log</h2>
-      <p class="help">The last 14 days exactly as Health Connect reported them. A dash means nothing was recorded.</p>
+      <p class="help">The last 14 days from Health Connect. Where several apps counted the same steps (a watch, Google Fit, the phone itself), each quarter-hour counts once, the watch's first. A dash means nothing was recorded.</p>
       <div class="card table-wrap">
         <table class="dtable">
           <thead><tr><th scope="col">Day</th>${LOG_COLUMNS.map(c => html`<th scope="col">${c.label}</th>`)}<th scope="col">Sessions</th></tr></thead>

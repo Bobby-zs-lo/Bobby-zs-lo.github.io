@@ -73,11 +73,15 @@ syncBrand();
 let renderSeq = 0;
 let cleanup = null;
 
+// A request that fails while the phone says it is online is the server not answering, not the phone
+// being offline: the badge says which, so a server fault is not mistaken for poor reception.
 function updateOffline() {
-  const off = netStatus.offline || (typeof navigator !== 'undefined' && navigator.onLine === false);
+  const phoneOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
+  const off = netStatus.offline || phoneOffline;
+  const what = phoneOffline ? 'Offline' : 'Server down';
   offlineEl.hidden = !off;
-  offlineEl.textContent = netStatus.cachedAt ? 'Offline · saved copy' : 'Offline';
-  offlineEl.title = netStatus.cachedAt ? `Showing data saved ${formatTimestamp(netStatus.cachedAt)}` : 'No connection';
+  offlineEl.textContent = netStatus.cachedAt ? `${what} · saved copy` : what;
+  offlineEl.title = `${phoneOffline ? 'No connection' : 'The server is not answering'}${netStatus.cachedAt ? `. Showing data saved ${formatTimestamp(netStatus.cachedAt)}` : ''}`;
 }
 window.addEventListener('api:net', updateOffline);
 window.addEventListener('online', updateOffline);
