@@ -1,4 +1,6 @@
 """Tests for generate_index.py."""
+from datetime import date
+
 import pytest
 
 import generate_index as gi
@@ -69,3 +71,33 @@ class TestInjectBetweenSentinels:
     def test_raises_when_markers_missing(self):
         with pytest.raises(ValueError, match="X-START"):
             gi.inject_between("no markers here", "X-START", "X-END", "NEW")
+
+
+class TestPublishScheduled:
+    SCHEDULED = '<li hidden data-publish-from="2026-11-01">TR</li>'
+
+    def test_reveals_element_on_its_date(self):
+        result = gi.publish_scheduled(self.SCHEDULED, date(2026, 11, 1))
+        assert result == "<li>TR</li>"
+
+    def test_reveals_element_after_its_date(self):
+        result = gi.publish_scheduled(self.SCHEDULED, date(2026, 11, 5))
+        assert result == "<li>TR</li>"
+
+    def test_keeps_element_hidden_before_its_date(self):
+        result = gi.publish_scheduled(self.SCHEDULED, date(2026, 10, 31))
+        assert result == self.SCHEDULED
+
+    def test_handles_any_attribute_order(self):
+        src = '<li data-publish-from="2026-11-01" class="row" hidden>TR</li>'
+        result = gi.publish_scheduled(src, date(2026, 11, 1))
+        assert result == '<li class="row">TR</li>'
+
+    def test_leaves_hidden_inside_attribute_values_alone(self):
+        src = '<li class="a hidden b" hidden data-publish-from="2026-11-01">TR</li>'
+        result = gi.publish_scheduled(src, date(2026, 11, 1))
+        assert result == '<li class="a hidden b">TR</li>'
+
+    def test_ignores_hidden_elements_without_a_date(self):
+        src = '<div hidden>x</div>'
+        assert gi.publish_scheduled(src, date(2026, 11, 1)) == src

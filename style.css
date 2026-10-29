@@ -74,6 +74,9 @@ ul { list-style: none; }
   overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
 }
 
+/* scheduled entries (data-publish-from) stay hidden even inside grid/flex rows */
+[hidden] { display: none !important; }
+
 /* focus */
 :focus-visible {
   outline: 2px solid var(--accent);

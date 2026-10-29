@@ -439,4 +439,17 @@ Things to know:
   a patched copy of `easter-egg.js` run in a headless browser. For another one like it, ask Claude. It
   keeps the recipe and the approved design.
 
+## 17. Schedule an entry to appear on a date
+
+Any element in `index.html` can wait for a start date. Add `hidden` and `data-publish-from`:
+
+```html
+<li hidden data-publish-from="2026-11-01"><span class="tl-date">2026 →</span> ...</li>
+```
+
+It stays invisible on the site and out of the CV export until then. The daily "Update site
+content" Action runs `generate_index.py`, which strips both attributes once the date has
+arrived and commits the result. GitHub starts that job a few hours late (about 07:00–08:00
+UTC), so the entry goes live on the morning of the date, not at midnight.
+
 > **Deprecated:** Recipes that asked you to hand-edit the "Major Research Projects" or "Speaking, Service & Outreach" sections directly in `index.html` no longer apply. Edit the YAML files instead.

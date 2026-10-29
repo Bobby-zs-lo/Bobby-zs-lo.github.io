@@ -867,7 +867,7 @@
       document.querySelectorAll('#experience .exp-col').forEach(function (col) {
         var ct = col.querySelector('.exp-col-title');
         if (ct) subHeading(ct.textContent.trim());
-        col.querySelectorAll('.timeline li').forEach(function (li) {
+        col.querySelectorAll('.timeline li:not([hidden])').forEach(function (li) {
           var date = li.querySelector('.tl-date');
           var strong = li.querySelector('strong');
           var div = li.querySelector('div');
@@ -886,7 +886,7 @@
       document.querySelectorAll('#education .ed-grid > div').forEach(function (col) {
         var ct = col.querySelector('.ed-col-title');
         if (ct) subHeading(ct.textContent.trim());
-        col.querySelectorAll('.timeline li').forEach(function (li) {
+        col.querySelectorAll('.timeline li:not([hidden])').forEach(function (li) {
           var date = li.querySelector('.tl-date');
           var strong = li.querySelector('strong');
           var div = li.querySelector('div');
@@ -917,7 +917,7 @@
       if (includeCourses) {
         if (includeSkills) y += 1;
         subHeading('Continuing Education');
-        document.querySelectorAll('#expertise .course-list li').forEach(function (li) {
+        document.querySelectorAll('#expertise .course-list li:not([hidden])').forEach(function (li) {
           var date = li.querySelector('.tl-date');
           var text = li.textContent.trim().replace(/\s+/g, ' ');
           if (date) text = text.replace(date.textContent.trim(), '').trim();
@@ -981,7 +981,7 @@
         var title = b.querySelector('.sso-title');
         if (title) subHeading(title.textContent.trim());
 
-        b.querySelectorAll('.sso-list li').forEach(function (li) {
+        b.querySelectorAll('.sso-list li:not([hidden])').forEach(function (li) {
           var date = li.querySelector('.tl-date');
           var text = li.textContent.trim().replace(/\s+/g, ' ');
           if (date) text = text.replace(date.textContent.trim(), '').trim();

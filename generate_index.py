@@ -2,13 +2,15 @@
 
 Edits only the regions between <!-- RESEARCH-START -->/<!-- RESEARCH-END -->
 and <!-- OUTREACH-START -->/<!-- OUTREACH-END --> sentinels. Manual content
-outside the sentinels is preserved.
+outside the sentinels is preserved, except that elements marked
+`hidden data-publish-from="YYYY-MM-DD"` are revealed once that date arrives.
 """
 from __future__ import annotations
 
 import html
 import re
 import sys
+from datetime import date
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -77,6 +79,22 @@ def inject_between(text: str, start_marker: str, end_marker: str, new_content: s
     return text[: match.start(2)] + new_content + text[match.end(2):]
 
 
+SCHEDULED_TAG = re.compile(r'<[a-zA-Z][^>]*\sdata-publish-from="(\d{4}-\d{2}-\d{2})"[^>]*>')
+
+
+def publish_scheduled(text: str, today: date) -> str:
+    """Drop `hidden` and `data-publish-from` from tags whose date has arrived."""
+    def reveal(match: re.Match) -> str:
+        if date.fromisoformat(match.group(1)) > today:
+            return match.group(0)
+        # Odd-numbered pieces are quoted attribute values; leave those untouched.
+        pieces = re.split(r'("[^"]*")', match.group(0))
+        for i in range(0, len(pieces), 2):
+            pieces[i] = re.sub(r'\s+hidden(?=[\s/>])', "", pieces[i])
+        return re.sub(r'\s+data-publish-from="[^"]*"', "", "".join(pieces))
+    return SCHEDULED_TAG.sub(reveal, text)
+
+
 def main() -> int:
     if not INDEX_PATH.exists():
         print(f"Error: {INDEX_PATH} not found.")
@@ -88,6 +106,7 @@ def main() -> int:
     src = INDEX_PATH.read_text(encoding="utf-8")
     src = inject_between(src, "RESEARCH-START", "RESEARCH-END", render_projects(projects, cache))
     src = inject_between(src, "OUTREACH-START", "OUTREACH-END", render_outreach(activity))
+    src = publish_scheduled(src, date.today())
     INDEX_PATH.write_text(src, encoding="utf-8")
     print(f"Wrote {INDEX_PATH} ({len(projects)} projects, {len(activity)} outreach blocks).")
     return 0
