@@ -1,5 +1,7 @@
-requests
-google-genai
-pyyaml
-pytest
-responses
+# Lower bounds exclude versions with known advisories; upper bounds stop a
+# surprise major release from breaking the scheduled publications workflow.
+requests>=2.32.4,<3
+google-genai>=1.0,<4
+pyyaml>=6.0.2,<7
+pytest>=8,<10
+responses>=0.25,<1
